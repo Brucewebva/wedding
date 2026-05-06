@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>婚宴桌位系統</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #c9a96e; --gold-light: #e8d5a3; --gold-dark: #8b6914;
+  --cream: #fdf8f0; --warm: #f5ede0; --deep: #1a1208; --brown: #3d2b0e;
+  --text: #2c1f0a; --muted: #8a7055; --border: rgba(201,169,110,0.3);
+  --success: #4a7c59; --danger: #8b2020;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Serif TC', serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+.screen { display: none; min-height: 100vh; }
+.screen.active { display: block; }
+
+/* HOME */
+#home { background: linear-gradient(160deg,#1a1208 0%,#2e1e08 40%,#1a1208 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+#home::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 60% 40% at 50% 50%,rgba(201,169,110,0.08) 0%,transparent 70%); }
+.home-inner { position:relative; text-align:center; padding:60px 40px; max-width:520px; }
+.home-orn { font-family:'Cormorant Garamond',serif; font-size:2.5rem; color:var(--gold); letter-spacing:0.3em; opacity:0.6; margin-bottom:8px; }
+.home-title { font-family:'Cormorant Garamond',serif; font-size:clamp(2.2rem,6vw,3.2rem); color:var(--gold-light); font-weight:300; letter-spacing:0.15em; line-height:1.2; margin-bottom:6px; }
+.home-sub { font-size:0.85rem; color:rgba(201,169,110,0.6); letter-spacing:0.3em; margin-bottom:48px; }
+.home-divider { width:120px; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); margin:0 auto 48px; }
+.home-btns { display:flex; flex-direction:column; gap:14px; width:100%; max-width:300px; margin:0 auto; }
+.btn-home { padding:16px 32px; border:1px solid; font-family:'Noto Serif TC',serif; font-size:1rem; cursor:pointer; letter-spacing:0.15em; transition:all 0.3s; border-radius:2px; }
+.btn-home-primary { background:var(--gold); border-color:var(--gold); color:var(--deep); font-weight:500; }
+.btn-home-primary:hover { background:var(--gold-light); transform:translateY(-2px); box-shadow:0 8px 24px rgba(201,169,110,0.3); }
+.btn-home-secondary { background:transparent; border-color:rgba(201,169,110,0.4); color:rgba(201,169,110,0.8); }
+.btn-home-secondary:hover { border-color:var(--gold); color:var(--gold); transform:translateY(-2px); }
+
+/* GUEST */
+#guest { background:var(--cream); }
+.guest-header { background:linear-gradient(135deg,var(--deep),var(--brown)); padding:28px 24px; text-align:center; }
+.guest-header h1 { font-family:'Cormorant Garamond',serif; font-size:1.8rem; color:var(--gold-light); font-weight:300; letter-spacing:0.2em; }
+.guest-header p { font-size:0.8rem; color:rgba(201,169,110,0.6); letter-spacing:0.2em; margin-top:4px; }
+.guest-body { max-width:480px; margin:0 auto; padding:40px 20px; }
+.search-box { background:white; border:1.5px solid var(--border); border-radius:4px; padding:24px; margin-bottom:24px; box-shadow:0 4px 20px rgba(26,18,8,0.06); }
+.search-box label { display:block; font-size:0.85rem; color:var(--muted); letter-spacing:0.2em; margin-bottom:10px; }
+.search-input-row { display:flex; gap:10px; }
+.search-input { flex:1; padding:12px 16px; border:1.5px solid var(--border); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:1rem; color:var(--text); background:var(--cream); outline:none; transition:border-color 0.2s; }
+.search-input:focus { border-color:var(--gold); }
+.btn-search { padding:12px 22px; background:var(--gold); border:none; border-radius:2px; color:var(--deep); font-family:'Noto Serif TC',serif; font-size:0.95rem; font-weight:500; cursor:pointer; transition:all 0.2s; white-space:nowrap; letter-spacing:0.1em; }
+.btn-search:hover { background:var(--gold-light); }
+.result-card { background:white; border:1.5px solid var(--border); border-radius:4px; overflow:hidden; box-shadow:0 8px 32px rgba(26,18,8,0.1); animation:slideUp 0.3s ease; }
+@keyframes slideUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+.result-header { background:linear-gradient(135deg,var(--deep),var(--brown)); padding:20px 24px; display:flex; align-items:center; gap:14px; }
+.result-avatar { width:44px; height:44px; border-radius:50%; background:var(--gold); display:flex; align-items:center; justify-content:center; font-size:1.2rem; color:var(--deep); font-weight:700; flex-shrink:0; }
+.result-name { font-size:1.2rem; color:var(--gold-light); }
+.result-tag { font-size:0.75rem; color:rgba(201,169,110,0.5); letter-spacing:0.15em; margin-top:2px; }
+.result-body { padding:24px; }
+.table-number { text-align:center; padding:20px 0; border-bottom:1px solid var(--border); margin-bottom:20px; }
+.table-label { font-size:0.8rem; color:var(--muted); letter-spacing:0.3em; margin-bottom:8px; }
+.table-num { font-family:'Cormorant Garamond',serif; font-size:4rem; font-weight:600; color:var(--gold); line-height:1; }
+.table-name-display { font-size:0.9rem; color:var(--muted); margin-top:4px; }
+.result-info { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+.info-item { text-align:center; padding:12px; background:var(--warm); border-radius:2px; }
+.info-lbl { font-size:0.72rem; color:var(--muted); letter-spacing:0.2em; margin-bottom:4px; }
+.info-val { font-size:1rem; color:var(--text); font-weight:500; }
+.checkin-btn { width:100%; padding:14px; border:none; border-radius:2px; font-family:'Noto Serif TC',serif; font-size:1rem; cursor:pointer; transition:all 0.3s; letter-spacing:0.1em; }
+.checkin-btn.unchecked { background:var(--gold); color:var(--deep); font-weight:500; }
+.checkin-btn.unchecked:hover { background:var(--gold-light); }
+.checkin-btn.checked { background:#e8f5ec; color:var(--success); border:1.5px solid #a8d5b0; cursor:default; }
+.not-found { text-align:center; padding:40px 20px; background:white; border:1.5px solid var(--border); border-radius:4px; animation:slideUp 0.3s ease; }
+.not-found .nf-icon { font-size:2.5rem; margin-bottom:12px; }
+.not-found h3 { color:var(--brown); font-size:1.1rem; margin-bottom:6px; }
+.not-found p { font-size:0.85rem; color:var(--muted); }
+.back-btn { margin-top:24px; padding:10px 20px; background:transparent; border:1px solid var(--border); font-family:'Noto Serif TC',serif; font-size:0.85rem; color:var(--muted); cursor:pointer; border-radius:2px; letter-spacing:0.1em; transition:all 0.2s; }
+.back-btn:hover { border-color:var(--gold); color:var(--gold); }
+
+/* LOGIN */
+.login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,#1a1208,#2e1e08); }
+.login-card { background:rgba(253,248,240,0.04); border:1px solid rgba(201,169,110,0.2); border-radius:4px; padding:48px 40px; width:100%; max-width:360px; text-align:center; }
+.login-card h2 { font-family:'Cormorant Garamond',serif; font-size:1.8rem; color:var(--gold-light); font-weight:300; margin-bottom:6px; }
+.login-card p { font-size:0.8rem; color:rgba(201,169,110,0.5); letter-spacing:0.2em; margin-bottom:32px; }
+.login-input { width:100%; padding:12px 16px; margin-bottom:14px; background:rgba(255,255,255,0.05); border:1px solid rgba(201,169,110,0.25); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:1rem; color:var(--gold-light); outline:none; }
+.login-input:focus { border-color:var(--gold); }
+.login-input::placeholder { color:rgba(201,169,110,0.3); }
+.login-btn { width:100%; padding:13px; background:var(--gold); border:none; border-radius:2px; font-family:'Noto Serif TC',serif; font-size:1rem; font-weight:500; color:var(--deep); cursor:pointer; letter-spacing:0.1em; }
+.login-btn:hover { background:var(--gold-light); }
+.login-err { font-size:0.82rem; color:#e07070; margin-top:10px; min-height:20px; }
+
+/* ADMIN */
+#admin { background:#f8f4ee; }
+.admin-nav { background:var(--deep); padding:0 24px; display:flex; align-items:center; border-bottom:1px solid rgba(201,169,110,0.2); overflow-x:auto; }
+.admin-nav-title { font-family:'Cormorant Garamond',serif; font-size:1.2rem; color:var(--gold); white-space:nowrap; padding:18px 0; margin-right:32px; letter-spacing:0.1em; }
+.nav-tab { padding:18px 20px; font-size:0.85rem; color:rgba(201,169,110,0.5); cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s; white-space:nowrap; letter-spacing:0.1em; }
+.nav-tab:hover { color:var(--gold); }
+.nav-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+.nav-right { margin-left:auto; display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.nav-badge { font-size:0.75rem; background:rgba(201,169,110,0.15); color:var(--gold); padding:4px 10px; border-radius:20px; border:1px solid rgba(201,169,110,0.3); white-space:nowrap; }
+.admin-content { padding:28px 24px; max-width:1100px; margin:0 auto; }
+.stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:28px; }
+.stat-card { background:white; border:1px solid var(--border); border-radius:4px; padding:20px; text-align:center; position:relative; overflow:hidden; transition:transform 0.2s; }
+.stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--gold),var(--gold-light)); }
+.stat-card:hover { transform:translateY(-2px); }
+.stat-num { font-family:'Cormorant Garamond',serif; font-size:2.4rem; font-weight:600; color:var(--gold); line-height:1; }
+.stat-lbl { font-size:0.78rem; color:var(--muted); letter-spacing:0.2em; margin-top:6px; }
+.panel { display:none; }
+.panel.active { display:block; }
+.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:12px; }
+.section-title { font-size:1rem; color:var(--brown); letter-spacing:0.15em; }
+.btn-sm { padding:8px 16px; font-family:'Noto Serif TC',serif; font-size:0.82rem; cursor:pointer; border-radius:2px; transition:all 0.2s; letter-spacing:0.05em; }
+.btn-gold { background:var(--gold); border:none; color:var(--deep); font-weight:500; }
+.btn-gold:hover { background:var(--gold-light); }
+.btn-outline { background:transparent; border:1px solid var(--border); color:var(--muted); }
+.btn-outline:hover { border-color:var(--gold); color:var(--gold); }
+.btn-danger { background:transparent; border:1px solid #d9a0a0; color:var(--danger); }
+.btn-danger:hover { background:#fff0f0; }
+.table-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+.table-card { background:white; border:1.5px solid var(--border); border-radius:4px; overflow:hidden; transition:box-shadow 0.2s,transform 0.2s; }
+.table-card:hover { box-shadow:0 6px 24px rgba(26,18,8,0.1); transform:translateY(-2px); }
+.tc-head { background:linear-gradient(135deg,var(--deep),var(--brown)); padding:14px 16px; display:flex; align-items:center; gap:12px; }
+.tc-num { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:600; color:var(--gold); line-height:1; flex-shrink:0; }
+.tc-name { font-size:0.9rem; color:var(--gold-light); }
+.tc-cap { font-size:0.75rem; color:rgba(201,169,110,0.5); margin-top:2px; }
+.tc-body { padding:14px 16px; }
+.guest-chips { display:flex; flex-wrap:wrap; gap:6px; min-height:28px; margin-bottom:12px; }
+.chip { padding:4px 10px; border-radius:20px; font-size:0.78rem; display:flex; align-items:center; gap:5px; }
+.chip-checked { background:#e8f5ec; color:var(--success); }
+.chip-unchecked { background:var(--warm); color:var(--text); }
+.chip-x { cursor:pointer; opacity:0.5; font-size:0.7rem; font-weight:700; margin-left:2px; padding:0 2px; }
+.chip-x:hover { opacity:1; color:var(--danger); }
+.tc-footer { display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:10px; }
+.tc-progress { font-size:0.78rem; color:var(--muted); }
+.add-guest-row { display:flex; gap:8px; margin-top:10px; }
+.mini-input { flex:1; padding:7px 10px; border:1px solid var(--border); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:0.85rem; color:var(--text); background:var(--cream); outline:none; }
+.mini-input:focus { border-color:var(--gold); }
+.btn-mini { padding:7px 12px; font-size:0.82rem; font-family:'Noto Serif TC',serif; cursor:pointer; border-radius:2px; border:none; }
+.btn-mini-gold { background:var(--gold); color:var(--deep); }
+.btn-mini-gold:hover { background:var(--gold-light); }
+.form-card { background:white; border:1.5px solid var(--border); border-radius:4px; padding:24px; margin-bottom:20px; }
+.form-card h3 { font-size:0.9rem; color:var(--brown); letter-spacing:0.2em; margin-bottom:20px; }
+.form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; }
+.form-group { display:flex; flex-direction:column; gap:6px; }
+.form-group label { font-size:0.78rem; color:var(--muted); letter-spacing:0.15em; }
+.form-input { padding:10px 14px; border:1.5px solid var(--border); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:0.95rem; color:var(--text); background:var(--cream); outline:none; transition:border-color 0.2s; }
+.form-input:focus { border-color:var(--gold); }
+.form-actions { margin-top:16px; display:flex; gap:10px; }
+.csv-area { width:100%; min-height:140px; padding:14px; border:1.5px dashed var(--border); border-radius:4px; font-family:'Courier New',monospace; font-size:0.82rem; color:var(--text); background:var(--cream); outline:none; resize:vertical; }
+.csv-area:focus { border-color:var(--gold); }
+.csv-hint { font-size:0.78rem; color:var(--muted); margin-top:8px; line-height:1.6; }
+.guest-list-table { width:100%; border-collapse:collapse; }
+.guest-list-table th { text-align:left; padding:10px 14px; font-size:0.78rem; color:var(--muted); letter-spacing:0.2em; border-bottom:1.5px solid var(--border); font-weight:400; }
+.guest-list-table td { padding:10px 14px; border-bottom:1px solid rgba(201,169,110,0.1); font-size:0.9rem; }
+.guest-list-table tr:hover td { background:var(--warm); }
+.badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.72rem; }
+.badge-ok { background:#e8f5ec; color:var(--success); }
+.badge-no { background:var(--warm); color:var(--muted); }
+.search-bar { padding:10px 14px; border:1.5px solid var(--border); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:0.9rem; color:var(--text); background:white; outline:none; width:100%; max-width:300px; margin-bottom:16px; }
+.search-bar:focus { border-color:var(--gold); }
+.empty-state { text-align:center; padding:60px 20px; color:var(--muted); font-size:0.9rem; }
+.empty-state .es-icon { font-size:2.5rem; margin-bottom:12px; opacity:0.4; }
+.sync-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; vertical-align:middle; }
+.sync-dot.ok { background:#4a7c59; }
+.sync-dot.err { background:#c0392b; }
+.sync-dot.loading { background:var(--gold); animation:pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--deep); color:var(--gold-light); padding:12px 24px; border-radius:4px; font-size:0.9rem; opacity:0; pointer-events:none; transition:all 0.3s; z-index:9999; white-space:nowrap; border:1px solid rgba(201,169,110,0.3); }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+@media(max-width:600px) { .admin-content{padding:20px 14px} .table-grid{grid-template-columns:1fr} .stats-row{grid-template-columns:repeat(2,1fr)} }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="home" class="screen active">
+  <div class="home-inner">
+    <div class="home-orn">❦ ❦ ❦</div>
+    <h1 class="home-title">婚宴桌位<br>查詢系統</h1>
+    <p class="home-sub">WEDDING SEATING SYSTEM</p>
+    <div class="home-divider"></div>
+    <div class="home-btns">
+      <button class="btn-home btn-home-primary" onclick="goTo('guest')">✦ 來賓查詢桌位</button>
+      <button class="btn-home btn-home-secondary" onclick="showLogin()">⚙ 主辦人後台管理</button>
+    </div>
+  </div>
+</div>
+
+<!-- GUEST -->
+<div id="guest" class="screen">
+  <div class="guest-header">
+    <h1>✦ 來賓桌位查詢</h1>
+    <p>請輸入您的姓名，查詢座位資訊</p>
+  </div>
+  <div class="guest-body">
+    <div class="search-box">
+      <label>來賓姓名</label>
+      <div class="search-input-row">
+        <input class="search-input" id="guestSearch" placeholder="請輸入您的姓名…" onkeydown="if(event.key==='Enter')searchGuest()"/>
+        <button class="btn-search" onclick="searchGuest()">查詢</button>
+      </div>
+    </div>
+    <div id="guestResult"></div>
+    <div style="text-align:center;margin-top:20px">
+      <button class="back-btn" onclick="goTo('home')">← 返回首頁</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="screen">
+  <div class="login-wrap">
+    <div class="login-card">
+      <h2>後台管理</h2>
+      <p>ADMIN DASHBOARD</p>
+      <input class="login-input" type="password" id="pwInput" placeholder="請輸入管理密碼" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <button class="login-btn" onclick="doLogin()">登入</button>
+      <div class="login-err" id="loginErr"></div>
+      <div style="margin-top:20px">
+        <button class="back-btn" onclick="goTo('home')" style="color:rgba(201,169,110,0.5);border-color:rgba(201,169,110,0.2)">← 返回</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="admin" class="screen">
+  <div class="admin-nav">
+    <div class="admin-nav-title">✦ 婚宴管理</div>
+    <div class="nav-tab active" onclick="adminTab('tables',this)">桌位管理</div>
+    <div class="nav-tab" onclick="adminTab('addtable',this)">新增桌位</div>
+    <div class="nav-tab" onclick="adminTab('import',this)">CSV 匯入</div>
+    <div class="nav-tab" onclick="adminTab('checkin',this)">報到總覽</div>
+    <div class="nav-right">
+      <span class="nav-badge" id="syncStatus"><span class="sync-dot loading"></span>連線中…</span>
+      <span class="nav-badge" id="navBadge">載入中</span>
+      <button class="btn-sm btn-outline" onclick="goTo('home')" style="font-size:0.78rem">登出</button>
+    </div>
+  </div>
+  <div class="admin-content">
+    <div class="stats-row" id="statsRow"></div>
+    <div class="panel active" id="panel-tables">
+      <div class="section-header">
+        <div class="section-title">所有桌位</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-sm btn-outline" onclick="clearAll()">清除全部資料</button>
+          <button class="btn-sm btn-gold" onclick="adminTab('addtable',document.querySelectorAll('.nav-tab')[1])">＋ 新增桌位</button>
+        </div>
+      </div>
+      <div class="table-grid" id="tableGrid"></div>
+    </div>
+    <div class="panel" id="panel-addtable">
+      <div class="form-card">
+        <h3>新增桌位</h3>
+        <div class="form-grid">
+          <div class="form-group"><label>桌號</label><input class="form-input" id="at-num" type="number" min="1" placeholder="例：1"/></div>
+          <div class="form-group"><label>桌名（選填）</label><input class="form-input" id="at-name" placeholder="例：新郎家屬桌"/></div>
+          <div class="form-group"><label>容納人數</label><input class="form-input" id="at-cap" type="number" min="1" value="10"/></div>
+        </div>
+        <div class="form-group" style="margin-top:14px">
+          <label>來賓名單（每行一名，或用逗號分隔）</label>
+          <textarea class="form-input csv-area" id="at-guests" rows="4" placeholder="王小明&#10;李美玲&#10;張大偉, 陳怡君"></textarea>
+        </div>
+        <div class="form-actions">
+          <button class="btn-sm btn-gold" onclick="addTable()">確認新增</button>
+          <button class="btn-sm btn-outline" onclick="clearForm()">清除</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel" id="panel-import">
+      <div class="form-card">
+        <h3>CSV 批次匯入</h3>
+        <textarea class="csv-area" id="csvInput" rows="10" placeholder="貼上 CSV 格式資料，例如：
+
+桌號,桌名,容納人數,來賓名單
+1,新郎家屬桌,10,王大明|李美玲|張小華
+2,新娘親友桌,10,陳怡君|林志偉|黃淑芬
+3,同事桌,8,吳建宏|蔡雅婷"></textarea>
+        <div class="csv-hint">格式：桌號, 桌名（選填）, 容納人數（選填）, 來賓名單（用「|」分隔）<br>第一行為標題列可省略。匯入後新增至現有資料。</div>
+        <div class="form-actions" style="margin-top:16px">
+          <button class="btn-sm btn-gold" onclick="importCSV()">匯入資料</button>
+          <button class="btn-sm btn-outline" onclick="document.getElementById('csvInput').value=''">清除</button>
+        </div>
+      </div>
+      <div class="form-card">
+        <h3>匯出現有資料</h3>
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:14px">將目前所有桌位資料匯出為 CSV 檔案。</p>
+        <button class="btn-sm btn-gold" onclick="exportCSV()">下載 CSV</button>
+      </div>
+    </div>
+    <div class="panel" id="panel-checkin">
+      <div class="section-header">
+        <div class="section-title">來賓報到總覽</div>
+        <button class="btn-sm btn-outline" onclick="resetAllCheckin()">重置全部報到</button>
+      </div>
+      <input class="search-bar" id="checkinSearch" placeholder="搜尋來賓姓名…" oninput="renderCheckin()"/>
+      <div style="background:white;border:1px solid var(--border);border-radius:4px;overflow:auto">
+        <table class="guest-list-table">
+          <thead><tr><th>姓名</th><th>桌號</th><th>桌名</th><th>報到狀態</th><th>操作</th></tr></thead>
+          <tbody id="checkinBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAp_ILpjSvOmLsMU9ONQa88XDLan6f4568",
+  authDomain: "my-wedding-b2b97.firebaseapp.com",
+  databaseURL: "https://my-wedding-b2b97-default-rtdb.firebaseio.com",
+  projectId: "my-wedding-b2b97",
+  storageBucket: "my-wedding-b2b97.firebasestorage.app",
+  messagingSenderId: "237043710985",
+  appId: "1:237043710985:web:875b8dfb1497357640ccd8"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const ADMIN_PW = 'wedding2024';
+let localData = [];
+
+// ── 導覽 ──
+window.goTo = id => {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'guest') { document.getElementById('guestSearch').value = ''; document.getElementById('guestResult').innerHTML = ''; }
+};
+window.showLogin = () => { goTo('loginScreen'); document.getElementById('pwInput').value = ''; document.getElementById('loginErr').textContent = ''; };
+window.doLogin = () => {
+  if (document.getElementById('pwInput').value === ADMIN_PW) goTo('admin');
+  else document.getElementById('loginErr').textContent = '密碼錯誤，請再試一次。';
+};
+
+// ── 即時監聽 Firebase ──
+onValue(ref(db, 'tables'), snapshot => {
+  const raw = snapshot.val();
+  localData = raw ? Object.values(raw).sort((a,b) => a.num - b.num) : [];
+  document.getElementById('syncStatus').innerHTML = '<span class="sync-dot ok"></span>即時同步中';
+  renderAdmin();
+}, () => {
+  document.getElementById('syncStatus').innerHTML = '<span class="sync-dot err"></span>連線失敗';
+});
+
+// ── 來賓查詢 ──
+window.searchGuest = () => {
+  const q = document.getElementById('guestSearch').value.trim();
+  if (!q) return;
+  let found = null, tInfo = null, foundKey = null;
+  for (const t of localData) {
+    if (!t.guests) continue;
+    const entry = Object.entries(t.guests).find(([,g]) => g.name.includes(q) || q.includes(g.name));
+    if (entry) { foundKey = entry[0]; found = entry[1]; tInfo = t; break; }
+  }
+  const el = document.getElementById('guestResult');
+  if (!found) {
+    el.innerHTML = `<div class="not-found"><div class="nf-icon">🔍</div><h3>找不到此來賓</h3><p>查無「${q}」的桌位資料，<br>請確認姓名是否正確，或洽詢工作人員。</p></div>`;
+    return;
+  }
+  const gCount = Object.values(tInfo.guests).length;
+  el.innerHTML = `<div class="result-card">
+    <div class="result-header">
+      <div class="result-avatar">${found.name[0]}</div>
+      <div><div class="result-name">${found.name} 您好</div><div class="result-tag">歡迎蒞臨，恭喜新人</div></div>
+    </div>
+    <div class="result-body">
+      <div class="table-number">
+        <div class="table-label">您的座位桌號</div>
+        <div class="table-num">${tInfo.num}</div>
+        <div class="table-name-display">${tInfo.name || ''}</div>
+      </div>
+      <div class="result-info">
+        <div class="info-item"><div class="info-lbl">同桌人數</div><div class="info-val">${gCount} 人</div></div>
+        <div class="info-item"><div class="info-lbl">報到狀態</div><div class="info-val" id="gCkSt">${found.checked ? '✓ 已報到' : '尚未報到'}</div></div>
+      </div>
+      <button class="checkin-btn ${found.checked ? 'checked' : 'unchecked'}" id="gCkBtn"
+        ${found.checked ? '' : `onclick="guestCheckin('${tInfo.id}','${foundKey}')"`}>
+        ${found.checked ? '✓ 已完成報到' : '點此完成報到'}
+      </button>
+    </div>
+  </div>`;
+};
+
+window.guestCheckin = async (tid, gk) => {
+  await update(ref(db, `tables/${tid}/guests/${gk}`), { checked: true });
+  const btn = document.getElementById('gCkBtn');
+  btn.className = 'checkin-btn checked'; btn.textContent = '✓ 已完成報到'; btn.onclick = null;
+  const st = document.getElementById('gCkSt'); if (st) st.textContent = '✓ 已報到';
+  toast('✓ 報到成功！祝新人百年好合 💍');
+};
+
+// ── 渲染 ──
+function renderAdmin() {
+  renderStats(); renderTableGrid(); renderCheckin();
+  let total = 0, checked = 0;
+  localData.forEach(t => { const gs = t.guests ? Object.values(t.guests) : []; total += gs.length; checked += gs.filter(g=>g.checked).length; });
+  document.getElementById('navBadge').textContent = `報到 ${checked} / ${total} 人`;
+}
+
+function renderStats() {
+  let total = 0, checked = 0;
+  localData.forEach(t => { const gs = t.guests ? Object.values(t.guests) : []; total += gs.length; checked += gs.filter(g=>g.checked).length; });
+  const rate = total ? Math.round(checked/total*100) : 0;
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${localData.length}</div><div class="stat-lbl">總桌數</div></div>
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">來賓總人數</div></div>
+    <div class="stat-card"><div class="stat-num">${checked}</div><div class="stat-lbl">已報到</div></div>
+    <div class="stat-card"><div class="stat-num">${total-checked}</div><div class="stat-lbl">尚未報到</div></div>
+    <div class="stat-card"><div class="stat-num">${rate}%</div><div class="stat-lbl">報到率</div></div>`;
+}
+
+function renderTableGrid() {
+  const el = document.getElementById('tableGrid');
+  if (!localData.length) { el.innerHTML = '<div class="empty-state"><div class="es-icon">🪑</div>尚無桌位資料，請先新增桌位。</div>'; return; }
+  el.innerHTML = localData.map(t => {
+    const gs = t.guests ? Object.entries(t.guests) : [];
+    const chips = gs.map(([k,g]) => `<span class="chip ${g.checked?'chip-checked':'chip-unchecked'}">${g.checked?'✓ ':''}${g.name}<span class="chip-x" onclick="removeGuest('${t.id}','${k}')">✕</span></span>`).join('');
+    const chk = gs.filter(([,g])=>g.checked).length;
+    return `<div class="table-card">
+      <div class="tc-head"><div class="tc-num">${t.num}</div><div><div class="tc-name">${t.name||'未命名'}</div><div class="tc-cap">${gs.length}/${t.cap} 人</div></div></div>
+      <div class="tc-body">
+        <div class="guest-chips">${chips}</div>
+        <div class="add-guest-row">
+          <input class="mini-input" id="gi-${t.id}" placeholder="新增來賓姓名…" onkeydown="if(event.key==='Enter')addGuest('${t.id}')"/>
+          <button class="btn-mini btn-mini-gold" onclick="addGuest('${t.id}')">＋</button>
+        </div>
+        <div class="tc-footer">
+          <div class="tc-progress">${chk}/${gs.length} 已報到</div>
+          <button class="btn-sm btn-danger" onclick="deleteTable('${t.id}')">刪除桌位</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCheckin() {
+  const q = (document.getElementById('checkinSearch')?.value||'').toLowerCase();
+  let rows = [];
+  localData.forEach(t => { const gs = t.guests?Object.entries(t.guests):[]; gs.forEach(([k,g]) => { if(!q||g.name.toLowerCase().includes(q)) rows.push({name:g.name,num:t.num,tname:t.name||'—',checked:g.checked,tid:t.id,gk:k}); }); });
+  rows.sort((a,b)=>a.num-b.num);
+  document.getElementById('checkinBody').innerHTML = rows.length
+    ? rows.map(r=>`<tr><td>${r.name}</td><td><b>${r.num}</b></td><td>${r.tname}</td>
+        <td><span class="badge ${r.checked?'badge-ok':'badge-no'}">${r.checked?'✓ 已報到':'待報到'}</span></td>
+        <td>${r.checked
+          ?`<button class="btn-sm btn-outline" style="font-size:0.75rem" onclick="toggleCheckin('${r.tid}','${r.gk}',false)">取消報到</button>`
+          :`<button class="btn-sm btn-gold" style="font-size:0.75rem" onclick="toggleCheckin('${r.tid}','${r.gk}',true)">標記報到</button>`}</td></tr>`).join('')
+    : '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--muted)">無資料</td></tr>';
+}
+
+// ── 後台操作 ──
+window.adminTab = (name, el) => {
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active')); document.getElementById('panel-'+name).classList.add('active');
+};
+
+window.addTable = async () => {
+  const num = parseInt(document.getElementById('at-num').value);
+  const name = document.getElementById('at-name').value.trim();
+  const cap = parseInt(document.getElementById('at-cap').value)||10;
+  const raw = document.getElementById('at-guests').value;
+  if (!num) { toast('請輸入桌號'); return; }
+  if (localData.find(t=>t.num===num)) { toast('此桌號已存在'); return; }
+  const guests = {};
+  raw.split(/[\n,|，、]/).map(s=>s.trim()).filter(Boolean).forEach((n,i)=>{ guests['g'+Date.now()+i]={name:n,checked:false}; });
+  await set(ref(db,'tables/t'+Date.now()), {id:'t'+Date.now(),num,name,cap,guests});
+  clearForm(); toast(`✓ 第 ${num} 桌已新增`);
+};
+
+window.clearForm = () => { ['at-num','at-name','at-guests'].forEach(id=>document.getElementById(id).value=''); document.getElementById('at-cap').value='10'; };
+
+window.deleteTable = async id => { if(!confirm('確定要刪除此桌位及所有來賓資料？'))return; await remove(ref(db,'tables/'+id)); toast('桌位已刪除'); };
+
+window.addGuest = async tid => {
+  const inp = document.getElementById('gi-'+tid); const name = inp.value.trim(); if(!name)return;
+  const t = localData.find(t=>t.id===tid); if(!t)return;
+  if(t.guests&&Object.values(t.guests).find(g=>g.name===name)){toast('此桌已有同名來賓');return;}
+  await set(ref(db,`tables/${tid}/guests/g${Date.now()}`),{name,checked:false}); inp.value=''; toast(`✓ 已新增：${name}`);
+};
+
+window.removeGuest = async (tid,gk) => {
+  const t=localData.find(t=>t.id===tid); const name=t?.guests?.[gk]?.name||'';
+  if(!confirm(`確定移除來賓「${name}」？`))return;
+  await remove(ref(db,`tables/${tid}/guests/${gk}`)); toast(`已移除：${name}`);
+};
+
+window.toggleCheckin = async (tid,gk,val) => {
+  await update(ref(db,`tables/${tid}/guests/${gk}`),{checked:val});
+  const t=localData.find(t=>t.id===tid); const name=t?.guests?.[gk]?.name||'';
+  toast(val?`✓ ${name} 已報到`:`${name} 取消報到`);
+};
+
+window.resetAllCheckin = async () => {
+  if(!confirm('確定要重置所有來賓的報到狀態？'))return;
+  const updates={};
+  localData.forEach(t=>{ if(t.guests)Object.keys(t.guests).forEach(k=>{ updates[`tables/${t.id}/guests/${k}/checked`]=false; }); });
+  await update(ref(db),updates); toast('已重置所有報到狀態');
+};
+
+window.clearAll = async () => { if(!confirm('確定要清除全部資料？此操作無法復原。'))return; await remove(ref(db,'tables')); toast('已清除全部資料'); };
+
+window.importCSV = async () => {
+  const raw = document.getElementById('csvInput').value.trim(); if(!raw){toast('請貼上 CSV 資料');return;}
+  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  let count=0, skip=0;
+  for(let i=0;i<lines.length;i++){
+    if(i===0&&/桌號|table/i.test(lines[i]))continue;
+    const parts=lines[i].split(',').map(s=>s.trim());
+    const num=parseInt(parts[0]); if(!num)continue;
+    if(localData.find(t=>t.num===num)){skip++;continue;}
+    const name=parts[1]||''; const cap=parseInt(parts[2])||10; const guestStr=parts[3]||'';
+    const guests={};
+    if(guestStr)guestStr.split('|').map(s=>s.trim()).filter(Boolean).forEach((n,i)=>{guests['g'+Date.now()+count+i]={name:n,checked:false};});
+    const id='t'+Date.now()+count;
+    await set(ref(db,'tables/'+id),{id,num,name,cap,guests}); count++;
+  }
+  document.getElementById('csvInput').value='';
+  toast(`✓ 成功匯入 ${count} 桌${skip?`，${skip} 桌已存在略過`:''}`);
+};
+
+window.exportCSV = () => {
+  if(!localData.length){toast('目前無資料');return;}
+  const rows=localData.map(t=>`${t.num},${t.name},${t.cap},${t.guests?Object.values(t.guests).map(g=>g.name).join('|'):''}`);
+  const blob=new Blob(['\uFEFF桌號,桌名,容納人數,來賓名單\n'+rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='婚宴桌位.csv'; a.click(); toast('✓ CSV 已下載');
+};
+
+// ── Toast ──
+let tt;
+window.toast = msg => { const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('show'),2500); };
+</script>
+</body>
+</html>
