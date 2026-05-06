@@ -208,33 +208,22 @@ body { font-family: 'Noto Serif TC', serif; background: #f8f4ee; color: var(--te
           <div class="form-group"><label>容納人數</label><input class="form-input" id="at-cap" type="number" min="1" value="10"/></div>
         </div>
 
-        <!-- Guest list builder -->
+        <!-- Guest picker from members -->
         <div style="margin-top:20px;">
-          <label style="font-size:0.78rem;color:var(--muted);letter-spacing:0.15em;display:block;margin-bottom:10px;">來賓名單（逐筆輸入）</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
-            <input class="form-input" id="at-guest-name" placeholder="來賓姓名" style="flex:1;min-width:120px;padding:9px 12px"/>
-            <select class="form-select" id="at-guest-relation" style="min-width:130px;">
-              <option value="">— 與新人關係 —</option>
-              <optgroup label="新郎側">
-                <option value="新郎家屬">新郎家屬</option>
-                <option value="新郎親戚">新郎親戚</option>
-                <option value="新郎同學">新郎同學</option>
-                <option value="新郎同事">新郎同事</option>
-                <option value="新郎朋友">新郎朋友</option>
-              </optgroup>
-              <optgroup label="新娘側">
-                <option value="新娘家屬">新娘家屬</option>
-                <option value="新娘親戚">新娘親戚</option>
-                <option value="新娘同學">新娘同學</option>
-                <option value="新娘同事">新娘同事</option>
-                <option value="新娘朋友">新娘朋友</option>
-              </optgroup>
-              <option value="共同朋友">共同朋友</option>
-              <option value="其他">其他</option>
-            </select>
-            <button class="btn-sm btn-gold" onclick="addGuestToForm()">＋ 加入</button>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+            <label style="font-size:0.78rem;color:var(--muted);letter-spacing:0.15em;">從人員管理選取來賓</label>
+            <input class="search-bar" id="at-member-search" placeholder="搜尋姓名…" oninput="renderMemberPicker()" style="margin-bottom:0;max-width:180px;padding:7px 12px;font-size:0.82rem;"/>
           </div>
-          <div id="at-guest-list" class="guest-form-list"></div>
+          <div id="at-member-picker" style="background:var(--warm);border:1px solid var(--border);border-radius:4px;max-height:240px;overflow-y:auto;padding:8px;">
+            <div style="color:var(--muted);font-size:0.82rem;padding:8px;">載入人員名單中…</div>
+          </div>
+          <div style="margin-top:10px;">
+            <div style="font-size:0.78rem;color:var(--muted);letter-spacing:0.15em;margin-bottom:6px;">已選來賓：</div>
+            <div id="at-guest-list" class="guest-form-list"></div>
+          </div>
+          <div style="margin-top:8px;">
+            <button class="btn-sm btn-outline" style="font-size:0.78rem;" onclick="adminTab('members',document.querySelectorAll('.nav-tab')[4])">＋ 前往人員管理新增人員</button>
+          </div>
         </div>
 
         <div class="form-actions">
@@ -521,6 +510,7 @@ function startListeners() {
     membersData = raw ? Object.values(raw) : [];
     renderMembers();
     renderMemberSummary();
+    renderMemberPicker(); // 同步更新新增桌位的選人清單
   });
 
   onValue(ref(db, 'tables'), snapshot => {
@@ -539,6 +529,7 @@ let pendingGuests = []; // [{name, relation}]
 window.adminTab = (name, el) => {
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active');
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active')); document.getElementById('panel-'+name).classList.add('active');
+  if (name === 'addtable') { renderMemberPicker(); renderPendingGuests(); }
 };
 
 // ── 渲染 ──
@@ -631,28 +622,59 @@ function renderCheckin() {
     : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">無資料</td></tr>';
 }
 
-// ── 新增桌位（逐筆來賓） ──
-window.addGuestToForm = () => {
-  const name = document.getElementById('at-guest-name').value.trim();
-  const relation = document.getElementById('at-guest-relation').value;
-  if (!name) { toast('請輸入來賓姓名'); return; }
-  if (pendingGuests.find(g=>g.name===name)) { toast('已有同名來賓'); return; }
-  pendingGuests.push({name, relation});
-  document.getElementById('at-guest-name').value = '';
+// ── 新增桌位：從人員管理選人 ──
+
+// 渲染人員選取清單
+window.renderMemberPicker = () => {
+  const q = (document.getElementById('at-member-search')?.value||'').toLowerCase();
+  const el = document.getElementById('at-member-picker');
+  if (!el) return;
+  const available = membersData.filter(m => {
+    if (q && !m.name.toLowerCase().includes(q)) return false;
+    // 已選的不再顯示
+    return !pendingGuests.find(g => g.memberId === m.id);
+  });
+  if (!available.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:8px;">' +
+      (membersData.length === 0 ? '尚無人員資料，請先至「人員管理」新增。' : '所有人員已全部選取或無符合搜尋。') + '</div>';
+    return;
+  }
+  el.innerHTML = available.map(m => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:3px;margin-bottom:4px;background:white;border:1px solid var(--border);cursor:pointer;"
+         onclick="pickMember('${m.id}')">
+      <div>
+        <span style="font-size:0.88rem;font-weight:500;">${m.name}</span>
+        <span style="font-size:0.75rem;color:var(--muted);margin-left:8px;">${m.relation}</span>
+      </div>
+      <span style="font-size:0.78rem;color:var(--gold);padding:3px 10px;background:rgba(201,169,110,0.1);border-radius:20px;">＋ 加入</span>
+    </div>`).join('');
+};
+
+window.pickMember = (id) => {
+  const m = membersData.find(m => m.id === id);
+  if (!m) return;
+  pendingGuests.push({name: m.name, relation: m.relation, memberId: m.id});
   renderPendingGuests();
+  renderMemberPicker();
 };
 
 function renderPendingGuests() {
-  document.getElementById('at-guest-list').innerHTML = pendingGuests.map((g,i) =>
+  const el = document.getElementById('at-guest-list');
+  if (!el) return;
+  el.innerHTML = pendingGuests.map((g,i) =>
     `<div class="guest-form-item">
       <span class="gfi-name">${g.name}</span>
       <span class="gfi-relation">${g.relation||'—'}</span>
       <span class="gfi-del" onclick="removePendingGuest(${i})">✕</span>
     </div>`
-  ).join('') || '<div style="color:var(--muted);font-size:0.8rem;padding:4px 0">尚未加入任何來賓</div>';
+  ).join('') || '<div style="color:var(--muted);font-size:0.8rem;padding:4px 0">尚未選取任何來賓</div>';
 }
 
-window.removePendingGuest = i => { pendingGuests.splice(i,1); renderPendingGuests(); };
+window.removePendingGuest = i => {
+  pendingGuests.splice(i, 1);
+  renderPendingGuests();
+  renderMemberPicker();
+};
 
 window.addTable = async () => {
   const num = parseInt(document.getElementById('at-num').value);
@@ -664,14 +686,18 @@ window.addTable = async () => {
   pendingGuests.forEach((g,i) => { guests[`g${Date.now()}${i}`] = {name:g.name, relation:g.relation||'', checked:false}; });
   const id = 't'+Date.now();
   await set(ref(db,'tables/'+id), {id,num,name,cap,guests});
-  clearForm(); toast(`✓ 第 ${num} 桌已新增，共 ${pendingGuests.length} 位來賓`);
+  clearForm();
+  toast(`✓ 第 ${num} 桌已新增，共 ${pendingGuests.length} 位來賓`);
 };
 
 window.clearForm = () => {
-  ['at-num','at-name','at-guest-name'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('at-num').value='';
+  document.getElementById('at-name').value='';
   document.getElementById('at-cap').value='10';
-  document.getElementById('at-guest-relation').value='';
-  pendingGuests = []; renderPendingGuests();
+  if (document.getElementById('at-member-search')) document.getElementById('at-member-search').value='';
+  pendingGuests = [];
+  renderPendingGuests();
+  renderMemberPicker();
 };
 
 window.deleteTable = async id => { if(!confirm('確定要刪除此桌位及所有來賓資料？'))return; await remove(ref(db,'tables/'+id)); toast('桌位已刪除'); };
@@ -877,7 +903,7 @@ let tt;
 window.toast = msg => { const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('show'),2500); };
 
 // ── Enter to add guest in form ──
-document.getElementById('at-guest-name')?.addEventListener('keydown', e => { if(e.key==='Enter') addGuestToForm(); });
+
 </script>
 </body>
 </html>
