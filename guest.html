@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>婚宴桌位查詢</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #c9a96e; --gold-light: #e8d5a3; --gold-dark: #8b6914;
+  --cream: #fdf8f0; --warm: #f5ede0; --deep: #1a1208; --brown: #3d2b0e;
+  --text: #2c1f0a; --muted: #8a7055; --border: rgba(201,169,110,0.3);
+  --success: #4a7c59; --danger: #8b2020;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Serif TC', serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+
+/* HOME PAGE */
+#homePage {
+  background: linear-gradient(160deg,#1a1208 0%,#2e1e08 40%,#1a1208 100%);
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; position: relative; overflow: hidden;
+}
+#homePage::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 60% 40% at 50% 50%,rgba(201,169,110,0.08) 0%,transparent 70%); }
+.home-inner { position:relative; text-align:center; padding:60px 40px; max-width:520px; }
+.home-orn { font-family:'Cormorant Garamond',serif; font-size:2.5rem; color:var(--gold); letter-spacing:0.3em; opacity:0.6; margin-bottom:8px; }
+.home-title { font-family:'Cormorant Garamond',serif; font-size:clamp(2.2rem,6vw,3.2rem); color:var(--gold-light); font-weight:300; letter-spacing:0.15em; line-height:1.2; margin-bottom:6px; }
+.home-sub { font-size:0.85rem; color:rgba(201,169,110,0.6); letter-spacing:0.3em; margin-bottom:48px; }
+.home-divider { width:120px; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); margin:0 auto 48px; }
+.home-btns { display:flex; flex-direction:column; gap:14px; width:100%; max-width:300px; margin:0 auto; }
+.btn-home { padding:16px 32px; border:1px solid; font-family:'Noto Serif TC',serif; font-size:1rem; cursor:pointer; letter-spacing:0.15em; transition:all 0.3s; border-radius:2px; text-decoration:none; display:block; text-align:center; }
+.btn-home-primary { background:var(--gold); border-color:var(--gold); color:var(--deep); font-weight:500; }
+.btn-home-primary:hover { background:var(--gold-light); transform:translateY(-2px); box-shadow:0 8px 24px rgba(201,169,110,0.3); }
+.btn-home-secondary { background:transparent; border-color:rgba(201,169,110,0.4); color:rgba(201,169,110,0.8); }
+.btn-home-secondary:hover { border-color:var(--gold); color:var(--gold); transform:translateY(-2px); }
+
+/* SEARCH PAGE */
+#searchPage { display:none; }
+.guest-header { background:linear-gradient(135deg,var(--deep),var(--brown)); padding:28px 24px; text-align:center; }
+.guest-header h1 { font-family:'Cormorant Garamond',serif; font-size:1.8rem; color:var(--gold-light); font-weight:300; letter-spacing:0.2em; }
+.guest-header p { font-size:0.8rem; color:rgba(201,169,110,0.6); letter-spacing:0.2em; margin-top:4px; }
+.guest-body { max-width:480px; margin:0 auto; padding:40px 20px; }
+.search-box { background:white; border:1.5px solid var(--border); border-radius:4px; padding:24px; margin-bottom:24px; box-shadow:0 4px 20px rgba(26,18,8,0.06); }
+.search-box label { display:block; font-size:0.85rem; color:var(--muted); letter-spacing:0.2em; margin-bottom:10px; }
+.search-input-row { display:flex; gap:10px; }
+.search-input { flex:1; padding:12px 16px; border:1.5px solid var(--border); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:1rem; color:var(--text); background:var(--cream); outline:none; transition:border-color 0.2s; }
+.search-input:focus { border-color:var(--gold); }
+.btn-search { padding:12px 22px; background:var(--gold); border:none; border-radius:2px; color:var(--deep); font-family:'Noto Serif TC',serif; font-size:0.95rem; font-weight:500; cursor:pointer; transition:all 0.2s; white-space:nowrap; letter-spacing:0.1em; }
+.btn-search:hover { background:var(--gold-light); }
+.result-card { background:white; border:1.5px solid var(--border); border-radius:4px; overflow:hidden; box-shadow:0 8px 32px rgba(26,18,8,0.1); animation:slideUp 0.3s ease; }
+@keyframes slideUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+.result-header { background:linear-gradient(135deg,var(--deep),var(--brown)); padding:20px 24px; display:flex; align-items:center; gap:14px; }
+.result-avatar { width:44px; height:44px; border-radius:50%; background:var(--gold); display:flex; align-items:center; justify-content:center; font-size:1.2rem; color:var(--deep); font-weight:700; flex-shrink:0; }
+.result-name { font-size:1.2rem; color:var(--gold-light); }
+.result-tag { font-size:0.75rem; color:rgba(201,169,110,0.5); letter-spacing:0.15em; margin-top:2px; }
+.result-body { padding:24px; }
+.table-number { text-align:center; padding:20px 0; border-bottom:1px solid var(--border); margin-bottom:20px; }
+.table-label { font-size:0.8rem; color:var(--muted); letter-spacing:0.3em; margin-bottom:8px; }
+.table-num { font-family:'Cormorant Garamond',serif; font-size:4rem; font-weight:600; color:var(--gold); line-height:1; }
+.table-name-display { font-size:0.9rem; color:var(--muted); margin-top:4px; }
+.result-info { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
+.info-item { text-align:center; padding:12px; background:var(--warm); border-radius:2px; }
+.info-lbl { font-size:0.72rem; color:var(--muted); letter-spacing:0.2em; margin-bottom:4px; }
+.info-val { font-size:0.95rem; color:var(--text); font-weight:500; }
+.checkin-btn { width:100%; padding:14px; border:none; border-radius:2px; font-family:'Noto Serif TC',serif; font-size:1rem; cursor:pointer; transition:all 0.3s; letter-spacing:0.1em; }
+.checkin-btn.unchecked { background:var(--gold); color:var(--deep); font-weight:500; }
+.checkin-btn.unchecked:hover { background:var(--gold-light); }
+.checkin-btn.checked { background:#e8f5ec; color:var(--success); border:1.5px solid #a8d5b0; cursor:default; }
+.not-found { text-align:center; padding:40px 20px; background:white; border:1.5px solid var(--border); border-radius:4px; animation:slideUp 0.3s ease; }
+.not-found .nf-icon { font-size:2.5rem; margin-bottom:12px; }
+.not-found h3 { color:var(--brown); font-size:1.1rem; margin-bottom:6px; }
+.not-found p { font-size:0.85rem; color:var(--muted); }
+.back-btn { margin-top:24px; padding:10px 20px; background:transparent; border:1px solid var(--border); font-family:'Noto Serif TC',serif; font-size:0.85rem; color:var(--muted); cursor:pointer; border-radius:2px; letter-spacing:0.1em; transition:all 0.2s; }
+.back-btn:hover { border-color:var(--gold); color:var(--gold); }
+.toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--deep); color:var(--gold-light); padding:12px 24px; border-radius:4px; font-size:0.9rem; opacity:0; pointer-events:none; transition:all 0.3s; z-index:9999; white-space:nowrap; border:1px solid rgba(201,169,110,0.3); }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.relation-badge { display:inline-block; margin-top:6px; padding:3px 10px; background:rgba(201,169,110,0.15); border:1px solid rgba(201,169,110,0.3); border-radius:20px; font-size:0.75rem; color:var(--gold-dark); letter-spacing:0.1em; }
+</style>
+</head>
+<body>
+
+<!-- HOME PAGE -->
+<div id="homePage">
+  <div class="home-inner">
+    <div class="home-orn">❦ ❦ ❦</div>
+    <h1 class="home-title">婚宴桌位<br>查詢系統</h1>
+    <p class="home-sub">WEDDING SEATING SYSTEM</p>
+    <div class="home-divider"></div>
+    <div class="home-btns">
+      <button class="btn-home btn-home-primary" onclick="showSearch()">✦ 來賓查詢桌位</button>
+      <a class="btn-home btn-home-secondary" href="admin.html">⚙ 主辦人後台管理</a>
+    </div>
+  </div>
+</div>
+
+<!-- SEARCH PAGE -->
+<div id="searchPage">
+  <div class="guest-header">
+    <h1>✦ 來賓桌位查詢</h1>
+    <p>請輸入您的姓名，查詢座位資訊</p>
+  </div>
+  <div class="guest-body">
+    <div class="search-box">
+      <label>來賓姓名</label>
+      <div class="search-input-row">
+        <input class="search-input" id="guestSearch" placeholder="請輸入您的姓名…" onkeydown="if(event.key==='Enter')searchGuest()"/>
+        <button class="btn-search" onclick="searchGuest()">查詢</button>
+      </div>
+    </div>
+    <div id="guestResult"></div>
+    <div style="text-align:center;margin-top:20px">
+      <button class="back-btn" onclick="showHome()">← 返回首頁</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAp_ILpjSvOmLsMU9ONQa88XDLan6f4568",
+  authDomain: "my-wedding-b2b97.firebaseapp.com",
+  databaseURL: "https://my-wedding-b2b97-default-rtdb.firebaseio.com",
+  projectId: "my-wedding-b2b97",
+  storageBucket: "my-wedding-b2b97.firebasestorage.app",
+  messagingSenderId: "237043710985",
+  appId: "1:237043710985:web:875b8dfb1497357640ccd8"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+let localData = [];
+
+onValue(ref(db, 'tables'), snapshot => {
+  const raw = snapshot.val();
+  localData = raw ? Object.values(raw).sort((a,b) => a.num - b.num) : [];
+});
+
+window.showSearch = () => {
+  document.getElementById('homePage').style.display = 'none';
+  document.getElementById('searchPage').style.display = 'block';
+  document.getElementById('guestSearch').value = '';
+  document.getElementById('guestResult').innerHTML = '';
+};
+
+window.showHome = () => {
+  document.getElementById('homePage').style.display = 'flex';
+  document.getElementById('searchPage').style.display = 'none';
+};
+
+window.searchGuest = () => {
+  const q = document.getElementById('guestSearch').value.trim();
+  if (!q) return;
+  let found = null, tInfo = null, foundKey = null;
+  for (const t of localData) {
+    if (!t.guests) continue;
+    const entry = Object.entries(t.guests).find(([,g]) => g.name.includes(q) || q.includes(g.name));
+    if (entry) { foundKey = entry[0]; found = entry[1]; tInfo = t; break; }
+  }
+  const el = document.getElementById('guestResult');
+  if (!found) {
+    el.innerHTML = `<div class="not-found"><div class="nf-icon">🔍</div><h3>找不到此來賓</h3><p>查無「${q}」的桌位資料，<br>請確認姓名是否正確，或洽詢工作人員。</p></div>`;
+    return;
+  }
+  const gCount = Object.values(tInfo.guests).length;
+  const relationLabel = found.relation ? `與新人關係：${found.relation}` : '';
+  const relationHTML = found.relation ? `<div class="relation-badge">🎀 ${found.relation}</div>` : '';
+  el.innerHTML = `<div class="result-card">
+    <div class="result-header">
+      <div class="result-avatar">${found.name[0]}</div>
+      <div>
+        <div class="result-name">${found.name} 您好</div>
+        <div class="result-tag">歡迎蒞臨，恭喜新人</div>
+        ${relationHTML}
+      </div>
+    </div>
+    <div class="result-body">
+      <div class="table-number">
+        <div class="table-label">您的座位桌號</div>
+        <div class="table-num">${tInfo.num}</div>
+        <div class="table-name-display">${tInfo.name || ''}</div>
+      </div>
+      <div class="result-info">
+        <div class="info-item"><div class="info-lbl">同桌人數</div><div class="info-val">${gCount} 人</div></div>
+        <div class="info-item"><div class="info-lbl">報到狀態</div><div class="info-val" id="gCkSt">${found.checked ? '✓ 已報到' : '尚未報到'}</div></div>
+        ${found.relation ? `<div class="info-item"><div class="info-lbl">與新人關係</div><div class="info-val">${found.relation}</div></div>` : '<div class="info-item"><div class="info-lbl">桌位容量</div><div class="info-val">${tInfo.cap} 人</div></div>'}
+      </div>
+      <button class="checkin-btn ${found.checked ? 'checked' : 'unchecked'}" id="gCkBtn"
+        ${found.checked ? '' : `onclick="guestCheckin('${tInfo.id}','${foundKey}')"`}>
+        ${found.checked ? '✓ 已完成報到' : '點此完成報到'}
+      </button>
+    </div>
+  </div>`;
+};
+
+window.guestCheckin = async (tid, gk) => {
+  await update(ref(db, `tables/${tid}/guests/${gk}`), { checked: true });
+  const btn = document.getElementById('gCkBtn');
+  btn.className = 'checkin-btn checked'; btn.textContent = '✓ 已完成報到'; btn.onclick = null;
+  const st = document.getElementById('gCkSt'); if (st) st.textContent = '✓ 已報到';
+  toast('✓ 報到成功！祝新人百年好合 💍');
+};
+
+let tt;
+window.toast = msg => { const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('show'),2500); };
+</script>
+</body>
+</html>

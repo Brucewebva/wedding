@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>婚宴後台管理</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #c9a96e; --gold-light: #e8d5a3; --gold-dark: #8b6914;
+  --cream: #fdf8f0; --warm: #f5ede0; --deep: #1a1208; --brown: #3d2b0e;
+  --text: #2c1f0a; --muted: #8a7055; --border: rgba(201,169,110,0.3);
+  --success: #4a7c59; --danger: #8b2020;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Serif TC', serif; background: #f8f4ee; color: var(--text); min-height: 100vh; }
+
+/* LOGIN */
+#loginScreen { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,#1a1208,#2e1e08); }
+.login-card { background:rgba(253,248,240,0.04); border:1px solid rgba(201,169,110,0.2); border-radius:4px; padding:48px 40px; width:100%; max-width:360px; text-align:center; }
+.login-card h2 { font-family:'Cormorant Garamond',serif; font-size:1.8rem; color:var(--gold-light); font-weight:300; margin-bottom:6px; }
+.login-card p { font-size:0.8rem; color:rgba(201,169,110,0.5); letter-spacing:0.2em; margin-bottom:32px; }
+.login-input { width:100%; padding:12px 16px; margin-bottom:14px; background:rgba(255,255,255,0.05); border:1px solid rgba(201,169,110,0.25); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:1rem; color:var(--gold-light); outline:none; }
+.login-input:focus { border-color:var(--gold); }
+.login-input::placeholder { color:rgba(201,169,110,0.3); }
+.login-btn { width:100%; padding:13px; background:var(--gold); border:none; border-radius:2px; font-family:'Noto Serif TC',serif; font-size:1rem; font-weight:500; color:var(--deep); cursor:pointer; letter-spacing:0.1em; }
+.login-btn:hover { background:var(--gold-light); }
+.login-err { font-size:0.82rem; color:#e07070; margin-top:10px; min-height:20px; }
+
+/* ADMIN PANEL */
+#adminPanel { display:none; }
+.admin-nav { background:var(--deep); padding:0 24px; display:flex; align-items:center; border-bottom:1px solid rgba(201,169,110,0.2); overflow-x:auto; }
+.admin-nav-title { font-family:'Cormorant Garamond',serif; font-size:1.2rem; color:var(--gold); white-space:nowrap; padding:18px 0; margin-right:32px; letter-spacing:0.1em; }
+.nav-tab { padding:18px 20px; font-size:0.85rem; color:rgba(201,169,110,0.5); cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s; white-space:nowrap; letter-spacing:0.1em; }
+.nav-tab:hover { color:var(--gold); }
+.nav-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+.nav-right { margin-left:auto; display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.nav-badge { font-size:0.75rem; background:rgba(201,169,110,0.15); color:var(--gold); padding:4px 10px; border-radius:20px; border:1px solid rgba(201,169,110,0.3); white-space:nowrap; }
+.admin-content { padding:28px 24px; max-width:1100px; margin:0 auto; }
+.stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:28px; }
+.stat-card { background:white; border:1px solid var(--border); border-radius:4px; padding:20px; text-align:center; position:relative; overflow:hidden; transition:transform 0.2s; }
+.stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--gold),var(--gold-light)); }
+.stat-card:hover { transform:translateY(-2px); }
+.stat-num { font-family:'Cormorant Garamond',serif; font-size:2.4rem; font-weight:600; color:var(--gold); line-height:1; }
+.stat-lbl { font-size:0.78rem; color:var(--muted); letter-spacing:0.2em; margin-top:6px; }
+.panel { display:none; }
+.panel.active { display:block; }
+.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:12px; }
+.section-title { font-size:1rem; color:var(--brown); letter-spacing:0.15em; }
+.btn-sm { padding:8px 16px; font-family:'Noto Serif TC',serif; font-size:0.82rem; cursor:pointer; border-radius:2px; transition:all 0.2s; letter-spacing:0.05em; border:none; }
+.btn-gold { background:var(--gold); color:var(--deep); font-weight:500; }
+.btn-gold:hover { background:var(--gold-light); }
+.btn-outline { background:transparent; border:1px solid var(--border); color:var(--muted); }
+.btn-outline:hover { border-color:var(--gold); color:var(--gold); }
+.btn-danger { background:transparent; border:1px solid #d9a0a0; color:var(--danger); }
+.btn-danger:hover { background:#fff0f0; }
+.table-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
+.table-card { background:white; border:1.5px solid var(--border); border-radius:4px; overflow:hidden; transition:box-shadow 0.2s,transform 0.2s; }
+.table-card:hover { box-shadow:0 6px 24px rgba(26,18,8,0.1); transform:translateY(-2px); }
+.tc-head { background:linear-gradient(135deg,var(--deep),var(--brown)); padding:14px 16px; display:flex; align-items:center; gap:12px; }
+.tc-num { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:600; color:var(--gold); line-height:1; flex-shrink:0; }
+.tc-name { font-size:0.9rem; color:var(--gold-light); }
+.tc-cap { font-size:0.75rem; color:rgba(201,169,110,0.5); margin-top:2px; }
+.tc-body { padding:14px 16px; }
+.guest-chips { display:flex; flex-wrap:wrap; gap:6px; min-height:28px; margin-bottom:12px; }
+.chip { padding:4px 10px; border-radius:20px; font-size:0.78rem; display:flex; align-items:center; gap:5px; max-width:100%; }
+.chip-inner { display:flex; flex-direction:column; line-height:1.2; }
+.chip-name { font-size:0.78rem; }
+.chip-relation { font-size:0.65rem; opacity:0.7; }
+.chip-checked { background:#e8f5ec; color:var(--success); }
+.chip-unchecked { background:var(--warm); color:var(--text); }
+.chip-x { cursor:pointer; opacity:0.5; font-size:0.7rem; font-weight:700; margin-left:2px; padding:0 2px; flex-shrink:0; }
+.chip-x:hover { opacity:1; color:var(--danger); }
+.tc-footer { display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:10px; }
+.tc-progress { font-size:0.78rem; color:var(--muted); }
+.add-guest-row { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+.mini-input { flex:1; min-width:80px; padding:7px 10px; border:1px solid var(--border); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:0.82rem; color:var(--text); background:var(--cream); outline:none; }
+.mini-input:focus { border-color:var(--gold); }
+.mini-select { padding:7px 8px; border:1px solid var(--border); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:0.78rem; color:var(--text); background:var(--cream); outline:none; cursor:pointer; }
+.mini-select:focus { border-color:var(--gold); }
+.btn-mini { padding:7px 12px; font-size:0.82rem; font-family:'Noto Serif TC',serif; cursor:pointer; border-radius:2px; border:none; white-space:nowrap; }
+.btn-mini-gold { background:var(--gold); color:var(--deep); }
+.btn-mini-gold:hover { background:var(--gold-light); }
+.form-card { background:white; border:1.5px solid var(--border); border-radius:4px; padding:24px; margin-bottom:20px; }
+.form-card h3 { font-size:0.9rem; color:var(--brown); letter-spacing:0.2em; margin-bottom:20px; }
+.form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; }
+.form-group { display:flex; flex-direction:column; gap:6px; }
+.form-group label { font-size:0.78rem; color:var(--muted); letter-spacing:0.15em; }
+.form-input { padding:10px 14px; border:1.5px solid var(--border); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:0.95rem; color:var(--text); background:var(--cream); outline:none; transition:border-color 0.2s; }
+.form-input:focus { border-color:var(--gold); }
+.form-select { padding:10px 14px; border:1.5px solid var(--border); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:0.95rem; color:var(--text); background:var(--cream); outline:none; cursor:pointer; }
+.form-select:focus { border-color:var(--gold); }
+.form-actions { margin-top:16px; display:flex; gap:10px; flex-wrap:wrap; }
+.csv-area { width:100%; min-height:140px; padding:14px; border:1.5px dashed var(--border); border-radius:4px; font-family:'Courier New',monospace; font-size:0.82rem; color:var(--text); background:var(--cream); outline:none; resize:vertical; }
+.csv-area:focus { border-color:var(--gold); }
+.csv-hint { font-size:0.78rem; color:var(--muted); margin-top:8px; line-height:1.8; }
+.csv-hint code { background:var(--warm); padding:1px 5px; border-radius:2px; font-size:0.77rem; }
+.guest-list-table { width:100%; border-collapse:collapse; }
+.guest-list-table th { text-align:left; padding:10px 14px; font-size:0.78rem; color:var(--muted); letter-spacing:0.2em; border-bottom:1.5px solid var(--border); font-weight:400; }
+.guest-list-table td { padding:10px 14px; border-bottom:1px solid rgba(201,169,110,0.1); font-size:0.88rem; }
+.guest-list-table tr:hover td { background:var(--warm); }
+.badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.72rem; }
+.badge-ok { background:#e8f5ec; color:var(--success); }
+.badge-no { background:var(--warm); color:var(--muted); }
+.badge-relation { background:rgba(201,169,110,0.1); color:var(--gold-dark); border:1px solid rgba(201,169,110,0.2); }
+.search-bar { padding:10px 14px; border:1.5px solid var(--border); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:0.9rem; color:var(--text); background:white; outline:none; width:100%; max-width:300px; margin-bottom:16px; }
+.search-bar:focus { border-color:var(--gold); }
+.empty-state { text-align:center; padding:60px 20px; color:var(--muted); font-size:0.9rem; }
+.empty-state .es-icon { font-size:2.5rem; margin-bottom:12px; opacity:0.4; }
+.sync-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; vertical-align:middle; }
+.sync-dot.ok { background:#4a7c59; }
+.sync-dot.err { background:#c0392b; }
+.sync-dot.loading { background:var(--gold); animation:pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--deep); color:var(--gold-light); padding:12px 24px; border-radius:4px; font-size:0.9rem; opacity:0; pointer-events:none; transition:all 0.3s; z-index:9999; white-space:nowrap; border:1px solid rgba(201,169,110,0.3); }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* Guest inline add section */
+.guest-add-section { border-top:1px dashed var(--border); padding-top:12px; margin-top:10px; }
+.guest-add-section .add-label { font-size:0.72rem; color:var(--muted); letter-spacing:0.15em; margin-bottom:8px; }
+
+/* Guests in form */
+.guest-form-list { margin-top:14px; }
+.guest-form-item { display:flex; gap:8px; align-items:center; padding:8px 10px; background:var(--warm); border-radius:2px; margin-bottom:6px; font-size:0.85rem; }
+.guest-form-item .gfi-name { flex:1; }
+.guest-form-item .gfi-relation { color:var(--muted); font-size:0.78rem; }
+.guest-form-item .gfi-del { cursor:pointer; color:var(--danger); opacity:0.5; font-size:0.8rem; padding:0 4px; }
+.guest-form-item .gfi-del:hover { opacity:1; }
+
+@media(max-width:600px) {
+  .admin-content{padding:20px 14px}
+  .table-grid{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .result-info{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <h2>後台管理</h2>
+    <p>ADMIN DASHBOARD</p>
+    <input class="login-input" type="password" id="pwInput" placeholder="請輸入管理密碼" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">登入</button>
+    <div class="login-err" id="loginErr"></div>
+    <div style="margin-top:20px">
+      <a href="guest.html" style="font-size:0.82rem;color:rgba(201,169,110,0.4);letter-spacing:0.1em;text-decoration:none;">← 返回來賓查詢頁</a>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="adminPanel">
+  <div class="admin-nav">
+    <div class="admin-nav-title">✦ 婚宴管理</div>
+    <div class="nav-tab active" onclick="adminTab('tables',this)">桌位管理</div>
+    <div class="nav-tab" onclick="adminTab('addtable',this)">新增桌位</div>
+    <div class="nav-tab" onclick="adminTab('import',this)">CSV 匯入</div>
+    <div class="nav-tab" onclick="adminTab('checkin',this)">報到總覽</div>
+    <div class="nav-right">
+      <span class="nav-badge" id="syncStatus"><span class="sync-dot loading"></span>連線中…</span>
+      <span class="nav-badge" id="navBadge">載入中</span>
+      <a href="guest.html" class="btn-sm btn-outline" style="font-size:0.78rem;text-decoration:none">登出</a>
+    </div>
+  </div>
+  <div class="admin-content">
+    <div class="stats-row" id="statsRow"></div>
+
+    <!-- Panel: Table List -->
+    <div class="panel active" id="panel-tables">
+      <div class="section-header">
+        <div class="section-title">所有桌位</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-sm btn-outline" onclick="clearAll()">清除全部資料</button>
+          <button class="btn-sm btn-gold" onclick="adminTab('addtable',document.querySelectorAll('.nav-tab')[1])">＋ 新增桌位</button>
+        </div>
+      </div>
+      <div class="table-grid" id="tableGrid"></div>
+    </div>
+
+    <!-- Panel: Add Table -->
+    <div class="panel" id="panel-addtable">
+      <div class="form-card">
+        <h3>新增桌位</h3>
+        <div class="form-grid">
+          <div class="form-group"><label>桌號</label><input class="form-input" id="at-num" type="number" min="1" placeholder="例：1"/></div>
+          <div class="form-group"><label>桌名（選填）</label><input class="form-input" id="at-name" placeholder="例：新郎家屬桌"/></div>
+          <div class="form-group"><label>容納人數</label><input class="form-input" id="at-cap" type="number" min="1" value="10"/></div>
+        </div>
+
+        <!-- Guest list builder -->
+        <div style="margin-top:20px;">
+          <label style="font-size:0.78rem;color:var(--muted);letter-spacing:0.15em;display:block;margin-bottom:10px;">來賓名單（逐筆輸入）</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+            <input class="form-input" id="at-guest-name" placeholder="來賓姓名" style="flex:1;min-width:120px;padding:9px 12px"/>
+            <select class="form-select" id="at-guest-relation" style="min-width:130px;">
+              <option value="">— 與新人關係 —</option>
+              <optgroup label="新郎側">
+                <option value="新郎家屬">新郎家屬</option>
+                <option value="新郎親戚">新郎親戚</option>
+                <option value="新郎同學">新郎同學</option>
+                <option value="新郎同事">新郎同事</option>
+                <option value="新郎朋友">新郎朋友</option>
+              </optgroup>
+              <optgroup label="新娘側">
+                <option value="新娘家屬">新娘家屬</option>
+                <option value="新娘親戚">新娘親戚</option>
+                <option value="新娘同學">新娘同學</option>
+                <option value="新娘同事">新娘同事</option>
+                <option value="新娘朋友">新娘朋友</option>
+              </optgroup>
+              <option value="共同朋友">共同朋友</option>
+              <option value="其他">其他</option>
+            </select>
+            <button class="btn-sm btn-gold" onclick="addGuestToForm()">＋ 加入</button>
+          </div>
+          <div id="at-guest-list" class="guest-form-list"></div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-sm btn-gold" onclick="addTable()">確認新增桌位</button>
+          <button class="btn-sm btn-outline" onclick="clearForm()">清除</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel: CSV Import -->
+    <div class="panel" id="panel-import">
+      <div class="form-card">
+        <h3>CSV 批次匯入</h3>
+        <textarea class="csv-area" id="csvInput" rows="10" placeholder="貼上 CSV 格式資料，例如：
+
+桌號,桌名,容納人數,來賓名單
+1,新郎家屬桌,10,王大明:新郎家屬|李美玲:新郎家屬|張小華:新郎親戚
+2,新娘親友桌,10,陳怡君:新娘朋友|林志偉:新娘同學
+3,同事桌,8,吳建宏:新郎同事|蔡雅婷:新娘同事"></textarea>
+        <div class="csv-hint">
+          格式：<code>桌號, 桌名（選填）, 容納人數（選填）, 來賓名單</code><br>
+          來賓名單格式：<code>姓名:關係</code>，多位用 <code>|</code> 分隔，例如 <code>王小明:新郎朋友|李美玲:新娘同學</code><br>
+          關係欄位可省略，直接填 <code>王小明|李美玲</code> 也可以。<br>
+          第一行為標題列可省略。匯入後新增至現有資料，同桌號略過。
+        </div>
+        <div class="form-actions" style="margin-top:16px">
+          <button class="btn-sm btn-gold" onclick="importCSV()">匯入資料</button>
+          <button class="btn-sm btn-outline" onclick="document.getElementById('csvInput').value=''">清除</button>
+        </div>
+      </div>
+      <div class="form-card">
+        <h3>匯出現有資料</h3>
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:14px">將目前所有桌位資料匯出為 CSV 檔案（含與新人關係欄位）。</p>
+        <button class="btn-sm btn-gold" onclick="exportCSV()">下載 CSV</button>
+      </div>
+    </div>
+
+    <!-- Panel: Check-in -->
+    <div class="panel" id="panel-checkin">
+      <div class="section-header">
+        <div class="section-title">來賓報到總覽</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <select class="form-select" id="filterRelation" onchange="renderCheckin()" style="font-size:0.82rem;padding:8px 12px;">
+            <option value="">全部關係</option>
+            <option value="新郎家屬">新郎家屬</option>
+            <option value="新郎親戚">新郎親戚</option>
+            <option value="新郎同學">新郎同學</option>
+            <option value="新郎同事">新郎同事</option>
+            <option value="新郎朋友">新郎朋友</option>
+            <option value="新娘家屬">新娘家屬</option>
+            <option value="新娘親戚">新娘親戚</option>
+            <option value="新娘同學">新娘同學</option>
+            <option value="新娘同事">新娘同事</option>
+            <option value="新娘朋友">新娘朋友</option>
+            <option value="共同朋友">共同朋友</option>
+            <option value="其他">其他</option>
+          </select>
+          <button class="btn-sm btn-outline" onclick="resetAllCheckin()">重置全部報到</button>
+        </div>
+      </div>
+      <input class="search-bar" id="checkinSearch" placeholder="搜尋來賓姓名…" oninput="renderCheckin()"/>
+      <div style="background:white;border:1px solid var(--border);border-radius:4px;overflow:auto">
+        <table class="guest-list-table">
+          <thead><tr><th>姓名</th><th>與新人關係</th><th>桌號</th><th>桌名</th><th>報到狀態</th><th>操作</th></tr></thead>
+          <tbody id="checkinBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAp_ILpjSvOmLsMU9ONQa88XDLan6f4568",
+  authDomain: "my-wedding-b2b97.firebaseapp.com",
+  databaseURL: "https://my-wedding-b2b97-default-rtdb.firebaseio.com",
+  projectId: "my-wedding-b2b97",
+  storageBucket: "my-wedding-b2b97.firebasestorage.app",
+  messagingSenderId: "237043710985",
+  appId: "1:237043710985:web:875b8dfb1497357640ccd8"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const ADMIN_PW = 'wedding2024';
+let localData = [];
+
+// ── 暫存新增桌位的來賓 ──
+let pendingGuests = []; // [{name, relation}]
+
+// ── Login ──
+window.doLogin = () => {
+  if (document.getElementById('pwInput').value === ADMIN_PW) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+  } else {
+    document.getElementById('loginErr').textContent = '密碼錯誤，請再試一次。';
+  }
+};
+
+// ── Firebase 即時監聽 ──
+onValue(ref(db, 'tables'), snapshot => {
+  const raw = snapshot.val();
+  localData = raw ? Object.values(raw).sort((a,b) => a.num - b.num) : [];
+  document.getElementById('syncStatus').innerHTML = '<span class="sync-dot ok"></span>即時同步中';
+  renderAdmin();
+}, () => {
+  document.getElementById('syncStatus').innerHTML = '<span class="sync-dot err"></span>連線失敗';
+});
+
+// ── 頁籤切換 ──
+window.adminTab = (name, el) => {
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active')); document.getElementById('panel-'+name).classList.add('active');
+};
+
+// ── 渲染 ──
+function renderAdmin() {
+  renderStats(); renderTableGrid(); renderCheckin();
+  let total = 0, checked = 0;
+  localData.forEach(t => { const gs = t.guests ? Object.values(t.guests) : []; total += gs.length; checked += gs.filter(g=>g.checked).length; });
+  document.getElementById('navBadge').textContent = `報到 ${checked} / ${total} 人`;
+}
+
+function renderStats() {
+  let total = 0, checked = 0;
+  localData.forEach(t => { const gs = t.guests ? Object.values(t.guests) : []; total += gs.length; checked += gs.filter(g=>g.checked).length; });
+  const rate = total ? Math.round(checked/total*100) : 0;
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${localData.length}</div><div class="stat-lbl">總桌數</div></div>
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">來賓總人數</div></div>
+    <div class="stat-card"><div class="stat-num">${checked}</div><div class="stat-lbl">已報到</div></div>
+    <div class="stat-card"><div class="stat-num">${total-checked}</div><div class="stat-lbl">尚未報到</div></div>
+    <div class="stat-card"><div class="stat-num">${rate}%</div><div class="stat-lbl">報到率</div></div>`;
+}
+
+function renderTableGrid() {
+  const el = document.getElementById('tableGrid');
+  if (!localData.length) { el.innerHTML = '<div class="empty-state"><div class="es-icon">🪑</div>尚無桌位資料，請先新增桌位。</div>'; return; }
+  el.innerHTML = localData.map(t => {
+    const gs = t.guests ? Object.entries(t.guests) : [];
+    const chips = gs.map(([k,g]) => {
+      const rel = g.relation ? `<span class="chip-relation">${g.relation}</span>` : '';
+      return `<span class="chip ${g.checked?'chip-checked':'chip-unchecked'}">
+        ${g.checked?'✓ ':''}<span class="chip-inner"><span class="chip-name">${g.name}</span>${rel}</span>
+        <span class="chip-x" onclick="removeGuest('${t.id}','${k}')">✕</span>
+      </span>`;
+    }).join('');
+    const chk = gs.filter(([,g])=>g.checked).length;
+    return `<div class="table-card">
+      <div class="tc-head"><div class="tc-num">${t.num}</div><div><div class="tc-name">${t.name||'未命名'}</div><div class="tc-cap">${gs.length}/${t.cap} 人</div></div></div>
+      <div class="tc-body">
+        <div class="guest-chips">${chips||'<span style="color:var(--muted);font-size:0.8rem">尚無來賓</span>'}</div>
+        <div class="guest-add-section">
+          <div class="add-label">新增來賓</div>
+          <div class="add-guest-row">
+            <input class="mini-input" id="gi-${t.id}" placeholder="來賓姓名" onkeydown="if(event.key==='Enter')addGuest('${t.id}')"/>
+            <select class="mini-select" id="gr-${t.id}">
+              <option value="">— 關係 —</option>
+              <optgroup label="新郎側">
+                <option>新郎家屬</option><option>新郎親戚</option><option>新郎同學</option><option>新郎同事</option><option>新郎朋友</option>
+              </optgroup>
+              <optgroup label="新娘側">
+                <option>新娘家屬</option><option>新娘親戚</option><option>新娘同學</option><option>新娘同事</option><option>新娘朋友</option>
+              </optgroup>
+              <option>共同朋友</option><option>其他</option>
+            </select>
+            <button class="btn-mini btn-mini-gold" onclick="addGuest('${t.id}')">＋</button>
+          </div>
+        </div>
+        <div class="tc-footer">
+          <div class="tc-progress">${chk}/${gs.length} 已報到</div>
+          <button class="btn-sm btn-danger" onclick="deleteTable('${t.id}')">刪除桌位</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderCheckin() {
+  const q = (document.getElementById('checkinSearch')?.value||'').toLowerCase();
+  const filterRel = document.getElementById('filterRelation')?.value || '';
+  let rows = [];
+  localData.forEach(t => {
+    const gs = t.guests ? Object.entries(t.guests) : [];
+    gs.forEach(([k,g]) => {
+      if (q && !g.name.toLowerCase().includes(q)) return;
+      if (filterRel && g.relation !== filterRel) return;
+      rows.push({name:g.name, relation:g.relation||'', num:t.num, tname:t.name||'—', checked:g.checked, tid:t.id, gk:k});
+    });
+  });
+  rows.sort((a,b)=>a.num-b.num);
+  document.getElementById('checkinBody').innerHTML = rows.length
+    ? rows.map(r=>`<tr>
+        <td>${r.name}</td>
+        <td>${r.relation ? `<span class="badge badge-relation">${r.relation}</span>` : '<span style="color:var(--muted);font-size:0.8rem">—</span>'}</td>
+        <td><b>${r.num}</b></td>
+        <td>${r.tname}</td>
+        <td><span class="badge ${r.checked?'badge-ok':'badge-no'}">${r.checked?'✓ 已報到':'待報到'}</span></td>
+        <td>${r.checked
+          ?`<button class="btn-sm btn-outline" style="font-size:0.75rem" onclick="toggleCheckin('${r.tid}','${r.gk}',false)">取消報到</button>`
+          :`<button class="btn-sm btn-gold" style="font-size:0.75rem" onclick="toggleCheckin('${r.tid}','${r.gk}',true)">標記報到</button>`}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">無資料</td></tr>';
+}
+
+// ── 新增桌位（逐筆來賓） ──
+window.addGuestToForm = () => {
+  const name = document.getElementById('at-guest-name').value.trim();
+  const relation = document.getElementById('at-guest-relation').value;
+  if (!name) { toast('請輸入來賓姓名'); return; }
+  if (pendingGuests.find(g=>g.name===name)) { toast('已有同名來賓'); return; }
+  pendingGuests.push({name, relation});
+  document.getElementById('at-guest-name').value = '';
+  renderPendingGuests();
+};
+
+function renderPendingGuests() {
+  document.getElementById('at-guest-list').innerHTML = pendingGuests.map((g,i) =>
+    `<div class="guest-form-item">
+      <span class="gfi-name">${g.name}</span>
+      <span class="gfi-relation">${g.relation||'—'}</span>
+      <span class="gfi-del" onclick="removePendingGuest(${i})">✕</span>
+    </div>`
+  ).join('') || '<div style="color:var(--muted);font-size:0.8rem;padding:4px 0">尚未加入任何來賓</div>';
+}
+
+window.removePendingGuest = i => { pendingGuests.splice(i,1); renderPendingGuests(); };
+
+window.addTable = async () => {
+  const num = parseInt(document.getElementById('at-num').value);
+  const name = document.getElementById('at-name').value.trim();
+  const cap = parseInt(document.getElementById('at-cap').value)||10;
+  if (!num) { toast('請輸入桌號'); return; }
+  if (localData.find(t=>t.num===num)) { toast('此桌號已存在'); return; }
+  const guests = {};
+  pendingGuests.forEach((g,i) => { guests[`g${Date.now()}${i}`] = {name:g.name, relation:g.relation||'', checked:false}; });
+  const id = 't'+Date.now();
+  await set(ref(db,'tables/'+id), {id,num,name,cap,guests});
+  clearForm(); toast(`✓ 第 ${num} 桌已新增，共 ${pendingGuests.length} 位來賓`);
+};
+
+window.clearForm = () => {
+  ['at-num','at-name','at-guest-name'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('at-cap').value='10';
+  document.getElementById('at-guest-relation').value='';
+  pendingGuests = []; renderPendingGuests();
+};
+
+window.deleteTable = async id => { if(!confirm('確定要刪除此桌位及所有來賓資料？'))return; await remove(ref(db,'tables/'+id)); toast('桌位已刪除'); };
+
+window.addGuest = async tid => {
+  const inp = document.getElementById('gi-'+tid);
+  const sel = document.getElementById('gr-'+tid);
+  const name = inp.value.trim(); if(!name)return;
+  const relation = sel ? sel.value : '';
+  const t = localData.find(t=>t.id===tid); if(!t)return;
+  if(t.guests&&Object.values(t.guests).find(g=>g.name===name)){toast('此桌已有同名來賓');return;}
+  const key = 'g'+Date.now()+Math.random().toString(36).slice(2,6);
+  await set(ref(db,`tables/${tid}/guests/${key}`),{name,relation,checked:false});
+  inp.value=''; if(sel)sel.value=''; toast(`✓ 已新增：${name}${relation?' ('+relation+')':''}`);
+};
+
+window.removeGuest = async (tid,gk) => {
+  const t=localData.find(t=>t.id===tid); const name=t?.guests?.[gk]?.name||'';
+  if(!confirm(`確定移除來賓「${name}」？`))return;
+  await remove(ref(db,`tables/${tid}/guests/${gk}`)); toast(`已移除：${name}`);
+};
+
+window.toggleCheckin = async (tid,gk,val) => {
+  await update(ref(db,`tables/${tid}/guests/${gk}`),{checked:val});
+  const t=localData.find(t=>t.id===tid); const name=t?.guests?.[gk]?.name||'';
+  toast(val?`✓ ${name} 已報到`:`${name} 取消報到`);
+};
+
+window.resetAllCheckin = async () => {
+  if(!confirm('確定要重置所有來賓的報到狀態？'))return;
+  const updates={};
+  localData.forEach(t=>{ if(t.guests)Object.keys(t.guests).forEach(k=>{ updates[`tables/${t.id}/guests/${k}/checked`]=false; }); });
+  await update(ref(db),updates); toast('已重置所有報到狀態');
+};
+
+window.clearAll = async () => { if(!confirm('確定要清除全部資料？此操作無法復原。'))return; await remove(ref(db,'tables')); toast('已清除全部資料'); };
+
+// ── CSV 匯入（修復 key 衝突問題）──
+window.importCSV = async () => {
+  const raw = document.getElementById('csvInput').value.trim();
+  if(!raw){toast('請貼上 CSV 資料');return;}
+  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  let count=0, skip=0;
+  for(let i=0; i<lines.length; i++){
+    if(i===0 && /桌號|table/i.test(lines[i])) continue;
+    const parts = lines[i].split(',').map(s=>s.trim());
+    const num = parseInt(parts[0]); if(!num) continue;
+    if(localData.find(t=>t.num===num)){skip++;continue;}
+    const name = parts[1]||'';
+    const cap = parseInt(parts[2])||10;
+    const guestStr = parts[3]||'';
+    const guests={};
+    if(guestStr){
+      guestStr.split('|').map(s=>s.trim()).filter(Boolean).forEach((entry, idx) => {
+        // 支援 "姓名:關係" 格式
+        const colonIdx = entry.lastIndexOf(':');
+        let gname, grelation;
+        if(colonIdx > 0){
+          gname = entry.slice(0, colonIdx).trim();
+          grelation = entry.slice(colonIdx+1).trim();
+        } else {
+          gname = entry;
+          grelation = '';
+        }
+        // 用 count + idx + random 避免 key 衝突
+        const key = `g${Date.now()}${count}${idx}${Math.random().toString(36).slice(2,5)}`;
+        guests[key] = {name:gname, relation:grelation, checked:false};
+      });
+    }
+    const id = `t${Date.now()}${count}${Math.random().toString(36).slice(2,5)}`;
+    await set(ref(db,'tables/'+id), {id,num,name,cap,guests});
+    count++;
+    // 避免同一毫秒產生相同 key
+    await new Promise(r=>setTimeout(r,5));
+  }
+  document.getElementById('csvInput').value='';
+  toast(`✓ 成功匯入 ${count} 桌${skip?`，${skip} 桌已存在略過`:''}`);
+};
+
+window.exportCSV = () => {
+  if(!localData.length){toast('目前無資料');return;}
+  const rows = localData.map(t => {
+    const guestStr = t.guests ? Object.values(t.guests).map(g=>g.relation?`${g.name}:${g.relation}`:g.name).join('|') : '';
+    return `${t.num},${t.name||''},${t.cap},${guestStr}`;
+  });
+  const blob = new Blob(['\uFEFF桌號,桌名,容納人數,來賓名單\n'+rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='婚宴桌位.csv'; a.click(); toast('✓ CSV 已下載');
+};
+
+// ── Toast ──
+let tt;
+window.toast = msg => { const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('show'),2500); };
+
+// ── 鍵盤 Enter for login ──
+document.getElementById('pwInput').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+// ── Enter to add guest in form ──
+document.getElementById('at-guest-name')?.addEventListener('keydown', e => { if(e.key==='Enter') addGuestToForm(); });
+</script>
+</body>
+</html>
