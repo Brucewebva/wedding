@@ -440,7 +440,7 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
       </div>
       <div style="background:white;border:1px solid var(--border);border-radius:4px;overflow:auto">
         <table class="guest-list-table">
-          <thead><tr><th>姓名</th><th>與新人關係</th><th>特殊需求</th><th>桌號</th><th>桌名</th><th>報到狀態</th><th>操作</th></tr></thead>
+          <thead><tr><th>姓名</th><th>與新人關係</th><th style="text-align:center">出席人數</th><th>特殊需求</th><th>桌號</th><th>桌名</th><th>報到狀態</th><th>操作</th></tr></thead>
           <tbody id="checkinBody"></tbody>
         </table>
       </div>
@@ -749,11 +749,22 @@ function renderAll() {
   if (selectedTableId) renderTableEditPanel(selectedTableId);
 }
 
+
+// ── 取得來賓出席人數（從 members 或 guest.attend 欄位） ──
+function getAttend(guestName, guestAttend) {
+  if (guestAttend && guestAttend > 0) return guestAttend;
+  const m = membersData.find(m => m.name === guestName);
+  return m ? (m.attend || 1) : 1;
+}
 function updateNavBadge() {
   let total = 0, checked = 0;
   localData.forEach(t => {
     const gs = t.guests ? Object.values(t.guests) : [];
-    total += gs.length; checked += gs.filter(g => g.checked).length;
+    gs.forEach(g => {
+      const a = getAttend(g.name, g.attend);
+      total += a;
+      if (g.checked) checked += a;
+    });
   });
   document.getElementById('navBadge').textContent = `報到 ${checked} / ${total} 人`;
 }
@@ -766,10 +777,13 @@ function renderDashboard() {
   let totalGuests = 0, checked = 0, totalVeg = 0, totalChild = 0;
   localData.forEach(t => {
     const gs = t.guests ? Object.values(t.guests) : [];
-    totalGuests += gs.length;
-    checked += gs.filter(g => g.checked).length;
-    totalVeg += gs.filter(g => g.veg).length;
-    totalChild += gs.filter(g => g.child).length;
+    gs.forEach(g => {
+      const a = getAttend(g.name, g.attend);
+      totalGuests += a;
+      if (g.checked) checked += a;
+      if (g.veg)   totalVeg += a;
+      if (g.child) totalChild += a;
+    });
   });
   const unchecked = totalGuests - checked;
   const rate = totalGuests ? Math.round(checked / totalGuests * 100) : 0;
@@ -873,15 +887,20 @@ function renderTableList() {
     const vegC = gs.filter(g => g.veg).length;
     const childC = gs.filter(g => g.child).length;
     const tags = (vegC ? `<span class="tli-veg">🥗${vegC}</span>` : '') + (childC ? `<span class="tli-child">👶${childC}</span>` : '');
-    const chk = gs.filter(g => g.checked).length;
-    const statusClass = gs.length === 0 ? 'none' : chk === gs.length ? 'full' : chk > 0 ? 'partial' : 'none';
-    const pct = gs.length ? Math.round(chk/gs.length*100) : 0;
+    let totalAttend = 0, chkAttend = 0;
+    gs.forEach(g => {
+      const a = getAttend(g.name, g.attend);
+      totalAttend += a;
+      if (g.checked) chkAttend += a;
+    });
+    const statusClass = totalAttend === 0 ? 'none' : chkAttend === totalAttend ? 'full' : chkAttend > 0 ? 'partial' : 'none';
+    const pct = totalAttend ? Math.round(chkAttend/totalAttend*100) : 0;
     return `<div class="table-list-item ${selectedTableId === t.id ? 'selected' : ''}" onclick="selectTable('${t.id}')">
       <div class="tli-status ${statusClass}"></div>
       <div class="tli-num">${t.num}</div>
       <div class="tli-info">
         <div class="tli-name">${t.name || '未命名'}</div>
-        <div class="tli-sub">${chk}/${gs.length} 報到・${pct}%</div>
+        <div class="tli-sub">${chkAttend}/${totalAttend} 人報到・${pct}%</div>
       </div>
       ${tags ? `<div class="tli-tags">${tags}</div>` : ''}
     </div>`;
@@ -1199,7 +1218,8 @@ function renderCheckin() {
       if (filterRel && g.relation !== filterRel) return;
       if (filterSpecial === 'veg' && !g.veg) return;
       if (filterSpecial === 'child' && !g.child) return;
-      rows.push({name: g.name, relation: g.relation || '', num: t.num, tname: t.name || '—', checked: g.checked, veg: g.veg, child: g.child, tid: t.id, gk: k});
+      const attend = getAttend(g.name, g.attend);
+      rows.push({name: g.name, relation: g.relation || '', num: t.num, tname: t.name || '—', checked: g.checked, veg: g.veg, child: g.child, tid: t.id, gk: k, attend});
     });
   });
   rows.sort((a, b) => a.num - b.num);
@@ -1207,6 +1227,9 @@ function renderCheckin() {
     ? rows.map(r => `<tr>
         <td><strong>${r.name}</strong></td>
         <td>${r.relation ? `<span class="badge badge-relation">${r.relation}</span>` : '—'}</td>
+        <td style="text-align:center">${r.attend > 1
+          ? `<span style="font-size:0.78rem;background:rgba(44,95,138,0.1);color:var(--info);padding:2px 9px;border-radius:20px;border:1px solid rgba(44,95,138,0.2)">👫 ${r.attend} 人</span>`
+          : `<span style="font-size:0.78rem;color:var(--muted)">1 人</span>`}</td>
         <td>${r.veg ? '<span class="badge badge-veg">🥗 素食</span> ' : ''}${r.child ? '<span class="badge badge-child">👶 兒童</span>' : (r.veg ? '' : '—')}</td>
         <td><b>${r.num}</b></td>
         <td>${r.tname}</td>
@@ -1703,13 +1726,14 @@ function renderReport() {
 
   localData.forEach(t => {
     const gs = t.guests ? Object.values(t.guests) : [];
-    totalGuests += gs.length;
     gs.forEach(g => {
-      if (g.checked) { checkedCount++; if(g.checkedAt) checkins.push({...g, num:t.num, tname:t.name||''}); }
-      if (g.veg) totalVeg++;
-      if (g.child) totalChild++;
-      if (g.relation) relMap[g.relation] = (relMap[g.relation]||0) + 1;
-      allGuests.push({...g, num:t.num, tname:t.name||''});
+      const a = getAttend(g.name, g.attend);
+      totalGuests += a;
+      if (g.checked) { checkedCount += a; if(g.checkedAt) checkins.push({...g, num:t.num, tname:t.name||'', attend:a}); }
+      if (g.veg)   totalVeg   += a;
+      if (g.child) totalChild += a;
+      if (g.relation) relMap[g.relation] = (relMap[g.relation]||0) + a;
+      allGuests.push({...g, num:t.num, tname:t.name||'', attend:a});
     });
   });
   const rate = totalGuests ? Math.round(checkedCount/totalGuests*100) : 0;
@@ -1789,7 +1813,7 @@ window.exportFullReport = () => {
     // Sheet 1: Summary
     const now = new Date().toLocaleString('zh-TW');
     let totalG=0, checkedG=0, vegG=0, childG=0;
-    localData.forEach(t=>{ const gs=t.guests?Object.values(t.guests):[]; totalG+=gs.length; checkedG+=gs.filter(g=>g.checked).length; vegG+=gs.filter(g=>g.veg).length; childG+=gs.filter(g=>g.child).length; });
+    localData.forEach(t=>{ const gs=t.guests?Object.values(t.guests):[]; gs.forEach(g=>{ const a=getAttend(g.name,g.attend); totalG+=a; if(g.checked)checkedG+=a; if(g.veg)vegG+=a; if(g.child)childG+=a; }); });
     const rate = totalG ? Math.round(checkedG/totalG*100) : 0;
     const ws1 = XLSX.utils.aoa_to_sheet([
       ['婚宴報表'],['報表時間', now],[''],
