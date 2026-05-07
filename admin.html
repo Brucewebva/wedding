@@ -990,21 +990,28 @@ function renderTableEditPanel(id) {
     <div style="font-size:0.78rem;color:var(--muted);letter-spacing:0.15em;margin-bottom:8px">來賓清單（${gs.length} 人）</div>
     <div class="guest-edit-list">${guestItems}</div>
     <!-- Add guest inline -->
-    <div style="background:var(--warm);border-radius:4px;padding:12px;margin-top:12px">
+    <div style="background:var(--warm);border-radius:4px;padding:12px;margin-top:12px;position:relative">
       <div style="font-size:0.74rem;color:var(--muted);letter-spacing:0.15em;margin-bottom:8px">新增來賓至此桌</div>
-      <div class="add-guest-row">
-        <input class="mini-input" id="gi-${id}" placeholder="來賓姓名" onkeydown="if(event.key==='Enter')addGuest('${id}')"/>
-        <select class="mini-select" id="gr-${id}">
-          <option value="">— 關係 —</option>
-          <optgroup label="新郎側"><option>新郎家屬</option><option>新郎親戚</option><option>新郎同學</option><option>新郎同事</option><option>新郎朋友</option></optgroup>
-          <optgroup label="新娘側"><option>新娘家屬</option><option>新娘親戚</option><option>新娘同學</option><option>新娘同事</option><option>新娘朋友</option></optgroup>
-          <option>共同朋友</option><option>其他</option>
-        </select>
-        <button class="btn-mini btn-mini-gold" onclick="addGuest('${id}')">＋ 新增</button>
+      <div style="position:relative">
+        <div class="add-guest-row">
+          <input class="mini-input" id="gi-${id}" placeholder="輸入姓名搜尋人員…" autocomplete="off"
+            oninput="onGuestSearchInput('${id}')"
+            onkeydown="onGuestSearchKeydown(event,'${id}')"
+            style="flex:1"/>
+          <button class="btn-mini btn-mini-gold" onclick="addGuestFromInput('${id}')">＋ 新增</button>
+        </div>
+        <!-- Autocomplete dropdown -->
+        <div id="gs-drop-${id}" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--border);border-radius:3px;box-shadow:0 6px 20px rgba(26,18,8,0.12);z-index:200;max-height:220px;overflow-y:auto;margin-top:2px"></div>
       </div>
-      <div class="mini-check-row" style="margin-top:7px">
-        <label class="mini-check"><input type="checkbox" id="gv-${id}" style="accent-color:var(--veg)"/> 🥗 素食</label>
-        <label class="mini-check"><input type="checkbox" id="gc-${id}" style="accent-color:var(--child)"/> 👶 兒童座椅</label>
+      <!-- Selected member preview -->
+      <div id="gs-preview-${id}" style="margin-top:8px;display:none">
+        <div style="background:white;border:1px solid var(--border);border-radius:3px;padding:8px 12px;display:flex;align-items:center;gap:10px;font-size:0.84rem">
+          <span style="font-size:1.1rem">👤</span>
+          <span id="gs-preview-name-${id}" style="font-weight:600;flex:1"></span>
+          <span id="gs-preview-rel-${id}" style="font-size:0.74rem;color:var(--muted)"></span>
+          <span id="gs-preview-veg-${id}" style="display:none;font-size:0.68rem;background:var(--veg-bg);color:var(--veg);padding:2px 7px;border-radius:10px">🥗素食</span>
+          <span id="gs-preview-child-${id}" style="display:none;font-size:0.68rem;background:var(--child-bg);color:var(--child);padding:2px 7px;border-radius:10px">👶兒童</span>
+        </div>
       </div>
     </div>`;
 }
@@ -1133,27 +1140,153 @@ window.deleteTable = async id => {
   toast('桌位已刪除');
 };
 
-window.addGuest = async tid => {
+// ── Guest search state per table ──
+const _guestSearchState = {}; // tid -> {selectedMember, focusIdx}
+
+function getTableGuests(tid) {
+  const t = localData.find(t => t.id === tid);
+  return t?.guests ? Object.values(t.guests) : [];
+}
+
+window.onGuestSearchInput = (tid) => {
   const inp = document.getElementById('gi-' + tid);
-  const sel = document.getElementById('gr-' + tid);
-  const vegChk = document.getElementById('gv-' + tid);
-  const childChk = document.getElementById('gc-' + tid);
+  const drop = document.getElementById('gs-drop-' + tid);
+  if (!inp || !drop) return;
+  const q = inp.value.trim();
+
+  // Clear selection preview
+  clearGuestPreview(tid);
+  if (!_guestSearchState[tid]) _guestSearchState[tid] = {};
+  _guestSearchState[tid].selectedMember = null;
+  _guestSearchState[tid].focusIdx = -1;
+
+  if (!q) { drop.style.display = 'none'; drop.innerHTML = ''; return; }
+
+  // Get members not yet in this table
+  const tableGuests = getTableGuests(tid);
+  const tableNames = new Set(tableGuests.map(g => g.name));
+
+  let matches;
+  if (q.length === 1) {
+    matches = membersData.filter(m => m.name[0] === q && !tableNames.has(m.name));
+  } else {
+    matches = membersData.filter(m => m.name.includes(q) && !tableNames.has(m.name));
+  }
+  matches = matches.slice(0, 10);
+
+  if (!matches.length) {
+    drop.style.display = 'block';
+    drop.innerHTML = '<div style="padding:10px 14px;font-size:0.8rem;color:var(--muted)">無符合人員（可直接輸入新名字新增）</div>';
+    return;
+  }
+
+  drop.style.display = 'block';
+  drop.innerHTML = matches.map((m, i) => {
+    const vegTag = m.veg > 0 ? '<span style="font-size:0.64rem;background:var(--veg-bg);color:var(--veg);padding:1px 6px;border-radius:10px;margin-left:4px">🥗素食</span>' : '';
+    const childTag = m.chair > 0 ? '<span style="font-size:0.64rem;background:var(--child-bg);color:var(--child);padding:1px 6px;border-radius:10px;margin-left:4px">👶兒童</span>' : '';
+    const safeName = m.name.replace(/'/g, "\'");
+    const safeId = m.id.replace(/'/g, "\'");
+    return `<div class="suggest-item" data-idx="${i}"
+      style="padding:9px 12px;cursor:pointer;border-bottom:1px solid rgba(201,169,110,0.08);display:flex;align-items:center;gap:10px;transition:background 0.12s"
+      onmouseover="this.style.background='var(--warm)'" onmouseout="this.style.background=''"
+      onclick="selectGuestMember('${tid}','${safeId}')">
+      <div style="width:30px;height:30px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:0.85rem;color:var(--deep);font-weight:700;flex-shrink:0">${m.name[0]}</div>
+      <div style="flex:1">
+        <div style="font-size:0.88rem;font-weight:500">${highlightGuestMatch(m.name, q)}</div>
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:1px">${m.relation}${vegTag}${childTag}</div>
+      </div>
+    </div>`;
+  }).join('');
+};
+
+function highlightGuestMatch(name, q) {
+  const idx = name.indexOf(q);
+  if (idx < 0) return name;
+  return name.slice(0,idx) + `<strong style="color:var(--gold-dark)">${name.slice(idx,idx+q.length)}</strong>` + name.slice(idx+q.length);
+}
+
+window.onGuestSearchKeydown = (e, tid) => {
+  const drop = document.getElementById('gs-drop-' + tid);
+  if (!drop || drop.style.display === 'none') {
+    if (e.key === 'Enter') addGuestFromInput(tid);
+    return;
+  }
+  const items = drop.querySelectorAll('[data-idx]');
+  if (!_guestSearchState[tid]) _guestSearchState[tid] = {focusIdx: -1};
+  let fi = _guestSearchState[tid].focusIdx || -1;
+  if (e.key === 'ArrowDown') { e.preventDefault(); fi = Math.min(fi+1, items.length-1); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); fi = Math.max(fi-1, -1); }
+  else if (e.key === 'Enter') { e.preventDefault();
+    if (fi >= 0 && items[fi]) items[fi].click();
+    else addGuestFromInput(tid);
+    return;
+  } else if (e.key === 'Escape') { drop.style.display='none'; return; }
+  _guestSearchState[tid].focusIdx = fi;
+  items.forEach((el,i) => el.style.background = i===fi ? 'var(--warm)' : '');
+  if (fi >= 0 && items[fi]) items[fi].scrollIntoView({block:'nearest'});
+};
+
+window.selectGuestMember = (tid, memberId) => {
+  const m = membersData.find(m => m.id === memberId);
+  if (!m) return;
+  const inp = document.getElementById('gi-' + tid);
+  const drop = document.getElementById('gs-drop-' + tid);
+  if (inp) inp.value = m.name;
+  if (drop) { drop.style.display = 'none'; drop.innerHTML = ''; }
+  if (!_guestSearchState[tid]) _guestSearchState[tid] = {};
+  _guestSearchState[tid].selectedMember = m;
+  // Show preview
+  showGuestPreview(tid, m);
+};
+
+function showGuestPreview(tid, m) {
+  const preview = document.getElementById('gs-preview-' + tid);
+  const nameEl = document.getElementById('gs-preview-name-' + tid);
+  const relEl  = document.getElementById('gs-preview-rel-' + tid);
+  const vegEl  = document.getElementById('gs-preview-veg-' + tid);
+  const childEl= document.getElementById('gs-preview-child-' + tid);
+  if (!preview) return;
+  if (nameEl) nameEl.textContent = m.name;
+  if (relEl)  relEl.textContent  = m.relation || '';
+  if (vegEl)  vegEl.style.display = m.veg > 0 ? '' : 'none';
+  if (childEl)childEl.style.display = m.chair > 0 ? '' : 'none';
+  preview.style.display = '';
+}
+
+function clearGuestPreview(tid) {
+  const preview = document.getElementById('gs-preview-' + tid);
+  if (preview) preview.style.display = 'none';
+}
+
+window.addGuestFromInput = async (tid) => {
+  const inp = document.getElementById('gi-' + tid);
   const name = inp?.value.trim();
   if (!name) return;
-  const relation = sel ? sel.value : '';
-  const veg = vegChk ? vegChk.checked : false;
-  const child = childChk ? childChk.checked : false;
+
   const t = localData.find(t => t.id === tid);
   if (!t) return;
   if (t.guests && Object.values(t.guests).find(g => g.name === name)) { toast('此桌已有同名來賓'); return; }
+
+  // Check if selected from member list
+  const state = _guestSearchState[tid];
+  const selectedMember = state?.selectedMember;
+
+  let relation = '', veg = false, child = false;
+  if (selectedMember && selectedMember.name === name) {
+    relation = selectedMember.relation || '';
+    veg = (selectedMember.veg || 0) > 0;
+    child = (selectedMember.chair || 0) > 0;
+  }
+
   const key = 'g' + Date.now() + Math.random().toString(36).slice(2, 6);
   await set(ref(db, `tables/${tid}/guests/${key}`), {name, relation, checked: false, veg, child});
   if (inp) inp.value = '';
-  if (sel) sel.value = '';
-  if (vegChk) vegChk.checked = false;
-  if (childChk) childChk.checked = false;
+  const drop = document.getElementById('gs-drop-' + tid);
+  if (drop) { drop.style.display = 'none'; drop.innerHTML = ''; }
+  clearGuestPreview(tid);
+  if (state) state.selectedMember = null;
   addActivity('add', `新增來賓：${name}（第 ${t.num} 桌）`);
-  toast(`✓ 已新增：${name}`);
+  toast(`✓ 已新增：${name}${relation ? ' (' + relation + ')' : ''}`);
 };
 
 window.removeGuest = async (tid, gk) => {
@@ -1555,92 +1688,120 @@ window.exportMembersXLSX = () => {
 // TIMELINE
 // ─────────────────────────────────────────
 function renderTimeline() {
-  const allCheckins = [];
+  // 分兩組：有時間戳記 / 已報到但無時間（舊資料）
+  const withTime = [];
+  const noTime = [];
   localData.forEach(t => {
     if (!t.guests) return;
     Object.values(t.guests).forEach(g => {
-      if (g.checked && g.checkedAt) {
-        allCheckins.push({name: g.name, relation: g.relation||'', num: t.num, tname: t.name||'', ts: g.checkedAt});
-      }
+      if (!g.checked) return;
+      const row = {name: g.name, relation: g.relation||'', num: t.num, tname: t.name||''};
+      if (g.checkedAt) withTime.push({...row, ts: g.checkedAt});
+      else             noTime.push(row);
     });
   });
-  allCheckins.sort((a,b) => a.ts - b.ts);
+  withTime.sort((a,b) => a.ts - b.ts);
+  const totalChecked = withTime.length + noTime.length;
 
   const subtitle = document.getElementById('timelineSubtitle');
-  if (subtitle) subtitle.textContent = `共 ${allCheckins.length} 筆報到記錄`;
+  if (subtitle) subtitle.textContent = `已報到 ${totalChecked} 人（含時間記錄 ${withTime.length} 筆）`;
 
-  // Peak stats
+  // ── Peak stats ──
   const peakRow = document.getElementById('peakRow');
   if (peakRow) {
-    if (!allCheckins.length) {
-      peakRow.innerHTML = '<div style="font-size:0.82rem;color:var(--muted)">尚無報到記錄</div>';
+    if (!totalChecked) {
+      peakRow.innerHTML = '<div style="font-size:0.82rem;color:var(--muted)">尚無報到資料</div>';
     } else {
-      const first = allCheckins[0];
-      const last = allCheckins[allCheckins.length-1];
-      // Build 15-min buckets
-      const buckets = {};
-      allCheckins.forEach(c => {
-        const d = new Date(c.ts);
-        const slot = `${d.getHours()}:${String(Math.floor(d.getMinutes()/15)*15).padStart(2,'0')}`;
-        buckets[slot] = (buckets[slot]||0) + 1;
-      });
-      const peakSlot = Object.entries(buckets).sort((a,b)=>b[1]-a[1])[0];
-      peakRow.innerHTML = `
-        <div class="peak-item"><strong>${new Date(first.ts).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}</strong>首位報到</div>
-        <div class="peak-item"><strong>${new Date(last.ts).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}</strong>最後報到</div>
-        <div class="peak-item"><strong>${peakSlot?peakSlot[0]:'—'}</strong>高峰時段</div>
-        <div class="peak-item"><strong>${peakSlot?peakSlot[1]:'—'} 人</strong>高峰人數</div>
-        <div class="peak-item"><strong>${allCheckins.length}</strong>已報到人次</div>`;
+      let peakHTML = `<div class="peak-item"><strong>${totalChecked}</strong>已報到總人數</div>`;
+      if (withTime.length) {
+        const first = withTime[0];
+        const last  = withTime[withTime.length-1];
+        const buckets = {};
+        withTime.forEach(c => {
+          const d = new Date(c.ts);
+          const slot = `${d.getHours()}:${String(Math.floor(d.getMinutes()/15)*15).padStart(2,'0')}`;
+          buckets[slot] = (buckets[slot]||0) + 1;
+        });
+        const peakSlot = Object.entries(buckets).sort((a,b)=>b[1]-a[1])[0];
+        peakHTML += `
+          <div class="peak-item"><strong>${new Date(first.ts).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}</strong>首位報到</div>
+          <div class="peak-item"><strong>${new Date(last.ts).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}</strong>最後報到</div>
+          <div class="peak-item"><strong>${peakSlot?peakSlot[0]:'—'}</strong>高峰時段</div>
+          <div class="peak-item"><strong>${peakSlot?peakSlot[1]:0} 人</strong>高峰人數</div>`;
+      }
+      if (noTime.length) {
+        peakHTML += `<div class="peak-item" style="border-color:rgba(201,169,110,0.3)"><strong style="color:var(--muted);font-size:1rem">${noTime.length}</strong>無時間記錄</div>`;
+      }
+      peakRow.innerHTML = peakHTML;
     }
   }
 
-  // Timeline bar chart (15-min slots)
+  // ── Bar chart ──
   const chartEl = document.getElementById('timelineChart');
-  const axisEl = document.getElementById('timelineAxis');
-  if (chartEl && allCheckins.length) {
-    const minTs = allCheckins[0].ts;
-    const maxTs = allCheckins[allCheckins.length-1].ts;
-    const spanMs = Math.max(maxTs - minTs, 60*60*1000); // at least 1hr span
-    // 15-min slots
-    const slotMs = 15*60*1000;
-    const startSlot = Math.floor(minTs/slotMs)*slotMs;
-    const endSlot = Math.ceil((maxTs+1)/slotMs)*slotMs;
-    const slots = [];
-    for (let s = startSlot; s < endSlot; s += slotMs) slots.push({start:s, count:0});
-    allCheckins.forEach(c => {
-      const idx = Math.floor((c.ts - startSlot)/slotMs);
-      if (slots[idx]) slots[idx].count++;
-    });
-    const maxCount = Math.max(...slots.map(s=>s.count), 1);
-    const colors = ['#c9a96e','#a07840','#7c5c3a','#4a7c59','#2c5f8a'];
-    chartEl.innerHTML = `<div class="timeline-bar">${slots.map(s => {
-      const pct = (s.count/maxCount*100).toFixed(1);
-      const d = new Date(s.start);
-      const label = s.count > 0 ? s.count : '';
-      const colorIdx = Math.min(Math.floor(s.count/maxCount*4), 4);
-      return `<div class="timeline-slot" style="width:${100/slots.length}%;background:${s.count?colors[colorIdx]:'transparent'};opacity:${s.count?0.7+s.count/maxCount*0.3:1}" title="${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')} — ${s.count}人">${label}</div>`;
-    }).join('')}</div>`;
-    // Axis labels (every 30min)
-    const axisSlots = slots.filter((_,i) => i % 2 === 0);
-    axisEl.innerHTML = axisSlots.map(s => {
-      const d = new Date(s.start);
-      return `<span>${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}</span>`;
-    }).join('');
-  } else if (chartEl) {
-    chartEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:0.82rem">尚無報到時間記錄（需重新報到才會記錄時間）</div>';
+  const axisEl  = document.getElementById('timelineAxis');
+  if (chartEl) {
+    if (withTime.length) {
+      const slotMs = 15*60*1000;
+      const startSlot = Math.floor(withTime[0].ts/slotMs)*slotMs;
+      const endSlot   = Math.ceil((withTime[withTime.length-1].ts+1)/slotMs)*slotMs;
+      const slots = [];
+      for (let s = startSlot; s < endSlot; s += slotMs) slots.push({start:s, count:0});
+      withTime.forEach(c => {
+        const idx = Math.floor((c.ts - startSlot)/slotMs);
+        if (slots[idx]) slots[idx].count++;
+      });
+      const maxCount = Math.max(...slots.map(s=>s.count), 1);
+      const colors = ['#e8d5a3','#c9a96e','#a07840','#7c5c3a','#4a7c59'];
+      chartEl.innerHTML = `<div class="timeline-bar">${slots.map(s => {
+        const d = new Date(s.start);
+        const label = s.count > 0 ? s.count : '';
+        const colorIdx = s.count ? Math.min(Math.floor(s.count/maxCount*4)+1, 4) : 0;
+        return `<div class="timeline-slot"
+          style="width:${100/slots.length}%;background:${s.count?colors[colorIdx]:'#f0ebe3'}"
+          title="${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')} — ${s.count}人">${label}</div>`;
+      }).join('')}</div>`;
+      if (axisEl) {
+        const step = slots.length > 8 ? 2 : 1;
+        axisEl.innerHTML = slots.filter((_,i)=>i%step===0).map(s=>{
+          const d=new Date(s.start);
+          return `<span>${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}</span>`;
+        }).join('');
+      }
+    } else {
+      chartEl.innerHTML = `<div style="text-align:center;padding:28px 20px;color:var(--muted);font-size:0.86rem;border:1.5px dashed var(--border);border-radius:6px">
+        <div style="font-size:1.8rem;margin-bottom:8px;opacity:0.4">⏱</div>
+        ${totalChecked > 0
+          ? `已有 <strong>${totalChecked}</strong> 人報到，但這些記錄是在時間記錄功能加入前完成的，<br>沒有時間戳記。<br><span style="font-size:0.78rem;margin-top:6px;display:block">之後新的報到將會自動記錄時間。</span>`
+          : '尚無任何報到資料'}
+      </div>`;
+      if (axisEl) axisEl.innerHTML = '';
+    }
   }
 
-  // Detail table
+  // ── Detail table ──
   const tbody = document.getElementById('timelineBody');
   if (tbody) {
-    tbody.innerHTML = allCheckins.length
-      ? allCheckins.map(c => `<tr>
-          <td><strong>${new Date(c.ts).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</strong></td>
-          <td>${c.name}</td>
-          <td><b>${c.num}</b>${c.tname?'・'+c.tname:''}</td>
-          <td>${c.relation ? `<span class="badge badge-relation">${c.relation}</span>` : '—'}</td>
-        </tr>`).join('')
-      : '<tr><td colspan="4" style="text-align:center;padding:28px;color:var(--muted)">尚無報到記錄</td></tr>';
+    const withTimeRows = withTime.map(c => `<tr>
+      <td><strong>${new Date(c.ts).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</strong></td>
+      <td>${c.name}</td>
+      <td><b>${c.num}</b>${c.tname?'・'+c.tname:''}</td>
+      <td>${c.relation?`<span class="badge badge-relation">${c.relation}</span>`:'—'}</td>
+    </tr>`).join('');
+
+    const noTimeRows = noTime.map(c => `<tr style="opacity:0.6">
+      <td style="color:var(--muted);font-size:0.78rem">—（無時間記錄）</td>
+      <td>${c.name}</td>
+      <td><b>${c.num}</b>${c.tname?'・'+c.tname:''}</td>
+      <td>${c.relation?`<span class="badge badge-relation">${c.relation}</span>`:'—'}</td>
+    </tr>`).join('');
+
+    if (!totalChecked) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:28px;color:var(--muted)">尚無報到資料</td></tr>';
+    } else {
+      tbody.innerHTML = withTimeRows + (noTimeRows
+        ? `<tr><td colspan="4" style="padding:8px 13px;background:var(--warm);font-size:0.74rem;color:var(--muted);letter-spacing:0.1em">以下為無時間記錄的舊有報到資料</td></tr>` + noTimeRows
+        : '');
+    }
   }
 }
 
@@ -1844,6 +2005,13 @@ function addActivity(type, msg) {
   activityLog.push({type, msg, time: new Date().toLocaleTimeString('zh-TW')});
   if (activityLog.length > 30) activityLog.shift();
 }
+
+// Close guest search dropdowns when clicking outside
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('[id^="gi-"]') && !e.target.closest('[id^="gs-drop-"]')) {
+    document.querySelectorAll('[id^="gs-drop-"]').forEach(el => { el.style.display='none'; el.innerHTML=''; });
+  }
+});
 
 // ─────────────────────────────────────────
 // TOAST
