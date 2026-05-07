@@ -451,7 +451,10 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
           </select>
           <button class="btn-sm btn-outline" style="font-size:0.76rem" onclick="clearMemberFilter()">✕ 清除篩選</button>
         </div>
-        <button class="btn-sm btn-outline" onclick="exportMembersCSV()">匯出 CSV</button>
+        <div style="display:flex;gap:6px">
+          <button class="btn-sm btn-outline" onclick="exportMembersCSV()" title="匯出篩選後的資料為 CSV">⬇ CSV</button>
+          <button class="btn-sm btn-success" onclick="exportMembersXLSX()" title="匯出篩選後的資料為 Excel">⬇ Excel</button>
+        </div>
       </div>
       <div id="memberFilterBar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;min-height:22px;"></div>
       <div style="background:white;border:1px solid var(--border);border-radius:4px;overflow:auto">
@@ -1287,12 +1290,45 @@ window.clearMemberFilter = () => {
   renderMembers();
 };
 
+// ── 取得目前篩選後的資料 ──
+function getFilteredMembers() {
+  const q = (document.getElementById('memberSearch')?.value || '').toLowerCase().trim();
+  const filterRel = document.getElementById('memberFilterRel')?.value || '';
+  const filterSpecial = document.getElementById('memberFilterSpecial')?.value || '';
+  return membersData.filter(m => {
+    if (q && !m.name.toLowerCase().includes(q)) return false;
+    if (filterRel && m.relation !== filterRel) return false;
+    if (filterSpecial === 'veg' && !(m.veg > 0)) return false;
+    if (filterSpecial === 'child' && !(m.chair > 0)) return false;
+    return true;
+  });
+}
+
 window.exportMembersCSV = () => {
-  if (!membersData.length) { toast('目前無人員資料'); return; }
-  const rows = membersData.map(m => `${m.name},${m.relation},${m.attend},${m.chair || 0},${m.veg || 0}`);
-  const blob = new Blob(['\uFEFF姓名,與新人關係,出席人數,兒童座椅,素食人數\n' + rows.join('\n')], {type: 'text/csv;charset=utf-8;'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '婚宴人員名單.csv'; a.click();
-  toast('✓ CSV 已下載');
+  const rows = getFilteredMembers();
+  if (!rows.length) { toast('目前無資料可匯出'); return; }
+  const isFiltered = rows.length < membersData.length;
+  const lines = rows.map(m => `${m.name},${m.relation},${m.attend},${m.chair || 0},${m.veg || 0}`);
+  const blob = new Blob(['\uFEFF姓名,與新人關係,出席人數,兒童座椅,素食人數\n' + lines.join('\n')], {type: 'text/csv;charset=utf-8;'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = isFiltered ? '婚宴人員名單（篩選）.csv' : '婚宴人員名單.csv';
+  a.click();
+  toast(`✓ CSV 已下載（${rows.length} 筆）`);
+};
+
+window.exportMembersXLSX = () => {
+  const rows = getFilteredMembers();
+  if (!rows.length) { toast('目前無資料可匯出'); return; }
+  const isFiltered = rows.length < membersData.length;
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const headers = ['姓名','與新人關係','出席人數','兒童座椅','素食人數'];
+  const dataRows = rows.map(m => [m.name, m.relation, m.attend, m.chair||0, m.veg||0]);
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<?mso-application progid="Excel.Sheet"?>\n<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n<Styles><Style ss:ID="H"><Font ss:Bold="1"/><Interior ss:Color="#C9A96E" ss:Pattern="Solid"/></Style><Style ss:ID="N"><NumberFormat ss:Format="@"/></Style></Styles>\n<Worksheet ss:Name="人員名單"><Table>\n<Row>${headers.map(h=>`<Cell ss:StyleID="H"><Data ss:Type="String">${esc(h)}</Data></Cell>`).join('')}</Row>\n${dataRows.map(r=>`<Row>${r.map((v,i)=>`<Cell ss:StyleID="N"><Data ss:Type="${i>=2?'Number':'String'}">${esc(v)}</Data></Cell>`).join('')}</Row>`).join('\n')}\n</Table></Worksheet></Workbook>`;
+  const blob = new Blob([xml], {type: 'application/vnd.ms-excel;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = isFiltered ? '婚宴人員名單（篩選）.xls' : '婚宴人員名單.xls';
+  a.click();
+  toast(`✓ Excel 已下載（${rows.length} 筆）`);
 };
 
 // ─────────────────────────────────────────
