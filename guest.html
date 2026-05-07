@@ -273,12 +273,19 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 let localData = [];
+let membersData = [];
 let focusIndex = -1;
 
 // Listen to tables data
 onValue(ref(db, 'tables'), snapshot => {
   const raw = snapshot.val();
   localData = raw ? Object.values(raw).sort((a, b) => a.num - b.num) : [];
+});
+
+// Listen to members data (for unassigned seat lookup)
+onValue(ref(db, 'members'), snapshot => {
+  const raw = snapshot.val();
+  membersData = raw ? Object.values(raw) : [];
 });
 
 // ─── PAGE NAVIGATION ───
@@ -299,12 +306,21 @@ window.showHome = () => {
 
 // ─── AUTOCOMPLETE ───
 function getAllGuests() {
+  // From tables (assigned seats)
   const guests = [];
+  const assignedNames = new Set();
   localData.forEach(t => {
     if (!t.guests) return;
     Object.entries(t.guests).forEach(([k, g]) => {
-      guests.push({name: g.name, relation: g.relation, tid: t.id, gk: k, num: t.num, tname: t.name || ''});
+      guests.push({name: g.name, relation: g.relation, tid: t.id, gk: k, num: t.num, tname: t.name || '', assigned: true});
+      assignedNames.add(g.name);
     });
+  });
+  // From members (unassigned)
+  membersData.forEach(m => {
+    if (!assignedNames.has(m.name)) {
+      guests.push({name: m.name, relation: m.relation, assigned: false});
+    }
   });
   return guests;
 }
@@ -313,10 +329,8 @@ window.onSearchInput = () => {
   const q = document.getElementById('guestSearch').value.trim();
   if (!q) { closeSuggest(); return; }
 
-  // Find matches: same surname (first char) or name contains query
   const all = getAllGuests();
   const matches = all.filter(g => g.name.includes(q));
-  // Also include same-surname matches even if query is just one char
   const surnameMatches = q.length === 1 ? all.filter(g => g.name[0] === q && !matches.includes(g)) : [];
   const combined = [...matches, ...surnameMatches].slice(0, 8);
 
@@ -329,7 +343,7 @@ window.onSearchInput = () => {
       <div class="suggest-avatar">${g.name[0]}</div>
       <div>
         <div class="suggest-name">${highlightMatch(g.name, q)}</div>
-        <div class="suggest-meta">第 ${g.num} 桌${g.tname ? '・' + g.tname : ''}${g.relation ? '・' + g.relation : ''}</div>
+        <div class="suggest-meta">${g.assigned ? `第 ${g.num} 桌${g.tname ? '・' + g.tname : ''}` : '⏳ 尚未安排座位'}${g.relation ? '・' + g.relation : ''}</div>
       </div>
     </div>`
   ).join('');
@@ -410,11 +424,46 @@ window.searchGuest = () => {
 
   const el = document.getElementById('guestResult');
 
+  // Not in tables → check members list
   if (!found) {
+    const member = membersData.find(m => m.name === q || m.name.includes(q) || q.includes(m.name));
+    if (member) {
+      const relationHTML = member.relation ? `<div class="relation-badge">🎀 ${member.relation}</div>` : '';
+      const vegBadge = member.veg > 0 ? '<span class="special-tag veg">🥗 素食餐點需求</span>' : '';
+      const childBadge = member.chair > 0 ? '<span class="special-tag child">👶 兒童座椅需求</span>' : '';
+      const specialHTML = (member.veg > 0 || member.chair > 0) ? `<div class="special-row">${vegBadge}${childBadge}</div>` : '';
+      el.innerHTML = `<div class="result-card">
+        <div class="result-header">
+          <div class="result-avatar">${member.name[0]}</div>
+          <div>
+            <div class="result-name">${member.name} 您好</div>
+            <div class="result-tag">歡迎蒞臨，恭喜新人</div>
+            ${relationHTML}
+          </div>
+        </div>
+        <div class="result-body">
+          <div class="table-number">
+            <div class="table-label" style="color:var(--gold-dark)">⏳ 座位安排中</div>
+            <div style="font-size:1.1rem;color:var(--muted);margin:14px 0 6px;letter-spacing:0.05em">您的座位尚未完成安排</div>
+            <div style="font-size:0.82rem;color:var(--muted)">請稍候或洽詢現場工作人員</div>
+          </div>
+          ${specialHTML}
+          <div class="result-info">
+            <div class="info-item"><div class="info-lbl">出席人數</div><div class="info-val">${member.attend || 1} 人</div></div>
+            <div class="info-item"><div class="info-lbl">座位狀態</div><div class="info-val" style="color:var(--gold-dark)">待安排</div></div>
+            ${member.relation ? `<div class="info-item"><div class="info-lbl">與新人關係</div><div class="info-val">${member.relation}</div></div>` : '<div class="info-item"></div>'}
+          </div>
+          <div style="background:var(--warm);border-radius:3px;padding:14px;text-align:center;font-size:0.85rem;color:var(--muted);border:1px dashed var(--border)">
+            您已確認在賓客名單中，請稍候工作人員為您引導入座
+          </div>
+        </div>
+      </div>`;
+      return;
+    }
     el.innerHTML = `<div class="not-found">
       <div class="nf-icon">🔍</div>
       <h3>找不到此來賓</h3>
-      <p>查無「${q}」的桌位資料，<br>請確認姓名是否正確，或洽詢工作人員。</p>
+      <p>查無「${q}」的資料，<br>請確認姓名是否正確，或洽詢工作人員。</p>
     </div>`;
     return;
   }
