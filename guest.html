@@ -330,23 +330,33 @@ window.onSearchInput = () => {
   if (!q) { closeSuggest(); return; }
 
   const all = getAllGuests();
-  const matches = all.filter(g => g.name.includes(q));
-  const surnameMatches = q.length === 1 ? all.filter(g => g.name[0] === q && !matches.includes(g)) : [];
-  const combined = [...matches, ...surnameMatches].slice(0, 8);
+
+  // 1字：同姓氏全列出；多字：名字包含搜尋字串
+  let combined;
+  if (q.length === 1) {
+    combined = all.filter(g => g.name[0] === q);
+  } else {
+    combined = all.filter(g => g.name.includes(q));
+  }
+  combined = combined.slice(0, 10);
 
   if (!combined.length) { closeSuggest(); return; }
 
   const list = document.getElementById('suggestList');
   focusIndex = -1;
-  list.innerHTML = combined.map((g, i) =>
-    `<div class="suggest-item" data-idx="${i}" onclick="selectSuggestion('${g.name}')">
+  list.innerHTML = combined.map((g, i) => {
+    // Escape single quotes in name for onclick
+    const safeName = g.name.replace(/'/g, "\'");
+    return `<div class="suggest-item" data-idx="${i}" onclick="selectSuggestion('${safeName}')">
       <div class="suggest-avatar">${g.name[0]}</div>
       <div>
         <div class="suggest-name">${highlightMatch(g.name, q)}</div>
-        <div class="suggest-meta">${g.assigned ? `第 ${g.num} 桌${g.tname ? '・' + g.tname : ''}` : '⏳ 尚未安排座位'}${g.relation ? '・' + g.relation : ''}</div>
+        <div class="suggest-meta">${g.assigned
+          ? `第 ${g.num} 桌${g.tname ? '・' + g.tname : ''}`
+          : '<span style="color:#c0845a">⏳ 尚未安排座位</span>'}${g.relation ? '・' + g.relation : ''}</div>
       </div>
-    </div>`
-  ).join('');
+    </div>`;
+  }).join('');
   list.classList.add('open');
 };
 
