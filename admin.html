@@ -495,6 +495,58 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
   </div>
 </div>
 
+<!-- Duplicate Member Modal -->
+<div class="modal-bg" id="dupModalBg" onclick="if(event.target===this)closeDupModal()">
+  <div class="modal" style="max-width:480px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+      <span style="font-size:1.6rem">⚠️</span>
+      <div>
+        <h3 style="margin-bottom:2px">發現重複姓名</h3>
+        <div style="font-size:0.8rem;color:var(--muted)">「<strong id="dup-name"></strong>」已存在於名單中</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+      <!-- Existing -->
+      <div style="background:var(--warm);border-radius:4px;padding:14px;border:1.5px solid var(--border)">
+        <div style="font-size:0.72rem;color:var(--muted);letter-spacing:0.15em;margin-bottom:10px">📋 現有資料</div>
+        <div style="font-size:0.82rem;display:flex;flex-direction:column;gap:6px">
+          <div><span style="color:var(--muted);font-size:0.72rem">關係</span><br><strong id="dup-existing-rel"></strong></div>
+          <div><span style="color:var(--muted);font-size:0.72rem">出席人數</span><br><strong id="dup-existing-attend"></strong> 人</div>
+          <div><span style="color:var(--muted);font-size:0.72rem">兒童座椅</span><br><strong id="dup-existing-chair"></strong></div>
+          <div><span style="color:var(--muted);font-size:0.72rem">素食人數</span><br><strong id="dup-existing-veg"></strong></div>
+        </div>
+      </div>
+      <!-- New -->
+      <div style="background:rgba(201,169,110,0.08);border-radius:4px;padding:14px;border:1.5px solid rgba(201,169,110,0.4)">
+        <div style="font-size:0.72rem;color:var(--gold-dark);letter-spacing:0.15em;margin-bottom:10px">✏️ 新輸入資料</div>
+        <div style="font-size:0.82rem;display:flex;flex-direction:column;gap:6px">
+          <div><span style="color:var(--muted);font-size:0.72rem">關係</span><br><strong id="dup-new-rel"></strong></div>
+          <div><span style="color:var(--muted);font-size:0.72rem">出席人數</span><br><strong id="dup-new-attend"></strong> 人</div>
+          <div><span style="color:var(--muted);font-size:0.72rem">兒童座椅</span><br><strong id="dup-new-chair"></strong></div>
+          <div><span style="color:var(--muted);font-size:0.72rem">素食人數</span><br><strong id="dup-new-veg"></strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:0.82rem;color:var(--muted);margin-bottom:16px;padding:10px 14px;background:#fff8f0;border-radius:3px;border-left:3px solid var(--gold)">
+      請選擇處理方式：
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn-sm btn-gold" style="justify-content:center;padding:12px" onclick="dupOverwrite()">
+        🔄 覆蓋現有資料（以新輸入取代）
+      </button>
+      <button class="btn-sm btn-info" style="justify-content:center;padding:12px" onclick="dupAddNew()">
+        ➕ 仍要新增（保留兩筆同名資料）
+      </button>
+      <button class="btn-sm btn-outline" style="justify-content:center;padding:11px" onclick="closeDupModal()">
+        ✕ 取消，返回修改
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Edit Member Modal -->
 <div class="modal-bg" id="editModalBg" onclick="if(event.target===this)closeEditModal()">
   <div class="modal">
@@ -1169,10 +1221,63 @@ window.addMember = async () => {
   const veg = parseInt(document.getElementById('mb-veg').value) || 0;
   if (!name) { toast('請輸入姓名'); return; }
   if (!relation) { toast('請選擇與新人關係'); return; }
+
+  // Check for duplicate name
+  const existing = membersData.find(m => m.name === name);
+  if (existing) {
+    showDuplicateModal(existing, {name, relation, attend, chair, veg});
+    return;
+  }
+
   const id = 'm' + Date.now() + Math.random().toString(36).slice(2, 5);
   await set(ref(db, 'members/' + id), {id, name, relation, attend, chair, veg});
   clearMemberForm();
   toast(`✓ 已新增：${name}`);
+};
+
+// ── 重複名稱處理 ──
+let _pendingDupData = null;
+let _existingDupMember = null;
+
+function showDuplicateModal(existing, newData) {
+  _existingDupMember = existing;
+  _pendingDupData = newData;
+
+  document.getElementById('dup-name').textContent = newData.name;
+  document.getElementById('dup-existing-rel').textContent = existing.relation;
+  document.getElementById('dup-existing-attend').textContent = existing.attend;
+  document.getElementById('dup-existing-chair').textContent = existing.chair || 0;
+  document.getElementById('dup-existing-veg').textContent = existing.veg || 0;
+  document.getElementById('dup-new-rel').textContent = newData.relation;
+  document.getElementById('dup-new-attend').textContent = newData.attend;
+  document.getElementById('dup-new-chair').textContent = newData.chair || 0;
+  document.getElementById('dup-new-veg').textContent = newData.veg || 0;
+  document.getElementById('dupModalBg').classList.add('show');
+}
+
+window.closeDupModal = () => {
+  document.getElementById('dupModalBg').classList.remove('show');
+  _pendingDupData = null;
+  _existingDupMember = null;
+};
+
+window.dupOverwrite = async () => {
+  if (!_existingDupMember || !_pendingDupData) return;
+  const {name, relation, attend, chair, veg} = _pendingDupData;
+  await update(ref(db, 'members/' + _existingDupMember.id), {name, relation, attend, chair, veg});
+  closeDupModal();
+  clearMemberForm();
+  toast(`✓ 已覆蓋更新：${name}`);
+};
+
+window.dupAddNew = async () => {
+  if (!_pendingDupData) return;
+  const {name, relation, attend, chair, veg} = _pendingDupData;
+  const id = 'm' + Date.now() + Math.random().toString(36).slice(2, 5);
+  await set(ref(db, 'members/' + id), {id, name, relation, attend, chair, veg});
+  closeDupModal();
+  clearMemberForm();
+  toast(`✓ 已新增（同名）：${name}`);
 };
 
 window.clearMemberForm = () => {
