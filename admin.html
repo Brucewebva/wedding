@@ -1326,7 +1326,7 @@ window.exportMembersXLSX = () => {
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<?mso-application progid="Excel.Sheet"?>\n<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n<Styles><Style ss:ID="H"><Font ss:Bold="1"/><Interior ss:Color="#C9A96E" ss:Pattern="Solid"/></Style><Style ss:ID="N"><NumberFormat ss:Format="@"/></Style></Styles>\n<Worksheet ss:Name="人員名單"><Table>\n<Row>${headers.map(h=>`<Cell ss:StyleID="H"><Data ss:Type="String">${esc(h)}</Data></Cell>`).join('')}</Row>\n${dataRows.map(r=>`<Row>${r.map((v,i)=>`<Cell ss:StyleID="N"><Data ss:Type="${i>=2?'Number':'String'}">${esc(v)}</Data></Cell>`).join('')}</Row>`).join('\n')}\n</Table></Worksheet></Workbook>`;
   const blob = new Blob([xml], {type: 'application/vnd.ms-excel;charset=utf-8'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = isFiltered ? '婚宴人員名單（篩選）.xls' : '婚宴人員名單.xls';
+  a.download = isFiltered ? '婚宴人員名單（篩選）.xlsx' : '婚宴人員名單.xlsx';
   a.click();
   toast(`✓ Excel 已下載（${rows.length} 筆）`);
 };
