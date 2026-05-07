@@ -1643,7 +1643,7 @@ window.exportMembersXLSX = () => {
 // ─────────────────────────────────────────
 // TIMELINE
 // ─────────────────────────────────────────
-function renderTimeline() {
+window.renderTimeline = function renderTimeline() {
   // 分兩組：有時間戳記 / 已報到但無時間（舊資料）
   const withTime = [];
   const noTime = [];
@@ -1764,7 +1764,7 @@ function renderTimeline() {
 // ─────────────────────────────────────────
 // FULL REPORT
 // ─────────────────────────────────────────
-function renderReport() {
+window.renderReport = function renderReport() {
   const allGuests = [];
   let totalTables = localData.length;
   let totalGuests = 0, checkedCount = 0, totalVeg = 0, totalChild = 0;
