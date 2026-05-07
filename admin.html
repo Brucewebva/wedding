@@ -428,9 +428,14 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
         <input class="search-bar" id="checkinSearch" placeholder="搜尋來賓姓名…" oninput="renderCheckin()" style="flex:1;max-width:none"/>
         <select class="form-select" id="filterRelation" onchange="renderCheckin()" style="font-size:0.8rem;padding:8px 11px;">
           <option value="">全部關係</option>
-          <option>新郎家屬</option><option>新郎親戚</option><option>新郎同學</option><option>新郎同事</option><option>新郎朋友</option>
-          <option>新娘家屬</option><option>新娘親戚</option><option>新娘同學</option><option>新娘同事</option><option>新娘朋友</option>
-          <option>共同朋友</option><option>其他</option>
+          <option>新郎父親朋友</option>
+          <option>新郎母親朋友</option>
+          <option>新郎親友</option>
+          <option>新郎同事</option>
+          <option>新郎同學</option>
+          <option>新娘同事</option>
+          <option>新娘同學</option>
+          <option>新娘親友</option>
         </select>
         <select class="form-select" id="filterSpecial" onchange="renderCheckin()" style="font-size:0.8rem;padding:8px 11px;">
           <option value="">全部類型</option>
@@ -479,9 +484,14 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
           <input class="search-bar" id="memberSearch" placeholder="搜尋姓名…" oninput="renderMembers()" style="max-width:160px"/>
           <select class="form-select" id="memberFilterRel" onchange="renderMembers()" style="font-size:0.8rem;padding:8px 11px;">
             <option value="">全部關係</option>
-            <option>新郎父親朋友</option><option>新郎母親朋友</option><option>新郎親友</option>
-            <option>新郎同事</option><option>新郎同學</option>
-            <option>新娘同事</option><option>新娘同學</option><option>新娘親友</option>
+            <option>新郎父親朋友</option>
+            <option>新郎母親朋友</option>
+            <option>新郎親友</option>
+            <option>新郎同事</option>
+            <option>新郎同學</option>
+            <option>新娘同事</option>
+            <option>新娘同學</option>
+            <option>新娘親友</option>
           </select>
           <select class="form-select" id="memberFilterSpecial" onchange="renderMembers()" style="font-size:0.8rem;padding:8px 11px;">
             <option value="">全部需求</option>
@@ -586,9 +596,14 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
         <label>與新人關係</label>
         <select class="form-select" id="eg-relation">
           <option value="">— 關係 —</option>
-          <optgroup label="新郎側"><option>新郎家屬</option><option>新郎親戚</option><option>新郎同學</option><option>新郎同事</option><option>新郎朋友</option></optgroup>
-          <optgroup label="新娘側"><option>新娘家屬</option><option>新娘親戚</option><option>新娘同學</option><option>新娘同事</option><option>新娘朋友</option></optgroup>
-          <option>共同朋友</option><option>其他</option>
+          <option>新郎父親朋友</option>
+          <option>新郎母親朋友</option>
+          <option>新郎親友</option>
+          <option>新郎同事</option>
+          <option>新郎同學</option>
+          <option>新娘同事</option>
+          <option>新娘同學</option>
+          <option>新娘親友</option>
         </select>
       </div>
     </div>
