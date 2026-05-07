@@ -437,7 +437,10 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
           <option value="veg">素食</option>
           <option value="child">兒童座椅</option>
         </select>
+        <button class="btn-sm btn-outline" style="font-size:0.76rem" onclick="clearCheckinFilter()">✕ 清除</button>
       </div>
+      <!-- Filter bar -->
+      <div id="checkinFilterBar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;min-height:22px;"></div>
       <div style="background:white;border:1px solid var(--border);border-radius:4px;overflow:auto">
         <table class="guest-list-table">
           <thead><tr><th>姓名</th><th>與新人關係</th><th style="text-align:center">出席人數</th><th>特殊需求</th><th>桌號</th><th>桌名</th><th>報到狀態</th><th>操作</th></tr></thead>
@@ -1206,7 +1209,7 @@ window.removeGuest = async (tid, gk) => {
 // ─────────────────────────────────────────
 // CHECK-IN
 // ─────────────────────────────────────────
-function renderCheckin() {
+window.renderCheckin = function renderCheckin() {
   const q = (document.getElementById('checkinSearch')?.value || '').toLowerCase();
   const filterRel = document.getElementById('filterRelation')?.value || '';
   const filterSpecial = document.getElementById('filterSpecial')?.value || '';
@@ -1223,6 +1226,25 @@ function renderCheckin() {
     });
   });
   rows.sort((a, b) => a.num - b.num);
+
+  // Filter bar
+  const bar = document.getElementById('checkinFilterBar');
+  if (bar) {
+    const totalAttend = rows.reduce((s,r) => s+r.attend, 0);
+    const checkedAttend = rows.filter(r=>r.checked).reduce((s,r) => s+r.attend, 0);
+    const tags = [];
+    if (filterRel) tags.push(`關係：${filterRel}`);
+    if (filterSpecial === 'veg') tags.push('素食');
+    if (filterSpecial === 'child') tags.push('兒童座椅');
+    if (q) tags.push(`搜尋：${q}`);
+    bar.innerHTML = tags.length
+      ? `<span style="font-size:0.76rem;color:var(--muted)">篩選中：</span>`
+        + tags.map(t=>`<span style="background:rgba(201,169,110,0.15);color:var(--gold-dark);font-size:0.74rem;padding:3px 10px;border-radius:20px;border:1px solid rgba(201,169,110,0.3)">${t}</span>`).join('')
+        + `<span style="font-size:0.74rem;color:var(--muted)">共 ${rows.length} 筆</span>`
+        + `<span style="background:var(--success-bg);color:var(--success);font-size:0.74rem;padding:3px 10px;border-radius:20px;border:1px solid rgba(74,124,89,0.25)">出席 ${totalAttend} 人・已報到 ${checkedAttend} 人</span>`
+      : `<span style="font-size:0.76rem;color:var(--muted)">全部 ${rows.length} 筆・出席 ${totalAttend} 人・已報到 ${checkedAttend} 人</span>`;
+  }
+
   document.getElementById('checkinBody').innerHTML = rows.length
     ? rows.map(r => `<tr>
         <td><strong>${r.name}</strong></td>
@@ -1240,6 +1262,16 @@ function renderCheckin() {
       </tr>`).join('')
     : '<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted)">無資料</td></tr>';
 }
+
+window.clearCheckinFilter = () => {
+  const s = document.getElementById('checkinSearch');
+  const r = document.getElementById('filterRelation');
+  const p = document.getElementById('filterSpecial');
+  if (s) s.value = '';
+  if (r) r.value = '';
+  if (p) p.value = '';
+  renderCheckin();
+};
 
 window.toggleCheckin = async (tid, gk, val) => {
   const now = val ? Date.now() : null;
