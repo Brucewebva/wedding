@@ -10,142 +10,261 @@
   --gold: #c9a96e; --gold-light: #e8d5a3; --gold-dark: #8b6914;
   --cream: #fdf8f0; --warm: #f5ede0; --deep: #1a1208; --brown: #3d2b0e;
   --text: #2c1f0a; --muted: #8a7055; --border: rgba(201,169,110,0.3);
-  --success: #4a7c59; --danger: #8b2020;
+  --success: #4a7c59; --success-bg: #e8f5ec; --danger: #8b2020; --danger-bg: #fff0f0;
+  --veg: #3a7d44; --veg-bg: #e6f4ea;
+  --child: #7c5c3a; --child-bg: #fdf0e6;
+  --info: #2c5f8a; --info-bg: #e8f0f8;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: 'Noto Serif TC', serif; background: #f8f4ee; color: var(--text); min-height: 100vh; }
+body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--text); min-height: 100vh; }
 
 /* LOGIN */
 #loginScreen { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,#1a1208,#2e1e08); }
 .login-card { background:rgba(253,248,240,0.04); border:1px solid rgba(201,169,110,0.2); border-radius:4px; padding:48px 40px; width:100%; max-width:360px; text-align:center; }
 .login-card h2 { font-family:'Cormorant Garamond',serif; font-size:1.8rem; color:var(--gold-light); font-weight:300; margin-bottom:6px; }
 .login-card p { font-size:0.8rem; color:rgba(201,169,110,0.5); letter-spacing:0.2em; margin-bottom:32px; }
-.login-input { width:100%; padding:12px 16px; margin-bottom:14px; background:rgba(255,255,255,0.05); border:1px solid rgba(201,169,110,0.25); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:1rem; color:var(--gold-light); outline:none; }
-.login-input:focus { border-color:var(--gold); }
-.login-input::placeholder { color:rgba(201,169,110,0.3); }
-.login-btn { width:100%; padding:13px; background:var(--gold); border:none; border-radius:2px; font-family:'Noto Serif TC',serif; font-size:1rem; font-weight:500; color:var(--deep); cursor:pointer; letter-spacing:0.1em; }
+.login-btn { width:100%; padding:13px; background:var(--gold); border:none; border-radius:2px; font-family:'Noto Serif TC',serif; font-size:1rem; font-weight:500; color:var(--deep); cursor:pointer; letter-spacing:0.1em; display:flex; align-items:center; justify-content:center; gap:10px; }
 .login-btn:hover { background:var(--gold-light); }
 .login-err { font-size:0.82rem; color:#e07070; margin-top:10px; min-height:20px; }
+#loginLoading { color:rgba(201,169,110,0.5);font-size:0.85rem;margin-bottom:20px;min-height:24px;letter-spacing:0.1em; }
 
 /* ADMIN PANEL */
 #adminPanel { display:none; }
-.admin-nav { background:var(--deep); padding:0 24px; display:flex; align-items:center; border-bottom:1px solid rgba(201,169,110,0.2); overflow-x:auto; }
-.admin-nav-title { font-family:'Cormorant Garamond',serif; font-size:1.2rem; color:var(--gold); white-space:nowrap; padding:18px 0; margin-right:32px; letter-spacing:0.1em; }
-.nav-tab { padding:18px 20px; font-size:0.85rem; color:rgba(201,169,110,0.5); cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s; white-space:nowrap; letter-spacing:0.1em; }
+.admin-nav { background:var(--deep); padding:0 20px; display:flex; align-items:center; border-bottom:1px solid rgba(201,169,110,0.2); overflow-x:auto; gap:0; min-height:56px; }
+.admin-nav-title { font-family:'Cormorant Garamond',serif; font-size:1.15rem; color:var(--gold); white-space:nowrap; padding:16px 0; margin-right:24px; letter-spacing:0.1em; flex-shrink:0; }
+.nav-tab { padding:16px 16px; font-size:0.82rem; color:rgba(201,169,110,0.5); cursor:pointer; border-bottom:2px solid transparent; transition:all 0.2s; white-space:nowrap; letter-spacing:0.08em; flex-shrink:0; }
 .nav-tab:hover { color:var(--gold); }
 .nav-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
-.nav-right { margin-left:auto; display:flex; align-items:center; gap:10px; flex-shrink:0; }
-.nav-badge { font-size:0.75rem; background:rgba(201,169,110,0.15); color:var(--gold); padding:4px 10px; border-radius:20px; border:1px solid rgba(201,169,110,0.3); white-space:nowrap; }
-.admin-content { padding:28px 24px; max-width:1100px; margin:0 auto; }
-.stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:28px; }
-.stat-card { background:white; border:1px solid var(--border); border-radius:4px; padding:20px; text-align:center; position:relative; overflow:hidden; transition:transform 0.2s; }
-.stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--gold),var(--gold-light)); }
-.stat-card:hover { transform:translateY(-2px); }
-.stat-num { font-family:'Cormorant Garamond',serif; font-size:2.4rem; font-weight:600; color:var(--gold); line-height:1; }
-.stat-lbl { font-size:0.78rem; color:var(--muted); letter-spacing:0.2em; margin-top:6px; }
+.nav-right { margin-left:auto; display:flex; align-items:center; gap:8px; flex-shrink:0; padding-left:12px; }
+.nav-badge { font-size:0.72rem; background:rgba(201,169,110,0.12); color:var(--gold); padding:4px 10px; border-radius:20px; border:1px solid rgba(201,169,110,0.3); white-space:nowrap; }
+.admin-content { padding:24px 20px; max-width:1200px; margin:0 auto; }
+
+/* DASHBOARD STATS */
+.dashboard-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:20px; }
+.dash-card { background:white; border:1px solid var(--border); border-radius:6px; padding:18px 16px; text-align:center; position:relative; overflow:hidden; transition:transform 0.2s,box-shadow 0.2s; cursor:default; }
+.dash-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.dash-card.dc-total::before { background:linear-gradient(90deg,var(--gold),var(--gold-light)); }
+.dash-card.dc-guests::before { background:linear-gradient(90deg,#7c9cbf,#a8c4e0); }
+.dash-card.dc-checked::before { background:linear-gradient(90deg,var(--success),#7abf8a); }
+.dash-card.dc-unchecked::before { background:linear-gradient(90deg,#c0845a,#e0a87a); }
+.dash-card.dc-rate::before { background:linear-gradient(90deg,var(--gold-dark),var(--gold)); }
+.dash-card.dc-veg::before { background:linear-gradient(90deg,var(--veg),#6abf7a); }
+.dash-card.dc-child::before { background:linear-gradient(90deg,var(--child),#c09060); }
+.dash-card:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(26,18,8,0.1); }
+.dash-num { font-family:'Cormorant Garamond',serif; font-size:2.6rem; font-weight:600; line-height:1; margin-bottom:4px; }
+.dc-total .dash-num { color:var(--gold); }
+.dc-guests .dash-num { color:#5a7a9f; }
+.dc-checked .dash-num { color:var(--success); }
+.dc-unchecked .dash-num { color:#c0845a; }
+.dc-rate .dash-num { color:var(--gold-dark); }
+.dc-veg .dash-num { color:var(--veg); }
+.dc-child .dash-num { color:var(--child); }
+.dash-lbl { font-size:0.72rem; color:var(--muted); letter-spacing:0.18em; }
+.dash-icon { font-size:1.4rem; margin-bottom:6px; }
+
+/* SPECIAL NEEDS BANNER */
+.special-needs-banner { background:white; border:1px solid var(--border); border-radius:6px; padding:16px 20px; margin-bottom:20px; display:flex; flex-wrap:wrap; gap:14px; align-items:center; }
+.sn-title { font-size:0.78rem; color:var(--muted); letter-spacing:0.2em; flex-basis:100%; margin-bottom:4px; }
+.sn-pill { display:flex; align-items:center; gap:8px; padding:8px 16px; border-radius:30px; font-size:0.85rem; font-weight:500; }
+.sn-pill.veg { background:var(--veg-bg); color:var(--veg); border:1px solid rgba(58,125,68,0.2); }
+.sn-pill.child { background:var(--child-bg); color:var(--child); border:1px solid rgba(124,92,58,0.2); }
+.sn-pill .sn-num { font-family:'Cormorant Garamond',serif; font-size:1.6rem; font-weight:600; line-height:1; }
+.sn-detail { font-size:0.72rem; opacity:0.8; }
+
+/* ACTIVITY FEED */
+.activity-feed { background:white; border:1px solid var(--border); border-radius:6px; padding:16px 20px; margin-bottom:20px; }
+.af-title { font-size:0.78rem; color:var(--muted); letter-spacing:0.2em; margin-bottom:12px; }
+.af-list { display:flex; flex-direction:column; gap:6px; max-height:160px; overflow-y:auto; }
+.af-item { display:flex; align-items:center; gap:10px; font-size:0.82rem; padding:6px 0; border-bottom:1px solid rgba(201,169,110,0.08); }
+.af-item:last-child { border-bottom:none; }
+.af-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.af-dot.add { background:var(--success); }
+.af-dot.del { background:var(--danger); }
+.af-dot.checkin { background:var(--gold); }
+.af-dot.edit { background:#7c9cbf; }
+.af-time { color:var(--muted); font-size:0.72rem; white-space:nowrap; margin-left:auto; }
+
+/* PANEL */
 .panel { display:none; }
 .panel.active { display:block; }
-.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:12px; }
-.section-title { font-size:1rem; color:var(--brown); letter-spacing:0.15em; }
-.btn-sm { padding:8px 16px; font-family:'Noto Serif TC',serif; font-size:0.82rem; cursor:pointer; border-radius:2px; transition:all 0.2s; letter-spacing:0.05em; border:none; }
+.section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
+.section-title { font-size:0.95rem; color:var(--brown); letter-spacing:0.15em; }
+
+/* BUTTONS */
+.btn-sm { padding:8px 16px; font-family:'Noto Serif TC',serif; font-size:0.82rem; cursor:pointer; border-radius:3px; transition:all 0.2s; letter-spacing:0.05em; border:none; display:inline-flex; align-items:center; gap:5px; }
 .btn-gold { background:var(--gold); color:var(--deep); font-weight:500; }
 .btn-gold:hover { background:var(--gold-light); }
 .btn-outline { background:transparent; border:1px solid var(--border); color:var(--muted); }
 .btn-outline:hover { border-color:var(--gold); color:var(--gold); }
 .btn-danger { background:transparent; border:1px solid #d9a0a0; color:var(--danger); }
-.btn-danger:hover { background:#fff0f0; }
-.table-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; }
-.table-card { background:white; border:1.5px solid var(--border); border-radius:4px; overflow:hidden; transition:box-shadow 0.2s,transform 0.2s; }
+.btn-danger:hover { background:var(--danger-bg); }
+.btn-info { background:transparent; border:1px solid rgba(44,95,138,0.3); color:var(--info); }
+.btn-info:hover { background:var(--info-bg); }
+.btn-success { background:var(--success-bg); border:1px solid rgba(74,124,89,0.3); color:var(--success); }
+.btn-success:hover { background:#d0ecda; }
+
+/* TABLE GRID */
+.table-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); gap:14px; }
+.table-card { background:white; border:1.5px solid var(--border); border-radius:6px; overflow:hidden; transition:box-shadow 0.2s,transform 0.2s; }
 .table-card:hover { box-shadow:0 6px 24px rgba(26,18,8,0.1); transform:translateY(-2px); }
-.tc-head { background:linear-gradient(135deg,var(--deep),var(--brown)); padding:14px 16px; display:flex; align-items:center; gap:12px; }
-.tc-num { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:600; color:var(--gold); line-height:1; flex-shrink:0; }
-.tc-name { font-size:0.9rem; color:var(--gold-light); }
-.tc-cap { font-size:0.75rem; color:rgba(201,169,110,0.5); margin-top:2px; }
-.tc-body { padding:14px 16px; }
-.guest-chips { display:flex; flex-wrap:wrap; gap:6px; min-height:28px; margin-bottom:12px; }
-.chip { padding:4px 10px; border-radius:20px; font-size:0.78rem; display:flex; align-items:center; gap:5px; max-width:100%; }
-.chip-inner { display:flex; flex-direction:column; line-height:1.2; }
-.chip-name { font-size:0.78rem; }
-.chip-relation { font-size:0.65rem; opacity:0.7; }
+.tc-head { background:linear-gradient(135deg,var(--deep),var(--brown)); padding:12px 16px; display:flex; align-items:center; gap:10px; }
+.tc-num { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:600; color:var(--gold); line-height:1; flex-shrink:0; min-width:36px; }
+.tc-meta { flex:1; }
+.tc-name { font-size:0.88rem; color:var(--gold-light); }
+.tc-cap { font-size:0.72rem; color:rgba(201,169,110,0.5); margin-top:2px; }
+.tc-actions { display:flex; gap:6px; }
+.tc-btn { padding:5px 10px; font-size:0.72rem; border-radius:3px; cursor:pointer; border:none; font-family:'Noto Serif TC',serif; transition:all 0.15s; }
+.tc-btn-edit { background:rgba(201,169,110,0.2); color:var(--gold-light); }
+.tc-btn-edit:hover { background:rgba(201,169,110,0.35); }
+.tc-btn-del { background:rgba(139,32,32,0.2); color:#e07070; }
+.tc-btn-del:hover { background:rgba(139,32,32,0.35); }
+.tc-body { padding:12px 14px; }
+.guest-chips { display:flex; flex-wrap:wrap; gap:5px; min-height:24px; margin-bottom:10px; }
+.chip { padding:3px 9px; border-radius:20px; font-size:0.76rem; display:flex; align-items:center; gap:4px; }
+.chip-inner { display:flex; flex-direction:column; line-height:1.25; }
+.chip-name { font-size:0.76rem; }
+.chip-relation { font-size:0.63rem; opacity:0.7; }
+.chip-badges { display:flex; gap:2px; margin-left:1px; }
+.chip-veg { font-size:0.6rem; background:var(--veg-bg); color:var(--veg); padding:1px 4px; border-radius:10px; }
+.chip-child { font-size:0.6rem; background:var(--child-bg); color:var(--child); padding:1px 4px; border-radius:10px; }
 .chip-checked { background:#e8f5ec; color:var(--success); }
 .chip-unchecked { background:var(--warm); color:var(--text); }
-.chip-x { cursor:pointer; opacity:0.5; font-size:0.7rem; font-weight:700; margin-left:2px; padding:0 2px; flex-shrink:0; }
+.chip-x { cursor:pointer; opacity:0.4; font-size:0.68rem; font-weight:700; margin-left:2px; padding:0 2px; flex-shrink:0; }
 .chip-x:hover { opacity:1; color:var(--danger); }
-.tc-footer { display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:10px; }
-.tc-progress { font-size:0.78rem; color:var(--muted); }
-.add-guest-row { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
-.mini-input { flex:1; min-width:80px; padding:7px 10px; border:1px solid var(--border); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:0.82rem; color:var(--text); background:var(--cream); outline:none; }
+.tc-special { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+.tc-special-tag { font-size:0.7rem; padding:2px 8px; border-radius:20px; display:flex; align-items:center; gap:3px; }
+.tc-special-tag.veg { background:var(--veg-bg); color:var(--veg); }
+.tc-special-tag.child { background:var(--child-bg); color:var(--child); }
+.tc-footer { display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:9px; }
+.tc-progress { font-size:0.76rem; color:var(--muted); }
+.add-guest-row { display:flex; gap:6px; flex-wrap:wrap; }
+.mini-input { flex:1; min-width:80px; padding:6px 9px; border:1px solid var(--border); border-radius:3px; font-family:'Noto Serif TC',serif; font-size:0.8rem; color:var(--text); background:var(--cream); outline:none; }
 .mini-input:focus { border-color:var(--gold); }
-.mini-select { padding:7px 8px; border:1px solid var(--border); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:0.78rem; color:var(--text); background:var(--cream); outline:none; cursor:pointer; }
+.mini-select { padding:6px 7px; border:1px solid var(--border); border-radius:3px; font-family:'Noto Serif TC',serif; font-size:0.76rem; color:var(--text); background:var(--cream); outline:none; cursor:pointer; }
 .mini-select:focus { border-color:var(--gold); }
-.btn-mini { padding:7px 12px; font-size:0.82rem; font-family:'Noto Serif TC',serif; cursor:pointer; border-radius:2px; border:none; white-space:nowrap; }
+.mini-check-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:5px; }
+.mini-check { display:flex; align-items:center; gap:4px; font-size:0.76rem; color:var(--muted); cursor:pointer; }
+.btn-mini { padding:6px 11px; font-size:0.8rem; font-family:'Noto Serif TC',serif; cursor:pointer; border-radius:3px; border:none; white-space:nowrap; }
 .btn-mini-gold { background:var(--gold); color:var(--deep); }
 .btn-mini-gold:hover { background:var(--gold-light); }
-.form-card { background:white; border:1.5px solid var(--border); border-radius:4px; padding:24px; margin-bottom:20px; }
-.form-card h3 { font-size:0.9rem; color:var(--brown); letter-spacing:0.2em; margin-bottom:20px; }
-.form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; }
-.form-group { display:flex; flex-direction:column; gap:6px; }
-.form-group label { font-size:0.78rem; color:var(--muted); letter-spacing:0.15em; }
-.form-input { padding:10px 14px; border:1.5px solid var(--border); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:0.95rem; color:var(--text); background:var(--cream); outline:none; transition:border-color 0.2s; }
+
+/* FORM CARD */
+.form-card { background:white; border:1.5px solid var(--border); border-radius:6px; padding:22px; margin-bottom:18px; }
+.form-card h3 { font-size:0.88rem; color:var(--brown); letter-spacing:0.2em; margin-bottom:18px; }
+.form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-group label { font-size:0.76rem; color:var(--muted); letter-spacing:0.15em; }
+.form-input { padding:9px 13px; border:1.5px solid var(--border); border-radius:3px; font-family:'Noto Serif TC',serif; font-size:0.92rem; color:var(--text); background:var(--cream); outline:none; transition:border-color 0.2s; }
 .form-input:focus { border-color:var(--gold); }
-.form-select { padding:10px 14px; border:1.5px solid var(--border); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:0.95rem; color:var(--text); background:var(--cream); outline:none; cursor:pointer; }
+.form-select { padding:9px 13px; border:1.5px solid var(--border); border-radius:3px; font-family:'Noto Serif TC',serif; font-size:0.92rem; color:var(--text); background:var(--cream); outline:none; cursor:pointer; }
 .form-select:focus { border-color:var(--gold); }
-.form-actions { margin-top:16px; display:flex; gap:10px; flex-wrap:wrap; }
-.csv-area { width:100%; min-height:140px; padding:14px; border:1.5px dashed var(--border); border-radius:4px; font-family:'Courier New',monospace; font-size:0.82rem; color:var(--text); background:var(--cream); outline:none; resize:vertical; }
+.form-actions { margin-top:14px; display:flex; gap:8px; flex-wrap:wrap; }
+
+/* TABLES MANAGEMENT */
+.table-mgmt-split { display:grid; grid-template-columns:320px 1fr; gap:18px; align-items:start; }
+.table-list-panel { background:white; border:1.5px solid var(--border); border-radius:6px; overflow:hidden; }
+.tlp-header { background:linear-gradient(135deg,var(--deep),var(--brown)); padding:12px 16px; display:flex; align-items:center; justify-content:space-between; }
+.tlp-header span { font-size:0.85rem; color:var(--gold-light); letter-spacing:0.1em; }
+.table-list-item { padding:10px 14px; border-bottom:1px solid rgba(201,169,110,0.1); cursor:pointer; display:flex; align-items:center; gap:10px; transition:background 0.15s; }
+.table-list-item:hover { background:var(--warm); }
+.table-list-item.selected { background:rgba(201,169,110,0.1); border-left:3px solid var(--gold); }
+.tli-num { font-family:'Cormorant Garamond',serif; font-size:1.5rem; font-weight:600; color:var(--gold); line-height:1; min-width:28px; }
+.tli-info { flex:1; }
+.tli-name { font-size:0.85rem; color:var(--text); }
+.tli-sub { font-size:0.72rem; color:var(--muted); margin-top:1px; }
+.tli-tags { display:flex; gap:4px; }
+.tli-veg { font-size:0.65rem; background:var(--veg-bg); color:var(--veg); padding:2px 6px; border-radius:10px; }
+.tli-child { font-size:0.65rem; background:var(--child-bg); color:var(--child); padding:2px 6px; border-radius:10px; }
+
+/* TABLE EDIT PANEL */
+.table-edit-panel { background:white; border:1.5px solid var(--border); border-radius:6px; padding:20px; }
+.tep-empty { text-align:center; padding:60px 20px; color:var(--muted); font-size:0.88rem; }
+.tep-title { font-size:0.88rem; color:var(--brown); letter-spacing:0.15em; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+.tep-info-row { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+.tep-input-row { display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; }
+.tep-label { font-size:0.74rem; color:var(--muted); letter-spacing:0.15em; margin-bottom:5px; }
+.tep-input { padding:8px 12px; border:1.5px solid var(--border); border-radius:3px; font-family:'Noto Serif TC',serif; font-size:0.92rem; color:var(--text); background:var(--cream); outline:none; }
+.tep-input:focus { border-color:var(--gold); }
+.tep-input.w80 { width:80px; }
+.tep-input.w120 { width:120px; }
+.tep-input.w200 { width:200px; }
+.guest-edit-list { margin-top:12px; }
+.gel-item { display:flex; align-items:center; gap:8px; padding:8px 10px; background:var(--warm); border-radius:3px; margin-bottom:6px; }
+.gel-name { flex:1; font-size:0.85rem; font-weight:500; }
+.gel-rel { font-size:0.75rem; color:var(--muted); }
+.gel-badges { display:flex; gap:4px; }
+.gel-veg { font-size:0.68rem; background:var(--veg-bg); color:var(--veg); padding:2px 7px; border-radius:10px; }
+.gel-child { font-size:0.68rem; background:var(--child-bg); color:var(--child); padding:2px 7px; border-radius:10px; }
+.gel-checked { font-size:0.68rem; background:var(--success-bg); color:var(--success); padding:2px 7px; border-radius:10px; }
+.gel-actions { display:flex; gap:4px; }
+
+/* CSV */
+.csv-area { width:100%; min-height:120px; padding:12px; border:1.5px dashed var(--border); border-radius:4px; font-family:'Courier New',monospace; font-size:0.8rem; color:var(--text); background:var(--cream); outline:none; resize:vertical; }
 .csv-area:focus { border-color:var(--gold); }
-.csv-hint { font-size:0.78rem; color:var(--muted); margin-top:8px; line-height:1.8; }
-.csv-hint code { background:var(--warm); padding:1px 5px; border-radius:2px; font-size:0.77rem; }
+.csv-hint { font-size:0.76rem; color:var(--muted); margin-top:8px; line-height:1.8; }
+.csv-hint code { background:var(--warm); padding:1px 5px; border-radius:2px; font-size:0.74rem; }
+
+/* CHECK-IN TABLE */
 .guest-list-table { width:100%; border-collapse:collapse; }
-.guest-list-table th { text-align:left; padding:10px 14px; font-size:0.78rem; color:var(--muted); letter-spacing:0.2em; border-bottom:1.5px solid var(--border); font-weight:400; }
-.guest-list-table td { padding:10px 14px; border-bottom:1px solid rgba(201,169,110,0.1); font-size:0.88rem; }
+.guest-list-table th { text-align:left; padding:9px 13px; font-size:0.76rem; color:var(--muted); letter-spacing:0.18em; border-bottom:1.5px solid var(--border); font-weight:400; }
+.guest-list-table td { padding:9px 13px; border-bottom:1px solid rgba(201,169,110,0.1); font-size:0.86rem; }
 .guest-list-table tr:hover td { background:var(--warm); }
-.badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:0.72rem; }
-.badge-ok { background:#e8f5ec; color:var(--success); }
+.badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:0.7rem; }
+.badge-ok { background:var(--success-bg); color:var(--success); }
 .badge-no { background:var(--warm); color:var(--muted); }
 .badge-relation { background:rgba(201,169,110,0.1); color:var(--gold-dark); border:1px solid rgba(201,169,110,0.2); }
-.search-bar { padding:10px 14px; border:1.5px solid var(--border); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:0.9rem; color:var(--text); background:white; outline:none; width:100%; max-width:300px; margin-bottom:16px; }
+.badge-veg { background:var(--veg-bg); color:var(--veg); }
+.badge-child { background:var(--child-bg); color:var(--child); }
+.search-bar { padding:9px 13px; border:1.5px solid var(--border); border-radius:3px; font-family:'Noto Serif TC',serif; font-size:0.88rem; color:var(--text); background:white; outline:none; max-width:260px; }
 .search-bar:focus { border-color:var(--gold); }
-.empty-state { text-align:center; padding:60px 20px; color:var(--muted); font-size:0.9rem; }
-.empty-state .es-icon { font-size:2.5rem; margin-bottom:12px; opacity:0.4; }
-.sync-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; vertical-align:middle; }
+
+/* MEMBERS */
+.member-table { width:100%; border-collapse:collapse; font-size:0.83rem; }
+.member-table th { text-align:left; padding:9px 12px; font-size:0.73rem; color:var(--muted); letter-spacing:0.16em; border-bottom:1.5px solid var(--border); font-weight:400; white-space:nowrap; }
+.member-table td { padding:9px 12px; border-bottom:1px solid rgba(201,169,110,0.1); vertical-align:middle; }
+.member-table tr:hover td { background:var(--warm); }
+.member-summary { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+.member-summary-item { background:white; border:1px solid var(--border); border-radius:4px; padding:10px 16px; font-size:0.8rem; color:var(--muted); display:flex; gap:7px; align-items:center; }
+.member-summary-item strong { color:var(--text); font-size:0.96rem; }
+
+/* MODAL */
+.modal-bg { display:none; position:fixed; inset:0; background:rgba(26,18,8,0.55); z-index:500; align-items:center; justify-content:center; padding:20px; }
+.modal-bg.show { display:flex; }
+.modal { background:var(--cream); border:1.5px solid var(--border); border-radius:6px; padding:28px; width:100%; max-width:540px; max-height:90vh; overflow-y:auto; }
+.modal h3 { font-size:0.92rem; color:var(--brown); letter-spacing:0.2em; margin-bottom:18px; }
+
+/* TOAST */
+.toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--deep); color:var(--gold-light); padding:11px 22px; border-radius:4px; font-size:0.88rem; opacity:0; pointer-events:none; transition:all 0.3s; z-index:9999; white-space:nowrap; border:1px solid rgba(201,169,110,0.3); }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* SYNC */
+.sync-dot { width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:5px; vertical-align:middle; }
 .sync-dot.ok { background:#4a7c59; }
 .sync-dot.err { background:#c0392b; }
 .sync-dot.loading { background:var(--gold); animation:pulse 1s infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-.toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--deep); color:var(--gold-light); padding:12px 24px; border-radius:4px; font-size:0.9rem; opacity:0; pointer-events:none; transition:all 0.3s; z-index:9999; white-space:nowrap; border:1px solid rgba(201,169,110,0.3); }
-.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
-/* Member management */
-.member-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
-.member-table th { text-align:left; padding:10px 12px; font-size:0.75rem; color:var(--muted); letter-spacing:0.18em; border-bottom:1.5px solid var(--border); font-weight:400; white-space:nowrap; }
-.member-table td { padding:10px 12px; border-bottom:1px solid rgba(201,169,110,0.1); vertical-align:middle; }
-.member-table tr:hover td { background:var(--warm); }
-.member-table td.num-cell { text-align:center; font-weight:600; color:var(--gold-dark); }
-.member-summary { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px; }
-.member-summary-item { background:white; border:1px solid var(--border); border-radius:4px; padding:12px 18px; font-size:0.82rem; color:var(--muted); display:flex; gap:8px; align-items:center; }
-.member-summary-item strong { color:var(--text); font-size:1rem; }
-.edit-modal-bg { display:none; position:fixed; inset:0; background:rgba(26,18,8,0.55); z-index:500; align-items:center; justify-content:center; }
-.edit-modal-bg.show { display:flex; }
-.edit-modal { background:var(--cream); border:1.5px solid var(--border); border-radius:6px; padding:32px; width:100%; max-width:560px; max-height:90vh; overflow-y:auto; }
-.edit-modal h3 { font-size:0.95rem; color:var(--brown); letter-spacing:0.2em; margin-bottom:20px; }
+/* GUEST FORM LIST */
+.guest-form-list { margin-top:10px; }
+.guest-form-item { display:flex; gap:7px; align-items:center; padding:7px 9px; background:var(--warm); border-radius:3px; margin-bottom:5px; font-size:0.82rem; }
+.gfi-name { flex:1; font-weight:500; }
+.gfi-relation { color:var(--muted); font-size:0.75rem; }
+.gfi-del { cursor:pointer; color:var(--danger); opacity:0.5; font-size:0.78rem; padding:0 3px; }
+.gfi-del:hover { opacity:1; }
 
-/* Guest inline add section */
-.guest-add-section { border-top:1px dashed var(--border); padding-top:12px; margin-top:10px; }
-.guest-add-section .add-label { font-size:0.72rem; color:var(--muted); letter-spacing:0.15em; margin-bottom:8px; }
+/* EMPTY */
+.empty-state { text-align:center; padding:50px 20px; color:var(--muted); font-size:0.88rem; }
+.empty-state .es-icon { font-size:2.2rem; margin-bottom:10px; opacity:0.4; }
 
-/* Guests in form */
-.guest-form-list { margin-top:14px; }
-.guest-form-item { display:flex; gap:8px; align-items:center; padding:8px 10px; background:var(--warm); border-radius:2px; margin-bottom:6px; font-size:0.85rem; }
-.guest-form-item .gfi-name { flex:1; }
-.guest-form-item .gfi-relation { color:var(--muted); font-size:0.78rem; }
-.guest-form-item .gfi-del { cursor:pointer; color:var(--danger); opacity:0.5; font-size:0.8rem; padding:0 4px; }
-.guest-form-item .gfi-del:hover { opacity:1; }
-
-@media(max-width:600px) {
-  .admin-content{padding:20px 14px}
-  .table-grid{grid-template-columns:1fr}
-  .stats-row{grid-template-columns:repeat(2,1fr)}
-  .result-info{grid-template-columns:1fr 1fr}
+@media(max-width:768px){
+  .table-mgmt-split { grid-template-columns:1fr; }
+  .admin-content { padding:16px 12px; }
+  .dashboard-grid { grid-template-columns:repeat(2,1fr); }
+  .tep-input-row { flex-direction:column; }
+  .tep-input.w200 { width:100%; }
+}
+@media(max-width:480px){
+  .dashboard-grid { grid-template-columns:repeat(2,1fr); }
 }
 </style>
 </head>
@@ -156,8 +275,11 @@ body { font-family: 'Noto Serif TC', serif; background: #f8f4ee; color: var(--te
   <div class="login-card">
     <h2>後台管理</h2>
     <p>ADMIN DASHBOARD</p>
-    <input class="login-input" type="password" id="pwInput" placeholder="請輸入管理密碼" onkeydown="if(event.key==='Enter')doLogin()"/>
-    <button class="login-btn" onclick="doLogin()">登入</button>
+    <div id="loginLoading">驗證登入狀態中…</div>
+    <button class="login-btn" id="googleLoginBtn" onclick="doGoogleLogin()" style="display:none">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.1-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.1 18.9 12 24 12c3 0 5.8 1.1 7.9 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 10-1.9 13.6-5.1l-6.3-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.6-3-11.3-7.3l-6.6 5.1C9.8 39.8 16.4 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.2-2.3 4.1-4.2 5.4l6.3 5.2C41 35.3 44 30 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
+      使用 Google 帳號登入
+    </button>
     <div class="login-err" id="loginErr"></div>
     <div style="margin-top:20px">
       <a href="guest.html" style="font-size:0.82rem;color:rgba(201,169,110,0.4);letter-spacing:0.1em;text-decoration:none;">← 返回來賓查詢頁</a>
@@ -169,74 +291,64 @@ body { font-family: 'Noto Serif TC', serif; background: #f8f4ee; color: var(--te
 <div id="adminPanel">
   <div class="admin-nav">
     <div class="admin-nav-title">✦ 婚宴管理</div>
-    <div class="nav-tab active" onclick="adminTab('tables',this)">桌位管理</div>
-    <div class="nav-tab" onclick="adminTab('addtable',this)">新增桌位</div>
+    <div class="nav-tab active" onclick="adminTab('dashboard',this)">儀表板</div>
+    <div class="nav-tab" onclick="adminTab('tables',this)">桌位管理</div>
     <div class="nav-tab" onclick="adminTab('import',this)">CSV 匯入</div>
     <div class="nav-tab" onclick="adminTab('checkin',this)">報到總覽</div>
     <div class="nav-tab" onclick="adminTab('members',this)">人員管理</div>
     <div class="nav-right">
       <span class="nav-badge" id="syncStatus"><span class="sync-dot loading"></span>連線中…</span>
       <span class="nav-badge" id="navBadge">載入中</span>
-      <a href="guest.html" class="btn-sm btn-outline" style="font-size:0.78rem;text-decoration:none">登出</a>
+      <a href="guest.html" class="btn-sm btn-outline" style="font-size:0.75rem;text-decoration:none;">← 來賓查詢</a>
+      <button class="btn-sm btn-outline" style="font-size:0.75rem;" onclick="doLogout()">登出</button>
     </div>
   </div>
   <div class="admin-content">
-    <div class="stats-row" id="statsRow"></div>
 
-    <!-- Panel: Table List -->
-    <div class="panel active" id="panel-tables">
+    <!-- Panel: Dashboard -->
+    <div class="panel active" id="panel-dashboard">
       <div class="section-header">
-        <div class="section-title">所有桌位</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn-sm btn-outline" onclick="clearAll()">清除全部資料</button>
-          <button class="btn-sm btn-gold" onclick="adminTab('addtable',document.querySelectorAll('.nav-tab')[1])">＋ 新增桌位</button>
-        </div>
+        <div class="section-title">即時儀表板</div>
+        <div style="font-size:0.76rem;color:var(--muted)" id="lastUpdate"></div>
       </div>
-      <div class="table-grid" id="tableGrid"></div>
+
+      <!-- Main stats -->
+      <div class="dashboard-grid" id="dashStats"></div>
+
+      <!-- Special needs banner -->
+      <div class="special-needs-banner" id="specialNeedsBanner">
+        <div class="sn-title">⚠ 特殊需求提醒</div>
+      </div>
+
+      <!-- Activity feed -->
+      <div class="activity-feed">
+        <div class="af-title">最近動態</div>
+        <div class="af-list" id="activityFeed"><div style="color:var(--muted);font-size:0.82rem">尚無動態記錄</div></div>
+      </div>
+
+      <!-- Quick table overview -->
+      <div class="section-header" style="margin-top:4px">
+        <div class="section-title">各桌報到狀況</div>
+      </div>
+      <div class="table-grid" id="dashTableGrid"></div>
     </div>
 
-    <!-- Panel: Add Table -->
-    <div class="panel" id="panel-addtable">
-      <div class="form-card">
-        <h3>新增桌位</h3>
-        <div class="form-grid">
-          <div class="form-group"><label>桌號</label><input class="form-input" id="at-num" type="number" min="1" placeholder="例：1"/></div>
-          <div class="form-group"><label>桌名（選填）</label><input class="form-input" id="at-name" placeholder="例：新郎家屬桌"/></div>
-          <div class="form-group"><label>容納人數</label><input class="form-input" id="at-cap" type="number" min="1" value="10"/></div>
+    <!-- Panel: Tables Management -->
+    <div class="panel" id="panel-tables">
+      <div class="section-header">
+        <div class="section-title">桌位管理</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-sm btn-outline" onclick="openAddTableModal()">＋ 新增桌位</button>
+          <button class="btn-sm btn-danger" onclick="clearAll()">清除全部資料</button>
         </div>
-
-        <!-- Guest list builder -->
-        <div style="margin-top:20px;">
-          <label style="font-size:0.78rem;color:var(--muted);letter-spacing:0.15em;display:block;margin-bottom:10px;">來賓名單（逐筆輸入）</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
-            <input class="form-input" id="at-guest-name" placeholder="來賓姓名" style="flex:1;min-width:120px;padding:9px 12px"/>
-            <select class="form-select" id="at-guest-relation" style="min-width:130px;">
-              <option value="">— 與新人關係 —</option>
-              <optgroup label="新郎側">
-                <option value="新郎家屬">新郎家屬</option>
-                <option value="新郎親戚">新郎親戚</option>
-                <option value="新郎同學">新郎同學</option>
-                <option value="新郎同事">新郎同事</option>
-                <option value="新郎朋友">新郎朋友</option>
-              </optgroup>
-              <optgroup label="新娘側">
-                <option value="新娘家屬">新娘家屬</option>
-                <option value="新娘親戚">新娘親戚</option>
-                <option value="新娘同學">新娘同學</option>
-                <option value="新娘同事">新娘同事</option>
-                <option value="新娘朋友">新娘朋友</option>
-              </optgroup>
-              <option value="共同朋友">共同朋友</option>
-              <option value="其他">其他</option>
-            </select>
-            <button class="btn-sm btn-gold" onclick="addGuestToForm()">＋ 加入</button>
-          </div>
-          <div id="at-guest-list" class="guest-form-list"></div>
+      </div>
+      <div class="table-mgmt-split" id="tableMgmtSplit">
+        <div class="table-list-panel">
+          <div class="tlp-header"><span>所有桌位</span><span id="tlpCount" style="font-size:0.72rem;color:rgba(201,169,110,0.5)"></span></div>
+          <div id="tableListItems"></div>
         </div>
-
-        <div class="form-actions">
-          <button class="btn-sm btn-gold" onclick="addTable()">確認新增桌位</button>
-          <button class="btn-sm btn-outline" onclick="clearForm()">清除</button>
+        <div class="table-edit-panel" id="tableEditPanel">
+          <div class="tep-empty"><div style="font-size:2rem;opacity:0.3;margin-bottom:10px">🪑</div>請從左側選擇桌位進行編輯</div>
         </div>
       </div>
     </div>
@@ -245,26 +357,25 @@ body { font-family: 'Noto Serif TC', serif; background: #f8f4ee; color: var(--te
     <div class="panel" id="panel-import">
       <div class="form-card">
         <h3>CSV 批次匯入</h3>
-        <textarea class="csv-area" id="csvInput" rows="10" placeholder="貼上 CSV 格式資料，例如：
+        <textarea class="csv-area" id="csvInput" rows="9" placeholder="貼上 CSV 格式資料，例如：
 
 桌號,桌名,容納人數,來賓名單
-1,新郎家屬桌,10,王大明:新郎家屬|李美玲:新郎家屬|張小華:新郎親戚
+1,新郎家屬桌,10,王大明:新郎家屬|李美玲:新郎家屬
 2,新娘親友桌,10,陳怡君:新娘朋友|林志偉:新娘同學
 3,同事桌,8,吳建宏:新郎同事|蔡雅婷:新娘同事"></textarea>
         <div class="csv-hint">
-          格式：<code>桌號, 桌名（選填）, 容納人數（選填）, 來賓名單</code><br>
-          來賓名單格式：<code>姓名:關係</code>，多位用 <code>|</code> 分隔，例如 <code>王小明:新郎朋友|李美玲:新娘同學</code><br>
-          關係欄位可省略，直接填 <code>王小明|李美玲</code> 也可以。<br>
-          第一行為標題列可省略。匯入後新增至現有資料，同桌號略過。
+          格式：<code>桌號, 桌名, 容納人數, 來賓名單</code><br>
+          來賓名單：<code>姓名:關係</code>，多位用 <code>|</code> 分隔。<br>
+          素食/兒童座椅：在關係後加 <code>+素食</code> 或 <code>+兒童</code>，例如 <code>王小明:新郎朋友+素食+兒童</code>
         </div>
-        <div class="form-actions" style="margin-top:16px">
+        <div class="form-actions">
           <button class="btn-sm btn-gold" onclick="importCSV()">匯入資料</button>
           <button class="btn-sm btn-outline" onclick="document.getElementById('csvInput').value=''">清除</button>
         </div>
       </div>
       <div class="form-card">
         <h3>匯出現有資料</h3>
-        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:14px">將目前所有桌位資料匯出為 CSV 檔案（含與新人關係欄位）。</p>
+        <p style="font-size:0.83rem;color:var(--muted);margin-bottom:12px">將目前所有桌位資料匯出為 CSV 檔案。</p>
         <button class="btn-sm btn-gold" onclick="exportCSV()">下載 CSV</button>
       </div>
     </div>
@@ -274,160 +385,167 @@ body { font-family: 'Noto Serif TC', serif; background: #f8f4ee; color: var(--te
       <div class="section-header">
         <div class="section-title">來賓報到總覽</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <select class="form-select" id="filterRelation" onchange="renderCheckin()" style="font-size:0.82rem;padding:8px 12px;">
-            <option value="">全部關係</option>
-            <option value="新郎家屬">新郎家屬</option>
-            <option value="新郎親戚">新郎親戚</option>
-            <option value="新郎同學">新郎同學</option>
-            <option value="新郎同事">新郎同事</option>
-            <option value="新郎朋友">新郎朋友</option>
-            <option value="新娘家屬">新娘家屬</option>
-            <option value="新娘親戚">新娘親戚</option>
-            <option value="新娘同學">新娘同學</option>
-            <option value="新娘同事">新娘同事</option>
-            <option value="新娘朋友">新娘朋友</option>
-            <option value="共同朋友">共同朋友</option>
-            <option value="其他">其他</option>
-          </select>
           <button class="btn-sm btn-outline" onclick="resetAllCheckin()">重置全部報到</button>
         </div>
       </div>
-      <input class="search-bar" id="checkinSearch" placeholder="搜尋來賓姓名…" oninput="renderCheckin()"/>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <input class="search-bar" id="checkinSearch" placeholder="搜尋來賓姓名…" oninput="renderCheckin()" style="flex:1;max-width:none"/>
+        <select class="form-select" id="filterRelation" onchange="renderCheckin()" style="font-size:0.8rem;padding:8px 11px;">
+          <option value="">全部關係</option>
+          <option>新郎家屬</option><option>新郎親戚</option><option>新郎同學</option><option>新郎同事</option><option>新郎朋友</option>
+          <option>新娘家屬</option><option>新娘親戚</option><option>新娘同學</option><option>新娘同事</option><option>新娘朋友</option>
+          <option>共同朋友</option><option>其他</option>
+        </select>
+        <select class="form-select" id="filterSpecial" onchange="renderCheckin()" style="font-size:0.8rem;padding:8px 11px;">
+          <option value="">全部類型</option>
+          <option value="veg">素食</option>
+          <option value="child">兒童座椅</option>
+        </select>
+      </div>
       <div style="background:white;border:1px solid var(--border);border-radius:4px;overflow:auto">
         <table class="guest-list-table">
-          <thead><tr><th>姓名</th><th>與新人關係</th><th>桌號</th><th>桌名</th><th>報到狀態</th><th>操作</th></tr></thead>
+          <thead><tr><th>姓名</th><th>與新人關係</th><th>特殊需求</th><th>桌號</th><th>桌名</th><th>報到狀態</th><th>操作</th></tr></thead>
           <tbody id="checkinBody"></tbody>
         </table>
       </div>
     </div>
+
     <!-- Panel: Members -->
     <div class="panel" id="panel-members">
-      <!-- Add member form -->
       <div class="form-card">
         <h3>新增與會人員</h3>
         <div class="form-grid">
-          <div class="form-group">
-            <label>姓名 *</label>
-            <input class="form-input" id="mb-name" placeholder="例：王小明"/>
-          </div>
+          <div class="form-group"><label>姓名 *</label><input class="form-input" id="mb-name" placeholder="例：王小明"/></div>
           <div class="form-group">
             <label>與新人關係 *</label>
             <select class="form-select" id="mb-relation">
               <option value="">— 請選擇 —</option>
-              <option value="新郎父親朋友">新郎父親朋友</option>
-              <option value="新郎母親朋友">新郎母親朋友</option>
-              <option value="新郎親友">新郎親友</option>
-              <option value="新郎同事">新郎同事</option>
-              <option value="新郎同學">新郎同學</option>
-              <option value="新娘同事">新娘同事</option>
-              <option value="新娘同學">新娘同學</option>
-              <option value="新娘親友">新娘親友</option>
+              <option>新郎父親朋友</option><option>新郎母親朋友</option><option>新郎親友</option>
+              <option>新郎同事</option><option>新郎同學</option>
+              <option>新娘同事</option><option>新娘同學</option><option>新娘親友</option>
             </select>
           </div>
-          <div class="form-group">
-            <label>出席人數 *</label>
-            <input class="form-input" id="mb-attend" type="number" min="1" value="1" placeholder="例：2"/>
-          </div>
-          <div class="form-group">
-            <label>兒童座椅需求</label>
-            <input class="form-input" id="mb-chair" type="number" min="0" value="0" placeholder="0"/>
-          </div>
-          <div class="form-group">
-            <label>素食需求人數</label>
-            <input class="form-input" id="mb-veg" type="number" min="0" value="0" placeholder="0"/>
-          </div>
+          <div class="form-group"><label>出席人數 *</label><input class="form-input" id="mb-attend" type="number" min="1" value="1"/></div>
+          <div class="form-group"><label>兒童座椅需求</label><input class="form-input" id="mb-chair" type="number" min="0" value="0"/></div>
+          <div class="form-group"><label>素食需求人數</label><input class="form-input" id="mb-veg" type="number" min="0" value="0"/></div>
         </div>
         <div class="form-actions">
           <button class="btn-sm btn-gold" onclick="addMember()">＋ 新增人員</button>
           <button class="btn-sm btn-outline" onclick="clearMemberForm()">清除</button>
         </div>
       </div>
-
-      <!-- Summary stats -->
       <div class="member-summary" id="memberSummary"></div>
-
-      <!-- Filter + search -->
       <div class="section-header">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input class="search-bar" id="memberSearch" placeholder="搜尋姓名…" oninput="renderMembers()" style="margin-bottom:0;max-width:200px"/>
-          <select class="form-select" id="memberFilterRel" onchange="renderMembers()" style="font-size:0.82rem;padding:8px 12px;">
+          <input class="search-bar" id="memberSearch" placeholder="搜尋姓名…" oninput="renderMembers()" style="max-width:200px"/>
+          <select class="form-select" id="memberFilterRel" onchange="renderMembers()" style="font-size:0.8rem;padding:8px 11px;">
             <option value="">全部關係</option>
-            <option value="新郎父親朋友">新郎父親朋友</option>
-            <option value="新郎母親朋友">新郎母親朋友</option>
-            <option value="新郎親友">新郎親友</option>
-            <option value="新郎同事">新郎同事</option>
-            <option value="新郎同學">新郎同學</option>
-            <option value="新娘同事">新娘同事</option>
-            <option value="新娘同學">新娘同學</option>
-            <option value="新娘親友">新娘親友</option>
+            <option>新郎父親朋友</option><option>新郎母親朋友</option><option>新郎親友</option>
+            <option>新郎同事</option><option>新郎同學</option>
+            <option>新娘同事</option><option>新娘同學</option><option>新娘親友</option>
+          </select>
+          <select class="form-select" id="memberFilterSpecial" onchange="renderMembers()" style="font-size:0.8rem;padding:8px 11px;">
+            <option value="">全部需求</option>
+            <option value="veg">素食</option>
+            <option value="child">兒童座椅</option>
           </select>
         </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn-sm btn-outline" onclick="exportMembersCSV()">匯出 CSV</button>
-        </div>
+        <button class="btn-sm btn-outline" onclick="exportMembersCSV()">匯出 CSV</button>
       </div>
-
-      <!-- Member list table -->
       <div style="background:white;border:1px solid var(--border);border-radius:4px;overflow:auto">
         <table class="member-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>姓名</th>
-              <th>與新人關係</th>
-              <th style="text-align:center">出席人數</th>
-              <th style="text-align:center">兒童座椅</th>
-              <th style="text-align:center">素食人數</th>
-              <th>操作</th>
-            </tr>
-          </thead>
+          <thead><tr><th>#</th><th>姓名</th><th>與新人關係</th><th style="text-align:center">出席人數</th><th style="text-align:center">兒童座椅</th><th style="text-align:center">素食人數</th><th>操作</th></tr></thead>
           <tbody id="memberBody"></tbody>
         </table>
       </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Add Table Modal -->
+<div class="modal-bg" id="addTableModal" onclick="if(event.target===this)closeAddTableModal()">
+  <div class="modal">
+    <h3>＋ 新增桌位</h3>
+    <div class="form-grid">
+      <div class="form-group"><label>桌號 *</label><input class="form-input" id="at-num" type="number" min="1" placeholder="例：1"/></div>
+      <div class="form-group"><label>桌名（選填）</label><input class="form-input" id="at-name" placeholder="例：新郎家屬桌"/></div>
+      <div class="form-group"><label>容納人數</label><input class="form-input" id="at-cap" type="number" min="1" value="10"/></div>
+    </div>
+    <div style="margin-top:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px">
+        <label style="font-size:0.76rem;color:var(--muted);letter-spacing:0.15em">從人員名單選取來賓</label>
+        <input class="search-bar" id="at-member-search" placeholder="搜尋…" oninput="renderMemberPicker()" style="max-width:150px;padding:6px 10px;font-size:0.8rem;"/>
+      </div>
+      <div id="at-member-picker" style="background:var(--warm);border:1px solid var(--border);border-radius:4px;max-height:200px;overflow-y:auto;padding:6px;"></div>
+      <div style="margin-top:10px">
+        <div style="font-size:0.74rem;color:var(--muted);letter-spacing:0.15em;margin-bottom:6px">已選來賓：</div>
+        <div id="at-guest-list" class="guest-form-list"></div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-sm btn-gold" onclick="addTable()">確認新增</button>
+      <button class="btn-sm btn-outline" onclick="closeAddTableModal()">取消</button>
     </div>
   </div>
 </div>
 
 <!-- Edit Member Modal -->
-<div class="edit-modal-bg" id="editModalBg" onclick="if(event.target===this)closeEditModal()">
-  <div class="edit-modal">
+<div class="modal-bg" id="editModalBg" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal">
     <h3>✏ 編輯人員資料</h3>
     <input type="hidden" id="edit-mb-id"/>
     <div class="form-grid">
-      <div class="form-group">
-        <label>姓名 *</label>
-        <input class="form-input" id="edit-mb-name" placeholder="姓名"/>
-      </div>
+      <div class="form-group"><label>姓名 *</label><input class="form-input" id="edit-mb-name"/></div>
       <div class="form-group">
         <label>與新人關係 *</label>
         <select class="form-select" id="edit-mb-relation">
           <option value="">— 請選擇 —</option>
-          <option value="新郎父親朋友">新郎父親朋友</option>
-          <option value="新郎母親朋友">新郎母親朋友</option>
-          <option value="新郎親友">新郎親友</option>
-          <option value="新郎同事">新郎同事</option>
-          <option value="新郎同學">新郎同學</option>
-          <option value="新娘同事">新娘同事</option>
-          <option value="新娘同學">新娘同學</option>
-          <option value="新娘親友">新娘親友</option>
+          <option>新郎父親朋友</option><option>新郎母親朋友</option><option>新郎親友</option>
+          <option>新郎同事</option><option>新郎同學</option>
+          <option>新娘同事</option><option>新娘同學</option><option>新娘親友</option>
         </select>
       </div>
-      <div class="form-group">
-        <label>出席人數 *</label>
-        <input class="form-input" id="edit-mb-attend" type="number" min="1"/>
-      </div>
-      <div class="form-group">
-        <label>兒童座椅需求</label>
-        <input class="form-input" id="edit-mb-chair" type="number" min="0"/>
-      </div>
-      <div class="form-group">
-        <label>素食需求人數</label>
-        <input class="form-input" id="edit-mb-veg" type="number" min="0"/>
-      </div>
+      <div class="form-group"><label>出席人數 *</label><input class="form-input" id="edit-mb-attend" type="number" min="1"/></div>
+      <div class="form-group"><label>兒童座椅需求</label><input class="form-input" id="edit-mb-chair" type="number" min="0"/></div>
+      <div class="form-group"><label>素食需求人數</label><input class="form-input" id="edit-mb-veg" type="number" min="0"/></div>
     </div>
-    <div class="form-actions" style="margin-top:20px">
+    <div class="form-actions" style="margin-top:18px">
       <button class="btn-sm btn-gold" onclick="saveEditMember()">儲存</button>
       <button class="btn-sm btn-outline" onclick="closeEditModal()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Guest Modal -->
+<div class="modal-bg" id="editGuestModal" onclick="if(event.target===this)closeEditGuestModal()">
+  <div class="modal">
+    <h3>✏ 編輯來賓資料</h3>
+    <input type="hidden" id="eg-tid"/>
+    <input type="hidden" id="eg-gk"/>
+    <div class="form-grid">
+      <div class="form-group"><label>姓名 *</label><input class="form-input" id="eg-name"/></div>
+      <div class="form-group">
+        <label>與新人關係</label>
+        <select class="form-select" id="eg-relation">
+          <option value="">— 關係 —</option>
+          <optgroup label="新郎側"><option>新郎家屬</option><option>新郎親戚</option><option>新郎同學</option><option>新郎同事</option><option>新郎朋友</option></optgroup>
+          <optgroup label="新娘側"><option>新娘家屬</option><option>新娘親戚</option><option>新娘同學</option><option>新娘同事</option><option>新娘朋友</option></optgroup>
+          <option>共同朋友</option><option>其他</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:20px;margin-top:14px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:7px;font-size:0.86rem;cursor:pointer">
+        <input type="checkbox" id="eg-veg" style="accent-color:var(--veg)"/> 🥗 素食需求
+      </label>
+      <label style="display:flex;align-items:center;gap:7px;font-size:0.86rem;cursor:pointer">
+        <input type="checkbox" id="eg-child" style="accent-color:var(--child)"/> 👶 兒童座椅
+      </label>
+    </div>
+    <div class="form-actions" style="margin-top:18px">
+      <button class="btn-sm btn-gold" onclick="saveEditGuest()">儲存</button>
+      <button class="btn-sm btn-outline" onclick="closeEditGuestModal()">取消</button>
     </div>
   </div>
 </div>
@@ -437,6 +555,7 @@ body { font-family: 'Noto Serif TC', serif; background: #f8f4ee; color: var(--te
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAp_ILpjSvOmLsMU9ONQa88XDLan6f4568",
@@ -448,280 +567,604 @@ const firebaseConfig = {
   appId: "1:237043710985:web:875b8dfb1497357640ccd8"
 };
 
+const ALLOWED_EMAIL = 'tradevan.bruce@gmail.com';
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const ADMIN_PW = 'wedding2024';
-let localData = [];
-let membersData = []; // [{id, name, relation, attend, chair, veg}]
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 
-// ── Firebase: members 監聽 ──
-onValue(ref(db, 'members'), snapshot => {
-  const raw = snapshot.val();
-  membersData = raw ? Object.values(raw) : [];
-  renderMembers();
-  renderMemberSummary();
+let localData = [];
+let membersData = [];
+let pendingGuests = [];
+let selectedTableId = null;
+let activityLog = [];
+
+// ─────────────────────────────────────────
+// AUTH
+// ─────────────────────────────────────────
+function enterAdmin() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'block';
+  startListeners();
+}
+
+onAuthStateChanged(auth, user => {
+  const loadingEl = document.getElementById('loginLoading');
+  const btnEl = document.getElementById('googleLoginBtn');
+  if (user) {
+    if (user.email === ALLOWED_EMAIL) {
+      enterAdmin();
+    } else {
+      signOut(auth);
+      loadingEl.style.display = 'none';
+      btnEl.style.display = 'flex';
+      document.getElementById('loginErr').textContent = `此帳號（${user.email}）無權限。`;
+    }
+  } else {
+    loadingEl.style.display = 'none';
+    btnEl.style.display = 'flex';
+  }
 });
 
-// ── 暫存新增桌位的來賓 ──
-let pendingGuests = []; // [{name, relation}]
-
-// ── Login ──
-window.doLogin = () => {
-  if (document.getElementById('pwInput').value === ADMIN_PW) {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('adminPanel').style.display = 'block';
-  } else {
-    document.getElementById('loginErr').textContent = '密碼錯誤，請再試一次。';
+window.doGoogleLogin = async () => {
+  document.getElementById('loginErr').textContent = '';
+  try {
+    const result = await signInWithPopup(auth, provider);
+    if (result.user.email !== ALLOWED_EMAIL) {
+      await signOut(auth);
+      document.getElementById('loginErr').textContent = `此帳號（${result.user.email}）無權限。`;
+    }
+  } catch (err) {
+    if (err.code !== 'auth/popup-closed-by-user') {
+      document.getElementById('loginErr').textContent = '登入失敗，請再試一次。';
+    }
   }
 };
 
-// ── Firebase 即時監聽 ──
-onValue(ref(db, 'tables'), snapshot => {
-  const raw = snapshot.val();
-  localData = raw ? Object.values(raw).sort((a,b) => a.num - b.num) : [];
-  document.getElementById('syncStatus').innerHTML = '<span class="sync-dot ok"></span>即時同步中';
-  renderAdmin();
-}, () => {
-  document.getElementById('syncStatus').innerHTML = '<span class="sync-dot err"></span>連線失敗';
-});
-
-// ── 頁籤切換 ──
-window.adminTab = (name, el) => {
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active');
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active')); document.getElementById('panel-'+name).classList.add('active');
+window.doLogout = async () => {
+  await signOut(auth);
+  document.getElementById('adminPanel').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginLoading').style.display = 'none';
+  document.getElementById('googleLoginBtn').style.display = 'flex';
 };
 
-// ── 渲染 ──
-function renderAdmin() {
-  renderStats(); renderTableGrid(); renderCheckin();
+// ─────────────────────────────────────────
+// FIREBASE LISTENERS
+// ─────────────────────────────────────────
+function startListeners() {
+  onValue(ref(db, 'members'), snapshot => {
+    membersData = snapshot.val() ? Object.values(snapshot.val()) : [];
+    renderMembers();
+    renderMemberSummary();
+    renderMemberPicker();
+  });
+  onValue(ref(db, 'tables'), snapshot => {
+    const prev = localData.map(t => JSON.stringify(t)).join('');
+    const raw = snapshot.val();
+    localData = raw ? Object.values(raw).sort((a,b) => a.num - b.num) : [];
+    const curr = localData.map(t => JSON.stringify(t)).join('');
+    if (prev !== curr) {
+      document.getElementById('lastUpdate').textContent = '最後更新：' + new Date().toLocaleTimeString('zh-TW');
+    }
+    document.getElementById('syncStatus').innerHTML = '<span class="sync-dot ok"></span>即時同步中';
+    renderAll();
+  }, () => {
+    document.getElementById('syncStatus').innerHTML = '<span class="sync-dot err"></span>連線失敗';
+  });
+}
+
+// ─────────────────────────────────────────
+// NAV
+// ─────────────────────────────────────────
+window.adminTab = (name, el) => {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'tables') renderTableList();
+};
+
+// ─────────────────────────────────────────
+// RENDER ALL
+// ─────────────────────────────────────────
+function renderAll() {
+  renderDashboard();
+  renderTableList();
+  renderCheckin();
+  updateNavBadge();
+  if (selectedTableId) renderTableEditPanel(selectedTableId);
+}
+
+function updateNavBadge() {
   let total = 0, checked = 0;
-  localData.forEach(t => { const gs = t.guests ? Object.values(t.guests) : []; total += gs.length; checked += gs.filter(g=>g.checked).length; });
+  localData.forEach(t => {
+    const gs = t.guests ? Object.values(t.guests) : [];
+    total += gs.length; checked += gs.filter(g => g.checked).length;
+  });
   document.getElementById('navBadge').textContent = `報到 ${checked} / ${total} 人`;
 }
 
-function renderStats() {
-  let total = 0, checked = 0;
-  localData.forEach(t => { const gs = t.guests ? Object.values(t.guests) : []; total += gs.length; checked += gs.filter(g=>g.checked).length; });
-  const rate = total ? Math.round(checked/total*100) : 0;
-  document.getElementById('statsRow').innerHTML = `
-    <div class="stat-card"><div class="stat-num">${localData.length}</div><div class="stat-lbl">總桌數</div></div>
-    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">來賓總人數</div></div>
-    <div class="stat-card"><div class="stat-num">${checked}</div><div class="stat-lbl">已報到</div></div>
-    <div class="stat-card"><div class="stat-num">${total-checked}</div><div class="stat-lbl">尚未報到</div></div>
-    <div class="stat-card"><div class="stat-num">${rate}%</div><div class="stat-lbl">報到率</div></div>`;
-}
+// ─────────────────────────────────────────
+// DASHBOARD
+// ─────────────────────────────────────────
+function renderDashboard() {
+  let totalTables = localData.length;
+  let totalGuests = 0, checked = 0, totalVeg = 0, totalChild = 0;
+  localData.forEach(t => {
+    const gs = t.guests ? Object.values(t.guests) : [];
+    totalGuests += gs.length;
+    checked += gs.filter(g => g.checked).length;
+    totalVeg += gs.filter(g => g.veg).length;
+    totalChild += gs.filter(g => g.child).length;
+  });
+  const unchecked = totalGuests - checked;
+  const rate = totalGuests ? Math.round(checked / totalGuests * 100) : 0;
 
-function renderTableGrid() {
-  const el = document.getElementById('tableGrid');
-  if (!localData.length) { el.innerHTML = '<div class="empty-state"><div class="es-icon">🪑</div>尚無桌位資料，請先新增桌位。</div>'; return; }
-  el.innerHTML = localData.map(t => {
+  document.getElementById('dashStats').innerHTML = `
+    <div class="dash-card dc-total"><div class="dash-icon">🪑</div><div class="dash-num">${totalTables}</div><div class="dash-lbl">總桌數</div></div>
+    <div class="dash-card dc-guests"><div class="dash-icon">👥</div><div class="dash-num">${totalGuests}</div><div class="dash-lbl">來賓總人數</div></div>
+    <div class="dash-card dc-checked"><div class="dash-icon">✅</div><div class="dash-num">${checked}</div><div class="dash-lbl">已報到</div></div>
+    <div class="dash-card dc-unchecked"><div class="dash-icon">⏳</div><div class="dash-num">${unchecked}</div><div class="dash-lbl">尚未報到</div></div>
+    <div class="dash-card dc-rate"><div class="dash-icon">📊</div><div class="dash-num">${rate}%</div><div class="dash-lbl">報到率</div></div>
+    <div class="dash-card dc-veg"><div class="dash-icon">🥗</div><div class="dash-num">${totalVeg}</div><div class="dash-lbl">素食人數</div></div>
+    <div class="dash-card dc-child"><div class="dash-icon">👶</div><div class="dash-num">${totalChild}</div><div class="dash-lbl">兒童座椅</div></div>`;
+
+  // Special needs banner
+  const banner = document.getElementById('specialNeedsBanner');
+  // Build per-table breakdown
+  let vegTables = [], childTables = [];
+  localData.forEach(t => {
+    const gs = t.guests ? Object.values(t.guests) : [];
+    const v = gs.filter(g => g.veg).map(g => g.name);
+    const c = gs.filter(g => g.child).map(g => g.name);
+    if (v.length) vegTables.push({num: t.num, name: t.name, guests: v});
+    if (c.length) childTables.push({num: t.num, name: t.name, guests: c});
+  });
+  let bannerHTML = '<div class="sn-title">⚠ 特殊需求提醒</div>';
+  if (totalVeg === 0 && totalChild === 0) {
+    bannerHTML += '<div style="font-size:0.82rem;color:var(--muted)">目前無特殊餐飲或座椅需求</div>';
+  } else {
+    if (totalVeg > 0) {
+      const detail = vegTables.map(t => `第 ${t.num} 桌 (${t.guests.join('、')})`).join('；');
+      bannerHTML += `<div class="sn-pill veg"><span class="sn-num">${totalVeg}</span><div><div>素食人數</div><div class="sn-detail">${detail}</div></div></div>`;
+    }
+    if (totalChild > 0) {
+      const detail = childTables.map(t => `第 ${t.num} 桌 (${t.guests.join('、')})`).join('；');
+      bannerHTML += `<div class="sn-pill child"><span class="sn-num">${totalChild}</span><div><div>兒童座椅需求</div><div class="sn-detail">${detail}</div></div></div>`;
+    }
+  }
+  banner.innerHTML = bannerHTML;
+
+  // Activity feed
+  const feed = document.getElementById('activityFeed');
+  if (activityLog.length) {
+    feed.innerHTML = activityLog.slice().reverse().map(a =>
+      `<div class="af-item"><span class="af-dot ${a.type}"></span><span>${a.msg}</span><span class="af-time">${a.time}</span></div>`
+    ).join('');
+  }
+
+  // Table overview grid
+  document.getElementById('dashTableGrid').innerHTML = localData.map(t => {
     const gs = t.guests ? Object.entries(t.guests) : [];
-    const chips = gs.map(([k,g]) => {
-      const rel = g.relation ? `<span class="chip-relation">${g.relation}</span>` : '';
-      return `<span class="chip ${g.checked?'chip-checked':'chip-unchecked'}">
-        ${g.checked?'✓ ':''}<span class="chip-inner"><span class="chip-name">${g.name}</span>${rel}</span>
+    const chk = gs.filter(([,g]) => g.checked).length;
+    const vegC = gs.filter(([,g]) => g.veg).length;
+    const childC = gs.filter(([,g]) => g.child).length;
+    const chips = gs.slice(0, 6).map(([k,g]) => {
+      const vegBadge = g.veg ? '<span class="chip-veg">素</span>' : '';
+      const childBadge = g.child ? '<span class="chip-child">童</span>' : '';
+      return `<span class="chip ${g.checked ? 'chip-checked' : 'chip-unchecked'}">
+        ${g.checked ? '✓ ' : ''}<span class="chip-inner"><span class="chip-name">${g.name}</span><span class="chip-relation">${g.relation||''}</span></span>
+        <span class="chip-badges">${vegBadge}${childBadge}</span>
         <span class="chip-x" onclick="removeGuest('${t.id}','${k}')">✕</span>
       </span>`;
     }).join('');
-    const chk = gs.filter(([,g])=>g.checked).length;
+    const moreChips = gs.length > 6 ? `<span style="font-size:0.76rem;color:var(--muted);padding:4px">…還有 ${gs.length - 6} 人</span>` : '';
+    const specTags = (vegC ? `<span class="tc-special-tag veg">🥗 素食 ${vegC}</span>` : '') +
+                     (childC ? `<span class="tc-special-tag child">👶 兒童 ${childC}</span>` : '');
     return `<div class="table-card">
-      <div class="tc-head"><div class="tc-num">${t.num}</div><div><div class="tc-name">${t.name||'未命名'}</div><div class="tc-cap">${gs.length}/${t.cap} 人</div></div></div>
-      <div class="tc-body">
-        <div class="guest-chips">${chips||'<span style="color:var(--muted);font-size:0.8rem">尚無來賓</span>'}</div>
-        <div class="guest-add-section">
-          <div class="add-label">新增來賓</div>
-          <div class="add-guest-row">
-            <input class="mini-input" id="gi-${t.id}" placeholder="來賓姓名" onkeydown="if(event.key==='Enter')addGuest('${t.id}')"/>
-            <select class="mini-select" id="gr-${t.id}">
-              <option value="">— 關係 —</option>
-              <optgroup label="新郎側">
-                <option>新郎家屬</option><option>新郎親戚</option><option>新郎同學</option><option>新郎同事</option><option>新郎朋友</option>
-              </optgroup>
-              <optgroup label="新娘側">
-                <option>新娘家屬</option><option>新娘親戚</option><option>新娘同學</option><option>新娘同事</option><option>新娘朋友</option>
-              </optgroup>
-              <option>共同朋友</option><option>其他</option>
-            </select>
-            <button class="btn-mini btn-mini-gold" onclick="addGuest('${t.id}')">＋</button>
-          </div>
-        </div>
-        <div class="tc-footer">
-          <div class="tc-progress">${chk}/${gs.length} 已報到</div>
-          <button class="btn-sm btn-danger" onclick="deleteTable('${t.id}')">刪除桌位</button>
+      <div class="tc-head">
+        <div class="tc-num">${t.num}</div>
+        <div class="tc-meta"><div class="tc-name">${t.name||'未命名'}</div><div class="tc-cap">${gs.length}/${t.cap} 人</div></div>
+        <div class="tc-actions">
+          <button class="tc-btn tc-btn-edit" onclick="adminTab('tables',document.querySelectorAll('.nav-tab')[1]);selectTable('${t.id}')">編輯</button>
         </div>
       </div>
+      <div class="tc-body">
+        ${specTags ? `<div class="tc-special">${specTags}</div>` : ''}
+        <div class="guest-chips">${chips || '<span style="color:var(--muted);font-size:0.78rem">尚無來賓</span>'}${moreChips}</div>
+        <div class="tc-footer"><div class="tc-progress">${chk}/${gs.length} 已報到</div></div>
+      </div>
+    </div>`;
+  }).join('') || '<div class="empty-state"><div class="es-icon">🪑</div>尚無桌位資料</div>';
+}
+
+// ─────────────────────────────────────────
+// TABLE LIST (left panel)
+// ─────────────────────────────────────────
+function renderTableList() {
+  const el = document.getElementById('tableListItems');
+  const count = document.getElementById('tlpCount');
+  if (!el) return;
+  count.textContent = `共 ${localData.length} 桌`;
+  if (!localData.length) {
+    el.innerHTML = '<div class="empty-state" style="padding:30px 20px"><div class="es-icon">🪑</div>尚無桌位</div>';
+    return;
+  }
+  el.innerHTML = localData.map(t => {
+    const gs = t.guests ? Object.values(t.guests) : [];
+    const vegC = gs.filter(g => g.veg).length;
+    const childC = gs.filter(g => g.child).length;
+    const tags = (vegC ? `<span class="tli-veg">🥗${vegC}</span>` : '') + (childC ? `<span class="tli-child">👶${childC}</span>` : '');
+    const chk = gs.filter(g => g.checked).length;
+    return `<div class="table-list-item ${selectedTableId === t.id ? 'selected' : ''}" onclick="selectTable('${t.id}')">
+      <div class="tli-num">${t.num}</div>
+      <div class="tli-info">
+        <div class="tli-name">${t.name || '未命名'}</div>
+        <div class="tli-sub">${chk}/${gs.length} 報到・容量 ${t.cap}</div>
+      </div>
+      ${tags ? `<div class="tli-tags">${tags}</div>` : ''}
     </div>`;
   }).join('');
 }
 
-function renderCheckin() {
-  const q = (document.getElementById('checkinSearch')?.value||'').toLowerCase();
-  const filterRel = document.getElementById('filterRelation')?.value || '';
-  let rows = [];
-  localData.forEach(t => {
-    const gs = t.guests ? Object.entries(t.guests) : [];
-    gs.forEach(([k,g]) => {
-      if (q && !g.name.toLowerCase().includes(q)) return;
-      if (filterRel && g.relation !== filterRel) return;
-      rows.push({name:g.name, relation:g.relation||'', num:t.num, tname:t.name||'—', checked:g.checked, tid:t.id, gk:k});
-    });
-  });
-  rows.sort((a,b)=>a.num-b.num);
-  document.getElementById('checkinBody').innerHTML = rows.length
-    ? rows.map(r=>`<tr>
-        <td>${r.name}</td>
-        <td>${r.relation ? `<span class="badge badge-relation">${r.relation}</span>` : '<span style="color:var(--muted);font-size:0.8rem">—</span>'}</td>
-        <td><b>${r.num}</b></td>
-        <td>${r.tname}</td>
-        <td><span class="badge ${r.checked?'badge-ok':'badge-no'}">${r.checked?'✓ 已報到':'待報到'}</span></td>
-        <td>${r.checked
-          ?`<button class="btn-sm btn-outline" style="font-size:0.75rem" onclick="toggleCheckin('${r.tid}','${r.gk}',false)">取消報到</button>`
-          :`<button class="btn-sm btn-gold" style="font-size:0.75rem" onclick="toggleCheckin('${r.tid}','${r.gk}',true)">標記報到</button>`}</td>
-      </tr>`).join('')
-    : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">無資料</td></tr>';
+// ─────────────────────────────────────────
+// TABLE EDIT PANEL (right panel)
+// ─────────────────────────────────────────
+window.selectTable = (id) => {
+  selectedTableId = id;
+  renderTableList();
+  renderTableEditPanel(id);
+};
+
+function renderTableEditPanel(id) {
+  const t = localData.find(t => t.id === id);
+  const el = document.getElementById('tableEditPanel');
+  if (!t || !el) return;
+  const gs = t.guests ? Object.entries(t.guests) : [];
+  const guestItems = gs.map(([k, g]) => {
+    const vegBadge = g.veg ? '<span class="gel-veg">🥗 素食</span>' : '';
+    const childBadge = g.child ? '<span class="gel-child">👶 兒童</span>' : '';
+    const checkedBadge = g.checked ? '<span class="gel-checked">✓ 已報到</span>' : '';
+    return `<div class="gel-item">
+      <span class="gel-name">${g.name}</span>
+      <span class="gel-rel">${g.relation || '—'}</span>
+      <div class="gel-badges">${vegBadge}${childBadge}${checkedBadge}</div>
+      <div class="gel-actions">
+        <button class="btn-sm btn-info" style="font-size:0.72rem;padding:4px 8px" onclick="openEditGuestModal('${id}','${k}')">編輯</button>
+        <button class="btn-sm btn-danger" style="font-size:0.72rem;padding:4px 8px" onclick="removeGuest('${id}','${k}')">移除</button>
+      </div>
+    </div>`;
+  }).join('') || '<div style="color:var(--muted);font-size:0.82rem;padding:6px 0">尚無來賓</div>';
+
+  el.innerHTML = `
+    <div class="tep-title">
+      <span>第 ${t.num} 桌・${t.name || '未命名'}</span>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn-sm btn-danger" style="font-size:0.75rem" onclick="deleteTable('${t.id}')">🗑 刪除桌位</button>
+      </div>
+    </div>
+    <!-- Edit table info -->
+    <div style="background:var(--warm);border-radius:4px;padding:14px;margin-bottom:16px">
+      <div style="font-size:0.76rem;color:var(--muted);letter-spacing:0.15em;margin-bottom:10px">編輯桌位資料</div>
+      <div class="tep-input-row">
+        <div><div class="tep-label">桌號</div><input class="tep-input w80" id="te-num-${id}" value="${t.num}" type="number" min="1"/></div>
+        <div style="flex:1"><div class="tep-label">桌名</div><input class="tep-input w200" id="te-name-${id}" value="${t.name||''}" placeholder="未命名"/></div>
+        <div><div class="tep-label">容量</div><input class="tep-input w80" id="te-cap-${id}" value="${t.cap}" type="number" min="1"/></div>
+        <div style="align-self:flex-end"><button class="btn-sm btn-gold" onclick="saveTableInfo('${id}')">儲存</button></div>
+      </div>
+    </div>
+    <!-- Guest list -->
+    <div style="font-size:0.78rem;color:var(--muted);letter-spacing:0.15em;margin-bottom:8px">來賓清單（${gs.length} 人）</div>
+    <div class="guest-edit-list">${guestItems}</div>
+    <!-- Add guest inline -->
+    <div style="background:var(--warm);border-radius:4px;padding:12px;margin-top:12px">
+      <div style="font-size:0.74rem;color:var(--muted);letter-spacing:0.15em;margin-bottom:8px">新增來賓至此桌</div>
+      <div class="add-guest-row">
+        <input class="mini-input" id="gi-${id}" placeholder="來賓姓名" onkeydown="if(event.key==='Enter')addGuest('${id}')"/>
+        <select class="mini-select" id="gr-${id}">
+          <option value="">— 關係 —</option>
+          <optgroup label="新郎側"><option>新郎家屬</option><option>新郎親戚</option><option>新郎同學</option><option>新郎同事</option><option>新郎朋友</option></optgroup>
+          <optgroup label="新娘側"><option>新娘家屬</option><option>新娘親戚</option><option>新娘同學</option><option>新娘同事</option><option>新娘朋友</option></optgroup>
+          <option>共同朋友</option><option>其他</option>
+        </select>
+        <button class="btn-mini btn-mini-gold" onclick="addGuest('${id}')">＋ 新增</button>
+      </div>
+      <div class="mini-check-row" style="margin-top:7px">
+        <label class="mini-check"><input type="checkbox" id="gv-${id}" style="accent-color:var(--veg)"/> 🥗 素食</label>
+        <label class="mini-check"><input type="checkbox" id="gc-${id}" style="accent-color:var(--child)"/> 👶 兒童座椅</label>
+      </div>
+    </div>`;
 }
 
-// ── 新增桌位（逐筆來賓） ──
-window.addGuestToForm = () => {
-  const name = document.getElementById('at-guest-name').value.trim();
-  const relation = document.getElementById('at-guest-relation').value;
-  if (!name) { toast('請輸入來賓姓名'); return; }
-  if (pendingGuests.find(g=>g.name===name)) { toast('已有同名來賓'); return; }
-  pendingGuests.push({name, relation});
-  document.getElementById('at-guest-name').value = '';
+window.saveTableInfo = async (id) => {
+  const newNum = parseInt(document.getElementById(`te-num-${id}`).value);
+  const newName = document.getElementById(`te-name-${id}`).value.trim();
+  const newCap = parseInt(document.getElementById(`te-cap-${id}`).value) || 10;
+  if (!newNum) { toast('桌號不可為空'); return; }
+  const conflict = localData.find(t => t.num === newNum && t.id !== id);
+  if (conflict) { toast(`桌號 ${newNum} 已存在`); return; }
+  await update(ref(db, 'tables/' + id), {num: newNum, name: newName, cap: newCap});
+  addActivity('edit', `桌位資料已更新：第 ${newNum} 桌 ${newName}`);
+  toast(`✓ 已更新桌位資料`);
+};
+
+// ─────────────────────────────────────────
+// GUEST EDIT MODAL
+// ─────────────────────────────────────────
+window.openEditGuestModal = (tid, gk) => {
+  const t = localData.find(t => t.id === tid);
+  const g = t?.guests?.[gk];
+  if (!g) return;
+  document.getElementById('eg-tid').value = tid;
+  document.getElementById('eg-gk').value = gk;
+  document.getElementById('eg-name').value = g.name;
+  document.getElementById('eg-relation').value = g.relation || '';
+  document.getElementById('eg-veg').checked = !!g.veg;
+  document.getElementById('eg-child').checked = !!g.child;
+  document.getElementById('editGuestModal').classList.add('show');
+};
+window.closeEditGuestModal = () => document.getElementById('editGuestModal').classList.remove('show');
+window.saveEditGuest = async () => {
+  const tid = document.getElementById('eg-tid').value;
+  const gk = document.getElementById('eg-gk').value;
+  const name = document.getElementById('eg-name').value.trim();
+  const relation = document.getElementById('eg-relation').value;
+  const veg = document.getElementById('eg-veg').checked;
+  const child = document.getElementById('eg-child').checked;
+  if (!name) { toast('請輸入姓名'); return; }
+  await update(ref(db, `tables/${tid}/guests/${gk}`), {name, relation, veg, child});
+  closeEditGuestModal();
+  addActivity('edit', `來賓資料已更新：${name}`);
+  toast(`✓ 已更新：${name}`);
+};
+
+// ─────────────────────────────────────────
+// ADD TABLE MODAL
+// ─────────────────────────────────────────
+window.openAddTableModal = () => {
+  document.getElementById('at-num').value = '';
+  document.getElementById('at-name').value = '';
+  document.getElementById('at-cap').value = '10';
+  pendingGuests = [];
   renderPendingGuests();
+  renderMemberPicker();
+  document.getElementById('addTableModal').classList.add('show');
+};
+window.closeAddTableModal = () => document.getElementById('addTableModal').classList.remove('show');
+
+window.renderMemberPicker = () => {
+  const q = (document.getElementById('at-member-search')?.value || '').toLowerCase();
+  const el = document.getElementById('at-member-picker');
+  if (!el) return;
+  const available = membersData.filter(m => {
+    if (q && !m.name.toLowerCase().includes(q)) return false;
+    return !pendingGuests.find(g => g.memberId === m.id);
+  });
+  if (!available.length) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:0.8rem;padding:8px">${membersData.length === 0 ? '尚無人員資料' : '無符合結果'}</div>`;
+    return;
+  }
+  el.innerHTML = available.map(m => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 9px;border-radius:3px;margin-bottom:3px;background:white;border:1px solid var(--border);cursor:pointer;" onclick="pickMember('${m.id}')">
+      <div><span style="font-size:0.85rem;font-weight:500">${m.name}</span><span style="font-size:0.72rem;color:var(--muted);margin-left:7px">${m.relation}</span></div>
+      <span style="font-size:0.75rem;color:var(--gold);padding:2px 9px;background:rgba(201,169,110,0.1);border-radius:20px">＋</span>
+    </div>`).join('');
+};
+
+window.pickMember = (id) => {
+  const m = membersData.find(m => m.id === id);
+  if (!m) return;
+  pendingGuests.push({name: m.name, relation: m.relation, memberId: m.id, veg: (m.veg||0) > 0, child: (m.chair||0) > 0});
+  renderPendingGuests(); renderMemberPicker();
 };
 
 function renderPendingGuests() {
-  document.getElementById('at-guest-list').innerHTML = pendingGuests.map((g,i) =>
-    `<div class="guest-form-item">
+  const el = document.getElementById('at-guest-list');
+  if (!el) return;
+  el.innerHTML = pendingGuests.map((g, i) => `
+    <div class="guest-form-item">
       <span class="gfi-name">${g.name}</span>
       <span class="gfi-relation">${g.relation||'—'}</span>
+      ${g.veg ? '<span style="font-size:0.68rem;background:var(--veg-bg);color:var(--veg);padding:1px 6px;border-radius:10px">素食</span>' : ''}
+      ${g.child ? '<span style="font-size:0.68rem;background:var(--child-bg);color:var(--child);padding:1px 6px;border-radius:10px">兒童</span>' : ''}
       <span class="gfi-del" onclick="removePendingGuest(${i})">✕</span>
-    </div>`
-  ).join('') || '<div style="color:var(--muted);font-size:0.8rem;padding:4px 0">尚未加入任何來賓</div>';
+    </div>`).join('') || '<div style="color:var(--muted);font-size:0.78rem;padding:4px">尚未選取</div>';
 }
-
-window.removePendingGuest = i => { pendingGuests.splice(i,1); renderPendingGuests(); };
+window.removePendingGuest = i => { pendingGuests.splice(i, 1); renderPendingGuests(); renderMemberPicker(); };
 
 window.addTable = async () => {
   const num = parseInt(document.getElementById('at-num').value);
   const name = document.getElementById('at-name').value.trim();
-  const cap = parseInt(document.getElementById('at-cap').value)||10;
+  const cap = parseInt(document.getElementById('at-cap').value) || 10;
   if (!num) { toast('請輸入桌號'); return; }
-  if (localData.find(t=>t.num===num)) { toast('此桌號已存在'); return; }
+  if (localData.find(t => t.num === num)) { toast('此桌號已存在'); return; }
   const guests = {};
-  pendingGuests.forEach((g,i) => { guests[`g${Date.now()}${i}`] = {name:g.name, relation:g.relation||'', checked:false}; });
-  const id = 't'+Date.now();
-  await set(ref(db,'tables/'+id), {id,num,name,cap,guests});
-  clearForm(); toast(`✓ 第 ${num} 桌已新增，共 ${pendingGuests.length} 位來賓`);
+  pendingGuests.forEach((g, i) => {
+    guests[`g${Date.now()}${i}`] = {name: g.name, relation: g.relation || '', checked: false, veg: g.veg || false, child: g.child || false};
+  });
+  const id = 't' + Date.now();
+  await set(ref(db, 'tables/' + id), {id, num, name, cap, guests});
+  closeAddTableModal();
+  addActivity('add', `新增桌位：第 ${num} 桌「${name||'未命名'}」，${pendingGuests.length} 位來賓`);
+  toast(`✓ 第 ${num} 桌已新增`);
+  pendingGuests = [];
 };
 
-window.clearForm = () => {
-  ['at-num','at-name','at-guest-name'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('at-cap').value='10';
-  document.getElementById('at-guest-relation').value='';
-  pendingGuests = []; renderPendingGuests();
+window.deleteTable = async id => {
+  const t = localData.find(t => t.id === id);
+  if (!confirm(`確定要刪除第 ${t?.num} 桌「${t?.name||'未命名'}」及所有來賓？`)) return;
+  await remove(ref(db, 'tables/' + id));
+  selectedTableId = null;
+  document.getElementById('tableEditPanel').innerHTML = '<div class="tep-empty"><div style="font-size:2rem;opacity:0.3;margin-bottom:10px">🪑</div>請從左側選擇桌位進行編輯</div>';
+  addActivity('del', `刪除桌位：第 ${t?.num} 桌`);
+  toast('桌位已刪除');
 };
-
-window.deleteTable = async id => { if(!confirm('確定要刪除此桌位及所有來賓資料？'))return; await remove(ref(db,'tables/'+id)); toast('桌位已刪除'); };
 
 window.addGuest = async tid => {
-  const inp = document.getElementById('gi-'+tid);
-  const sel = document.getElementById('gr-'+tid);
-  const name = inp.value.trim(); if(!name)return;
+  const inp = document.getElementById('gi-' + tid);
+  const sel = document.getElementById('gr-' + tid);
+  const vegChk = document.getElementById('gv-' + tid);
+  const childChk = document.getElementById('gc-' + tid);
+  const name = inp?.value.trim();
+  if (!name) return;
   const relation = sel ? sel.value : '';
-  const t = localData.find(t=>t.id===tid); if(!t)return;
-  if(t.guests&&Object.values(t.guests).find(g=>g.name===name)){toast('此桌已有同名來賓');return;}
-  const key = 'g'+Date.now()+Math.random().toString(36).slice(2,6);
-  await set(ref(db,`tables/${tid}/guests/${key}`),{name,relation,checked:false});
-  inp.value=''; if(sel)sel.value=''; toast(`✓ 已新增：${name}${relation?' ('+relation+')':''}`);
+  const veg = vegChk ? vegChk.checked : false;
+  const child = childChk ? childChk.checked : false;
+  const t = localData.find(t => t.id === tid);
+  if (!t) return;
+  if (t.guests && Object.values(t.guests).find(g => g.name === name)) { toast('此桌已有同名來賓'); return; }
+  const key = 'g' + Date.now() + Math.random().toString(36).slice(2, 6);
+  await set(ref(db, `tables/${tid}/guests/${key}`), {name, relation, checked: false, veg, child});
+  if (inp) inp.value = '';
+  if (sel) sel.value = '';
+  if (vegChk) vegChk.checked = false;
+  if (childChk) childChk.checked = false;
+  addActivity('add', `新增來賓：${name}（第 ${t.num} 桌）`);
+  toast(`✓ 已新增：${name}`);
 };
 
-window.removeGuest = async (tid,gk) => {
-  const t=localData.find(t=>t.id===tid); const name=t?.guests?.[gk]?.name||'';
-  if(!confirm(`確定移除來賓「${name}」？`))return;
-  await remove(ref(db,`tables/${tid}/guests/${gk}`)); toast(`已移除：${name}`);
+window.removeGuest = async (tid, gk) => {
+  const t = localData.find(t => t.id === tid);
+  const name = t?.guests?.[gk]?.name || '';
+  if (!confirm(`確定移除來賓「${name}」？`)) return;
+  await remove(ref(db, `tables/${tid}/guests/${gk}`));
+  addActivity('del', `移除來賓：${name}（第 ${t?.num} 桌）`);
+  toast(`已移除：${name}`);
 };
 
-window.toggleCheckin = async (tid,gk,val) => {
-  await update(ref(db,`tables/${tid}/guests/${gk}`),{checked:val});
-  const t=localData.find(t=>t.id===tid); const name=t?.guests?.[gk]?.name||'';
-  toast(val?`✓ ${name} 已報到`:`${name} 取消報到`);
+// ─────────────────────────────────────────
+// CHECK-IN
+// ─────────────────────────────────────────
+function renderCheckin() {
+  const q = (document.getElementById('checkinSearch')?.value || '').toLowerCase();
+  const filterRel = document.getElementById('filterRelation')?.value || '';
+  const filterSpecial = document.getElementById('filterSpecial')?.value || '';
+  let rows = [];
+  localData.forEach(t => {
+    const gs = t.guests ? Object.entries(t.guests) : [];
+    gs.forEach(([k, g]) => {
+      if (q && !g.name.toLowerCase().includes(q)) return;
+      if (filterRel && g.relation !== filterRel) return;
+      if (filterSpecial === 'veg' && !g.veg) return;
+      if (filterSpecial === 'child' && !g.child) return;
+      rows.push({name: g.name, relation: g.relation || '', num: t.num, tname: t.name || '—', checked: g.checked, veg: g.veg, child: g.child, tid: t.id, gk: k});
+    });
+  });
+  rows.sort((a, b) => a.num - b.num);
+  document.getElementById('checkinBody').innerHTML = rows.length
+    ? rows.map(r => `<tr>
+        <td><strong>${r.name}</strong></td>
+        <td>${r.relation ? `<span class="badge badge-relation">${r.relation}</span>` : '—'}</td>
+        <td>${r.veg ? '<span class="badge badge-veg">🥗 素食</span> ' : ''}${r.child ? '<span class="badge badge-child">👶 兒童</span>' : (r.veg ? '' : '—')}</td>
+        <td><b>${r.num}</b></td>
+        <td>${r.tname}</td>
+        <td><span class="badge ${r.checked ? 'badge-ok' : 'badge-no'}">${r.checked ? '✓ 已報到' : '待報到'}</span></td>
+        <td>${r.checked
+          ? `<button class="btn-sm btn-outline" style="font-size:0.72rem" onclick="toggleCheckin('${r.tid}','${r.gk}',false)">取消</button>`
+          : `<button class="btn-sm btn-gold" style="font-size:0.72rem" onclick="toggleCheckin('${r.tid}','${r.gk}',true)">✓ 報到</button>`}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted)">無資料</td></tr>';
+}
+
+window.toggleCheckin = async (tid, gk, val) => {
+  await update(ref(db, `tables/${tid}/guests/${gk}`), {checked: val});
+  const t = localData.find(t => t.id === tid);
+  const name = t?.guests?.[gk]?.name || '';
+  if (val) addActivity('checkin', `${name} 完成報到（第 ${t?.num} 桌）`);
+  toast(val ? `✓ ${name} 已報到` : `${name} 取消報到`);
 };
 
 window.resetAllCheckin = async () => {
-  if(!confirm('確定要重置所有來賓的報到狀態？'))return;
-  const updates={};
-  localData.forEach(t=>{ if(t.guests)Object.keys(t.guests).forEach(k=>{ updates[`tables/${t.id}/guests/${k}/checked`]=false; }); });
-  await update(ref(db),updates); toast('已重置所有報到狀態');
+  if (!confirm('確定要重置所有來賓的報到狀態？')) return;
+  const updates = {};
+  localData.forEach(t => { if (t.guests) Object.keys(t.guests).forEach(k => { updates[`tables/${t.id}/guests/${k}/checked`] = false; }); });
+  await update(ref(db), updates);
+  addActivity('edit', '已重置所有報到狀態');
+  toast('已重置所有報到狀態');
 };
 
-window.clearAll = async () => { if(!confirm('確定要清除全部資料？此操作無法復原。'))return; await remove(ref(db,'tables')); toast('已清除全部資料'); };
+window.clearAll = async () => {
+  if (!confirm('確定要清除全部資料？此操作無法復原。')) return;
+  await remove(ref(db, 'tables'));
+  selectedTableId = null;
+  addActivity('del', '清除全部桌位資料');
+  toast('已清除全部資料');
+};
 
-// ── CSV 匯入（修復 key 衝突問題）──
+// ─────────────────────────────────────────
+// CSV
+// ─────────────────────────────────────────
 window.importCSV = async () => {
   const raw = document.getElementById('csvInput').value.trim();
-  if(!raw){toast('請貼上 CSV 資料');return;}
-  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
-  let count=0, skip=0;
-  for(let i=0; i<lines.length; i++){
-    if(i===0 && /桌號|table/i.test(lines[i])) continue;
-    const parts = lines[i].split(',').map(s=>s.trim());
-    const num = parseInt(parts[0]); if(!num) continue;
-    if(localData.find(t=>t.num===num)){skip++;continue;}
-    const name = parts[1]||'';
-    const cap = parseInt(parts[2])||10;
-    const guestStr = parts[3]||'';
-    const guests={};
-    if(guestStr){
-      guestStr.split('|').map(s=>s.trim()).filter(Boolean).forEach((entry, idx) => {
-        // 支援 "姓名:關係" 格式
+  if (!raw) { toast('請貼上 CSV 資料'); return; }
+  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  let count = 0, skip = 0;
+  for (let i = 0; i < lines.length; i++) {
+    if (i === 0 && /桌號|table/i.test(lines[i])) continue;
+    const parts = lines[i].split(',').map(s => s.trim());
+    const num = parseInt(parts[0]); if (!num) continue;
+    if (localData.find(t => t.num === num)) { skip++; continue; }
+    const name = parts[1] || '';
+    const cap = parseInt(parts[2]) || 10;
+    const guestStr = parts[3] || '';
+    const guests = {};
+    if (guestStr) {
+      guestStr.split('|').map(s => s.trim()).filter(Boolean).forEach((entry, idx) => {
         const colonIdx = entry.lastIndexOf(':');
-        let gname, grelation;
-        if(colonIdx > 0){
+        let gname, grelation, gveg = false, gchild = false;
+        if (colonIdx > 0) {
           gname = entry.slice(0, colonIdx).trim();
-          grelation = entry.slice(colonIdx+1).trim();
+          const rest = entry.slice(colonIdx + 1).trim();
+          // Parse +素食 +兒童 flags
+          gveg = rest.includes('+素食');
+          gchild = rest.includes('+兒童');
+          grelation = rest.replace('+素食', '').replace('+兒童', '').trim();
         } else {
-          gname = entry;
-          grelation = '';
+          gname = entry; grelation = '';
         }
-        // 用 count + idx + random 避免 key 衝突
-        const key = `g${Date.now()}${count}${idx}${Math.random().toString(36).slice(2,5)}`;
-        guests[key] = {name:gname, relation:grelation, checked:false};
+        const key = `g${Date.now()}${count}${idx}${Math.random().toString(36).slice(2, 5)}`;
+        guests[key] = {name: gname, relation: grelation, checked: false, veg: gveg, child: gchild};
       });
     }
-    const id = `t${Date.now()}${count}${Math.random().toString(36).slice(2,5)}`;
-    await set(ref(db,'tables/'+id), {id,num,name,cap,guests});
+    const id = `t${Date.now()}${count}${Math.random().toString(36).slice(2, 5)}`;
+    await set(ref(db, 'tables/' + id), {id, num, name, cap, guests});
     count++;
-    // 避免同一毫秒產生相同 key
-    await new Promise(r=>setTimeout(r,5));
+    await new Promise(r => setTimeout(r, 5));
   }
-  document.getElementById('csvInput').value='';
-  toast(`✓ 成功匯入 ${count} 桌${skip?`，${skip} 桌已存在略過`:''}`);
+  document.getElementById('csvInput').value = '';
+  addActivity('add', `CSV 匯入 ${count} 桌`);
+  toast(`✓ 成功匯入 ${count} 桌${skip ? `，${skip} 桌略過` : ''}`);
 };
 
 window.exportCSV = () => {
-  if(!localData.length){toast('目前無資料');return;}
+  if (!localData.length) { toast('目前無資料'); return; }
   const rows = localData.map(t => {
-    const guestStr = t.guests ? Object.values(t.guests).map(g=>g.relation?`${g.name}:${g.relation}`:g.name).join('|') : '';
-    return `${t.num},${t.name||''},${t.cap},${guestStr}`;
+    const guestStr = t.guests ? Object.values(t.guests).map(g => {
+      let s = g.relation ? `${g.name}:${g.relation}` : g.name;
+      if (g.veg) s += '+素食';
+      if (g.child) s += '+兒童';
+      return s;
+    }).join('|') : '';
+    return `${t.num},${t.name || ''},${t.cap},${guestStr}`;
   });
-  const blob = new Blob(['\uFEFF桌號,桌名,容納人數,來賓名單\n'+rows.join('\n')],{type:'text/csv;charset=utf-8;'});
-  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='婚宴桌位.csv'; a.click(); toast('✓ CSV 已下載');
+  const blob = new Blob(['\uFEFF桌號,桌名,容納人數,來賓名單\n' + rows.join('\n')], {type: 'text/csv;charset=utf-8;'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '婚宴桌位.csv'; a.click();
+  toast('✓ CSV 已下載');
 };
 
-// ── 人員管理 ──
+// ─────────────────────────────────────────
+// MEMBERS
+// ─────────────────────────────────────────
 window.addMember = async () => {
   const name = document.getElementById('mb-name').value.trim();
   const relation = document.getElementById('mb-relation').value;
-  const attend = parseInt(document.getElementById('mb-attend').value)||1;
-  const chair = parseInt(document.getElementById('mb-chair').value)||0;
-  const veg = parseInt(document.getElementById('mb-veg').value)||0;
+  const attend = parseInt(document.getElementById('mb-attend').value) || 1;
+  const chair = parseInt(document.getElementById('mb-chair').value) || 0;
+  const veg = parseInt(document.getElementById('mb-veg').value) || 0;
   if (!name) { toast('請輸入姓名'); return; }
   if (!relation) { toast('請選擇與新人關係'); return; }
-  if (attend < 1) { toast('出席人數至少 1 人'); return; }
-  const id = 'm' + Date.now() + Math.random().toString(36).slice(2,5);
+  const id = 'm' + Date.now() + Math.random().toString(36).slice(2, 5);
   await set(ref(db, 'members/' + id), {id, name, relation, attend, chair, veg});
   clearMemberForm();
   toast(`✓ 已新增：${name}`);
@@ -752,18 +1195,14 @@ window.openEditModal = (id) => {
   document.getElementById('edit-mb-veg').value = m.veg || 0;
   document.getElementById('editModalBg').classList.add('show');
 };
-
-window.closeEditModal = () => {
-  document.getElementById('editModalBg').classList.remove('show');
-};
-
+window.closeEditModal = () => document.getElementById('editModalBg').classList.remove('show');
 window.saveEditMember = async () => {
   const id = document.getElementById('edit-mb-id').value;
   const name = document.getElementById('edit-mb-name').value.trim();
   const relation = document.getElementById('edit-mb-relation').value;
-  const attend = parseInt(document.getElementById('edit-mb-attend').value)||1;
-  const chair = parseInt(document.getElementById('edit-mb-chair').value)||0;
-  const veg = parseInt(document.getElementById('edit-mb-veg').value)||0;
+  const attend = parseInt(document.getElementById('edit-mb-attend').value) || 1;
+  const chair = parseInt(document.getElementById('edit-mb-chair').value) || 0;
+  const veg = parseInt(document.getElementById('edit-mb-veg').value) || 0;
   if (!name) { toast('請輸入姓名'); return; }
   if (!relation) { toast('請選擇與新人關係'); return; }
   await update(ref(db, 'members/' + id), {name, relation, attend, chair, veg});
@@ -772,64 +1211,73 @@ window.saveEditMember = async () => {
 };
 
 function renderMembers() {
-  const q = (document.getElementById('memberSearch')?.value||'').toLowerCase();
-  const filterRel = document.getElementById('memberFilterRel')?.value||'';
+  const q = (document.getElementById('memberSearch')?.value || '').toLowerCase();
+  const filterRel = document.getElementById('memberFilterRel')?.value || '';
+  const filterSpecial = document.getElementById('memberFilterSpecial')?.value || '';
   let rows = membersData.filter(m => {
     if (q && !m.name.toLowerCase().includes(q)) return false;
     if (filterRel && m.relation !== filterRel) return false;
+    if (filterSpecial === 'veg' && !(m.veg > 0)) return false;
+    if (filterSpecial === 'child' && !(m.chair > 0)) return false;
     return true;
   });
   const tbody = document.getElementById('memberBody');
   if (!tbody) return;
-  if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">尚無人員資料</td></tr>';
-    return;
-  }
-  tbody.innerHTML = rows.map((m, i) => `
-    <tr>
-      <td style="color:var(--muted);font-size:0.8rem">${i+1}</td>
-      <td><strong>${m.name}</strong></td>
-      <td><span class="badge badge-relation">${m.relation}</span></td>
-      <td class="num-cell">${m.attend}</td>
-      <td class="num-cell">${m.chair||0}</td>
-      <td class="num-cell">${m.veg||0}</td>
-      <td style="white-space:nowrap">
-        <button class="btn-sm btn-outline" style="font-size:0.75rem;margin-right:4px" onclick="openEditModal('${m.id}')">編輯</button>
-        <button class="btn-sm btn-danger" style="font-size:0.75rem" onclick="deleteMember('${m.id}','${m.name}')">刪除</button>
-      </td>
-    </tr>`).join('');
+  tbody.innerHTML = rows.length
+    ? rows.map((m, i) => `<tr>
+        <td style="color:var(--muted);font-size:0.78rem">${i + 1}</td>
+        <td><strong>${m.name}</strong></td>
+        <td><span class="badge badge-relation">${m.relation}</span></td>
+        <td style="text-align:center;font-weight:600;color:var(--gold-dark)">${m.attend}</td>
+        <td style="text-align:center">${m.chair > 0 ? `<span class="badge badge-child">👶 ${m.chair}</span>` : '—'}</td>
+        <td style="text-align:center">${m.veg > 0 ? `<span class="badge badge-veg">🥗 ${m.veg}</span>` : '—'}</td>
+        <td style="white-space:nowrap">
+          <button class="btn-sm btn-outline" style="font-size:0.72rem;margin-right:3px" onclick="openEditModal('${m.id}')">編輯</button>
+          <button class="btn-sm btn-danger" style="font-size:0.72rem" onclick="deleteMember('${m.id}','${m.name}')">刪除</button>
+        </td>
+      </tr>`).join('')
+    : '<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted)">尚無人員資料</td></tr>';
   renderMemberSummary();
 }
 
 function renderMemberSummary() {
   const el = document.getElementById('memberSummary');
   if (!el) return;
-  const totalPeople = membersData.reduce((s,m)=>s+(m.attend||0),0);
-  const totalChair  = membersData.reduce((s,m)=>s+(m.chair||0),0);
-  const totalVeg    = membersData.reduce((s,m)=>s+(m.veg||0),0);
+  const totalPeople = membersData.reduce((s, m) => s + (m.attend || 0), 0);
+  const totalChair  = membersData.reduce((s, m) => s + (m.chair || 0), 0);
+  const totalVeg    = membersData.reduce((s, m) => s + (m.veg || 0), 0);
   el.innerHTML = `
     <div class="member-summary-item">👥 總筆數：<strong>${membersData.length} 筆</strong></div>
     <div class="member-summary-item">🪑 出席總人數：<strong>${totalPeople} 人</strong></div>
     <div class="member-summary-item">👶 兒童座椅：<strong>${totalChair} 張</strong></div>
-    <div class="member-summary-item">🥗 素食人數：<strong>${totalVeg} 人</strong></div>
-  `;
+    <div class="member-summary-item">🥗 素食人數：<strong>${totalVeg} 人</strong></div>`;
 }
 
 window.exportMembersCSV = () => {
   if (!membersData.length) { toast('目前無人員資料'); return; }
-  const rows = membersData.map(m => `${m.name},${m.relation},${m.attend},${m.chair||0},${m.veg||0}`);
-  const blob = new Blob(['\uFEFF姓名,與新人關係,出席人數,兒童座椅,素食人數\n'+rows.join('\n')], {type:'text/csv;charset=utf-8;'});
-  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='婚宴人員名單.csv'; a.click(); toast('✓ CSV 已下載');
+  const rows = membersData.map(m => `${m.name},${m.relation},${m.attend},${m.chair || 0},${m.veg || 0}`);
+  const blob = new Blob(['\uFEFF姓名,與新人關係,出席人數,兒童座椅,素食人數\n' + rows.join('\n')], {type: 'text/csv;charset=utf-8;'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '婚宴人員名單.csv'; a.click();
+  toast('✓ CSV 已下載');
 };
 
-// ── Toast ──
-let tt;
-window.toast = msg => { const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('show'),2500); };
+// ─────────────────────────────────────────
+// ACTIVITY LOG
+// ─────────────────────────────────────────
+function addActivity(type, msg) {
+  activityLog.push({type, msg, time: new Date().toLocaleTimeString('zh-TW')});
+  if (activityLog.length > 30) activityLog.shift();
+}
 
-// ── 鍵盤 Enter for login ──
-document.getElementById('pwInput').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
-// ── Enter to add guest in form ──
-document.getElementById('at-guest-name')?.addEventListener('keydown', e => { if(e.key==='Enter') addGuestToForm(); });
+// ─────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────
+let tt;
+window.toast = msg => {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(tt); tt = setTimeout(() => el.classList.remove('show'), 2500);
+};
 </script>
 </body>
 </html>
