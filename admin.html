@@ -437,7 +437,7 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
       <div class="member-summary" id="memberSummary"></div>
       <div class="section-header">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-          <input class="search-bar" id="memberSearch" placeholder="搜尋姓名…" oninput="renderMembers()" style="max-width:200px"/>
+          <input class="search-bar" id="memberSearch" placeholder="搜尋姓名…" oninput="renderMembers()" style="max-width:160px"/>
           <select class="form-select" id="memberFilterRel" onchange="renderMembers()" style="font-size:0.8rem;padding:8px 11px;">
             <option value="">全部關係</option>
             <option>新郎父親朋友</option><option>新郎母親朋友</option><option>新郎親友</option>
@@ -449,9 +449,11 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
             <option value="veg">素食</option>
             <option value="child">兒童座椅</option>
           </select>
+          <button class="btn-sm btn-outline" style="font-size:0.76rem" onclick="clearMemberFilter()">✕ 清除篩選</button>
         </div>
         <button class="btn-sm btn-outline" onclick="exportMembersCSV()">匯出 CSV</button>
       </div>
+      <div id="memberFilterBar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;min-height:22px;"></div>
       <div style="background:white;border:1px solid var(--border);border-radius:4px;overflow:auto">
         <table class="member-table">
           <thead><tr><th>#</th><th>姓名</th><th>與新人關係</th><th style="text-align:center">出席人數</th><th style="text-align:center">兒童座椅</th><th style="text-align:center">素食人數</th><th>操作</th></tr></thead>
@@ -1210,10 +1212,11 @@ window.saveEditMember = async () => {
   toast(`✓ 已更新：${name}`);
 };
 
-function renderMembers() {
-  const q = (document.getElementById('memberSearch')?.value || '').toLowerCase();
+window.renderMembers = function() {
+  const q = (document.getElementById('memberSearch')?.value || '').toLowerCase().trim();
   const filterRel = document.getElementById('memberFilterRel')?.value || '';
   const filterSpecial = document.getElementById('memberFilterSpecial')?.value || '';
+
   let rows = membersData.filter(m => {
     if (q && !m.name.toLowerCase().includes(q)) return false;
     if (filterRel && m.relation !== filterRel) return false;
@@ -1221,8 +1224,25 @@ function renderMembers() {
     if (filterSpecial === 'child' && !(m.chair > 0)) return false;
     return true;
   });
+
   const tbody = document.getElementById('memberBody');
   if (!tbody) return;
+
+  // Show filter summary bar
+  const filterBar = document.getElementById('memberFilterBar');
+  if (filterBar) {
+    const tags = [];
+    if (filterRel) tags.push(`關係：${filterRel}`);
+    if (filterSpecial === 'veg') tags.push('素食');
+    if (filterSpecial === 'child') tags.push('兒童座椅');
+    if (q) tags.push(`搜尋：${q}`);
+    filterBar.innerHTML = tags.length
+      ? `<span style="font-size:0.78rem;color:var(--muted)">篩選中：</span>` +
+        tags.map(t => `<span style="background:rgba(201,169,110,0.15);color:var(--gold-dark);font-size:0.76rem;padding:3px 10px;border-radius:20px;border:1px solid rgba(201,169,110,0.3)">${t}</span>`).join('') +
+        `<span style="font-size:0.76rem;color:var(--muted)">共 ${rows.length} 筆</span>`
+      : `<span style="font-size:0.78rem;color:var(--muted)">全部 ${rows.length} 筆</span>`;
+  }
+
   tbody.innerHTML = rows.length
     ? rows.map((m, i) => `<tr>
         <td style="color:var(--muted);font-size:0.78rem">${i + 1}</td>
@@ -1236,7 +1256,9 @@ function renderMembers() {
           <button class="btn-sm btn-danger" style="font-size:0.72rem" onclick="deleteMember('${m.id}','${m.name}')">刪除</button>
         </td>
       </tr>`).join('')
-    : '<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted)">尚無人員資料</td></tr>';
+    : `<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--muted)">
+        ${(filterRel || filterSpecial || q) ? `找不到符合條件的人員` : '尚無人員資料'}
+       </td></tr>`;
   renderMemberSummary();
 }
 
@@ -1252,6 +1274,16 @@ function renderMemberSummary() {
     <div class="member-summary-item">👶 兒童座椅：<strong>${totalChair} 張</strong></div>
     <div class="member-summary-item">🥗 素食人數：<strong>${totalVeg} 人</strong></div>`;
 }
+
+window.clearMemberFilter = () => {
+  const s = document.getElementById('memberSearch');
+  const r = document.getElementById('memberFilterRel');
+  const p = document.getElementById('memberFilterSpecial');
+  if (s) s.value = '';
+  if (r) r.value = '';
+  if (p) p.value = '';
+  renderMembers();
+};
 
 window.exportMembersCSV = () => {
   if (!membersData.length) { toast('目前無人員資料'); return; }
