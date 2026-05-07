@@ -478,7 +478,9 @@ window.searchGuest = () => {
     return;
   }
 
-  const gCount = Object.values(tInfo.guests).length;
+  // Look up attend count from members data
+  const memberRecord = membersData.find(m => m.name === found.name);
+  const attendCount = memberRecord ? (memberRecord.attend || 1) : 1;
   const relationHTML = found.relation ? `<div class="relation-badge">🎀 ${found.relation}</div>` : '';
 
   let specialHTML = '';
@@ -506,7 +508,7 @@ window.searchGuest = () => {
       </div>
       ${specialHTML}
       <div class="result-info">
-        <div class="info-item"><div class="info-lbl">同桌人數</div><div class="info-val">${gCount} 人</div></div>
+        <div class="info-item"><div class="info-lbl">出席人數</div><div class="info-val">${attendCount} 人</div></div>
         <div class="info-item"><div class="info-lbl">報到狀態</div><div class="info-val" id="gCkSt">${found.checked ? '✓ 已報到' : '尚未報到'}</div></div>
         ${found.relation
           ? `<div class="info-item"><div class="info-lbl">與新人關係</div><div class="info-val">${found.relation}</div></div>`
