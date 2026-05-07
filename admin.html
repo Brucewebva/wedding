@@ -269,18 +269,6 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
 .tli-status.partial { background:var(--gold); }
 .tli-status.none { background:#d0c0a8; }
 
-/* TIMELINE */
-.timeline-wrap { padding:4px 0; }
-.timeline-bar { display:flex; height:48px; background:#f0ebe3; border-radius:6px; overflow:hidden; position:relative; margin-bottom:8px; }
-.timeline-slot { height:100%; border-right:1px solid white; transition:all 0.2s; cursor:default; display:flex; align-items:center; justify-content:center; font-size:0.6rem; color:white; font-weight:600; }
-.timeline-slot:hover { filter:brightness(1.15); }
-.timeline-axis { display:flex; justify-content:space-between; font-size:0.68rem; color:var(--muted); padding:0 2px; }
-.checkin-peak { background:rgba(201,169,110,0.08); border:1px solid var(--border); border-radius:6px; padding:14px 16px; margin-bottom:14px; }
-.peak-title { font-size:0.76rem; color:var(--muted); letter-spacing:0.15em; margin-bottom:10px; }
-.peak-row { display:flex; gap:10px; flex-wrap:wrap; }
-.peak-item { background:white; border:1px solid var(--border); border-radius:4px; padding:8px 14px; font-size:0.82rem; text-align:center; }
-.peak-item strong { display:block; font-family:'Cormorant Garamond',serif; font-size:1.4rem; color:var(--gold); line-height:1; }
-
 /* REPORT PANEL */
 .report-section { background:white; border:1px solid var(--border); border-radius:6px; padding:20px; margin-bottom:16px; }
 .report-section h3 { font-size:0.88rem; color:var(--brown); letter-spacing:0.18em; margin-bottom:14px; border-bottom:1px solid var(--border); padding-bottom:10px; }
@@ -329,7 +317,6 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
     <div class="nav-tab" onclick="adminTab('import',this)">CSV 匯入</div>
     <div class="nav-tab" onclick="adminTab('checkin',this)">報到總覽</div>
     <div class="nav-tab" onclick="adminTab('members',this)">人員管理</div>
-    <div class="nav-tab" onclick="adminTab('timeline',this)">報到時間軸</div>
     <div class="nav-tab" onclick="adminTab('report',this)">完整報表</div>
     <div class="nav-tab" onclick="adminTab('settings',this)">⚙ 設定</div>
     <div class="nav-right">
@@ -788,7 +775,6 @@ window.adminTab = (name, el) => {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
   if (name === 'tables') renderTableList();
-  if (name === 'timeline') renderTimeline();
   if (name === 'report') renderReport();
 };
 
@@ -1679,124 +1665,6 @@ window.exportMembersXLSX = () => {
 // ─────────────────────────────────────────
 // TIMELINE
 // ─────────────────────────────────────────
-window.renderTimeline = function renderTimeline() {
-  // 分兩組：有時間戳記 / 已報到但無時間（舊資料）
-  const withTime = [];
-  const noTime = [];
-  localData.forEach(t => {
-    if (!t.guests) return;
-    Object.values(t.guests).forEach(g => {
-      if (!g.checked) return;
-      const row = {name: g.name, relation: g.relation||'', num: t.num, tname: t.name||''};
-      if (g.checkedAt) withTime.push({...row, ts: g.checkedAt});
-      else             noTime.push(row);
-    });
-  });
-  withTime.sort((a,b) => a.ts - b.ts);
-  const totalChecked = withTime.length + noTime.length;
-
-  const subtitle = document.getElementById('timelineSubtitle');
-  if (subtitle) subtitle.textContent = `已報到 ${totalChecked} 人（含時間記錄 ${withTime.length} 筆）`;
-
-  // ── Peak stats ──
-  const peakRow = document.getElementById('peakRow');
-  if (peakRow) {
-    if (!totalChecked) {
-      peakRow.innerHTML = '<div style="font-size:0.82rem;color:var(--muted)">尚無報到資料</div>';
-    } else {
-      let peakHTML = `<div class="peak-item"><strong>${totalChecked}</strong>已報到總人數</div>`;
-      if (withTime.length) {
-        const first = withTime[0];
-        const last  = withTime[withTime.length-1];
-        const buckets = {};
-        withTime.forEach(c => {
-          const d = new Date(c.ts);
-          const slot = `${d.getHours()}:${String(Math.floor(d.getMinutes()/15)*15).padStart(2,'0')}`;
-          buckets[slot] = (buckets[slot]||0) + 1;
-        });
-        const peakSlot = Object.entries(buckets).sort((a,b)=>b[1]-a[1])[0];
-        peakHTML += `
-          <div class="peak-item"><strong>${new Date(first.ts).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}</strong>首位報到</div>
-          <div class="peak-item"><strong>${new Date(last.ts).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}</strong>最後報到</div>
-          <div class="peak-item"><strong>${peakSlot?peakSlot[0]:'—'}</strong>高峰時段</div>
-          <div class="peak-item"><strong>${peakSlot?peakSlot[1]:0} 人</strong>高峰人數</div>`;
-      }
-      if (noTime.length) {
-        peakHTML += `<div class="peak-item" style="border-color:rgba(201,169,110,0.3)"><strong style="color:var(--muted);font-size:1rem">${noTime.length}</strong>無時間記錄</div>`;
-      }
-      peakRow.innerHTML = peakHTML;
-    }
-  }
-
-  // ── Bar chart ──
-  const chartEl = document.getElementById('timelineChart');
-  const axisEl  = document.getElementById('timelineAxis');
-  if (chartEl) {
-    if (withTime.length) {
-      const slotMs = 15*60*1000;
-      const startSlot = Math.floor(withTime[0].ts/slotMs)*slotMs;
-      const endSlot   = Math.ceil((withTime[withTime.length-1].ts+1)/slotMs)*slotMs;
-      const slots = [];
-      for (let s = startSlot; s < endSlot; s += slotMs) slots.push({start:s, count:0});
-      withTime.forEach(c => {
-        const idx = Math.floor((c.ts - startSlot)/slotMs);
-        if (slots[idx]) slots[idx].count++;
-      });
-      const maxCount = Math.max(...slots.map(s=>s.count), 1);
-      const colors = ['#e8d5a3','#c9a96e','#a07840','#7c5c3a','#4a7c59'];
-      chartEl.innerHTML = `<div class="timeline-bar">${slots.map(s => {
-        const d = new Date(s.start);
-        const label = s.count > 0 ? s.count : '';
-        const colorIdx = s.count ? Math.min(Math.floor(s.count/maxCount*4)+1, 4) : 0;
-        return `<div class="timeline-slot"
-          style="width:${100/slots.length}%;background:${s.count?colors[colorIdx]:'#f0ebe3'}"
-          title="${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')} — ${s.count}人">${label}</div>`;
-      }).join('')}</div>`;
-      if (axisEl) {
-        const step = slots.length > 8 ? 2 : 1;
-        axisEl.innerHTML = slots.filter((_,i)=>i%step===0).map(s=>{
-          const d=new Date(s.start);
-          return `<span>${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}</span>`;
-        }).join('');
-      }
-    } else {
-      chartEl.innerHTML = `<div style="text-align:center;padding:28px 20px;color:var(--muted);font-size:0.86rem;border:1.5px dashed var(--border);border-radius:6px">
-        <div style="font-size:1.8rem;margin-bottom:8px;opacity:0.4">⏱</div>
-        ${totalChecked > 0
-          ? `已有 <strong>${totalChecked}</strong> 人報到，但這些記錄是在時間記錄功能加入前完成的，<br>沒有時間戳記。<br><span style="font-size:0.78rem;margin-top:6px;display:block">之後新的報到將會自動記錄時間。</span>`
-          : '尚無任何報到資料'}
-      </div>`;
-      if (axisEl) axisEl.innerHTML = '';
-    }
-  }
-
-  // ── Detail table ──
-  const tbody = document.getElementById('timelineBody');
-  if (tbody) {
-    const withTimeRows = withTime.map(c => `<tr>
-      <td><strong>${new Date(c.ts).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</strong></td>
-      <td>${c.name}</td>
-      <td><b>${c.num}</b>${c.tname?'・'+c.tname:''}</td>
-      <td>${c.relation?`<span class="badge badge-relation">${c.relation}</span>`:'—'}</td>
-    </tr>`).join('');
-
-    const noTimeRows = noTime.map(c => `<tr style="opacity:0.6">
-      <td style="color:var(--muted);font-size:0.78rem">—（無時間記錄）</td>
-      <td>${c.name}</td>
-      <td><b>${c.num}</b>${c.tname?'・'+c.tname:''}</td>
-      <td>${c.relation?`<span class="badge badge-relation">${c.relation}</span>`:'—'}</td>
-    </tr>`).join('');
-
-    if (!totalChecked) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:28px;color:var(--muted)">尚無報到資料</td></tr>';
-    } else {
-      tbody.innerHTML = withTimeRows + (noTimeRows
-        ? `<tr><td colspan="4" style="padding:8px 13px;background:var(--warm);font-size:0.74rem;color:var(--muted);letter-spacing:0.1em">以下為無時間記錄的舊有報到資料</td></tr>` + noTimeRows
-        : '');
-    }
-  }
-}
-
 // ─────────────────────────────────────────
 // FULL REPORT
 // ─────────────────────────────────────────
