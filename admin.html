@@ -514,6 +514,42 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
       </div>
     </div>
 
+    <!-- Panel: Settings -->
+    <div class="panel" id="panel-settings">
+      <div class="form-card">
+        <h3>📲 Telegram 即時通知設定</h3>
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:16px;line-height:1.7">
+          填入你的 Telegram Bot Token 和 Chat ID，每當來賓完成報到時會自動傳送通知。<br>
+          建立步驟：① 對 <b>@BotFather</b> 傳 /newbot 取得 Token ② 對 <b>@userinfobot</b> 傳任意訊息取得 Chat ID
+        </p>
+        <div class="form-grid">
+          <div class="form-group" style="grid-column:span 2">
+            <label>Bot Token</label>
+            <input class="form-input" id="tg-token" placeholder="例：7123456789:AAH..." style="font-family:monospace;font-size:0.85rem"/>
+          </div>
+          <div class="form-group">
+            <label>Chat ID</label>
+            <input class="form-input" id="tg-chat" placeholder="例：123456789"/>
+          </div>
+          <div class="form-group">
+            <label>每幾人報到通知一次</label>
+            <select class="form-select" id="tg-every">
+              <option value="1">每 1 人</option>
+              <option value="5">每 5 人</option>
+              <option value="10">每 10 人</option>
+              <option value="20">每 20 人</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-sm btn-gold" onclick="saveTgSettings()">儲存設定</button>
+          <button class="btn-sm btn-outline" onclick="testTelegram()">📨 發送測試訊息</button>
+          <button class="btn-sm btn-danger" onclick="clearTgSettings()">清除</button>
+        </div>
+        <div id="tgStatus" style="margin-top:12px;font-size:0.8rem;color:var(--muted)"></div>
+      </div>
+    </div>
+
     <!-- Panel: Report -->
     <div class="panel" id="panel-report">
       <div class="section-header">
