@@ -942,9 +942,15 @@ function renderTableEditPanel(id) {
     <span style="font-size:0.78rem;padding:3px 10px;border-radius:20px;border:1px solid var(--border);color:${seatColor}">容量 ${t.cap}・剩 ${remaining} 位</span>
   </div>`;
 
-  // Build grouped dropdown of unassigned members
-  const tableGuestNames = new Set(gs.map(([,g]) => g.name));
-  const unassigned = membersData.filter(m => !tableGuestNames.has(m.name));
+  // Build grouped dropdown - exclude members already assigned to ANY table
+  const allAssignedNames = new Set();
+  localData.forEach(tbl => {
+    if (!tbl.guests) return;
+    Object.values(tbl.guests).forEach(g => allAssignedNames.add(g.name));
+  });
+  // Also exclude members already in THIS table (redundant but safe)
+  gs.forEach(([,g]) => allAssignedNames.add(g.name));
+  const unassigned = membersData.filter(m => !allAssignedNames.has(m.name));
   // Group by relation
   const relGroups = {};
   unassigned.forEach(m => {
