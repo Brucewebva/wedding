@@ -23,7 +23,7 @@ body { font-family: 'Noto Serif TC', serif; background: #f8f4ee; color: var(--te
 .login-input { width:100%; padding:12px 16px; margin-bottom:14px; background:rgba(255,255,255,0.05); border:1px solid rgba(201,169,110,0.25); border-radius:2px; font-family:'Noto Serif TC',serif; font-size:1rem; color:var(--gold-light); outline:none; }
 .login-input:focus { border-color:var(--gold); }
 .login-input::placeholder { color:rgba(201,169,110,0.3); }
-.login-btn { width:100%; padding:13px; background:var(--gold); border:none; border-radius:2px; font-family:'Noto Serif TC',serif; font-size:1rem; font-weight:500; color:var(--deep); cursor:pointer; letter-spacing:0.1em; display:flex; align-items:center; justify-content:center; gap:10px; }
+.login-btn { width:100%; padding:13px; background:var(--gold); border:none; border-radius:2px; font-family:'Noto Serif TC',serif; font-size:1rem; font-weight:500; color:var(--deep); cursor:pointer; letter-spacing:0.1em; }
 .login-btn:hover { background:var(--gold-light); }
 .login-err { font-size:0.82rem; color:#e07070; margin-top:10px; min-height:20px; }
 
@@ -156,11 +156,8 @@ body { font-family: 'Noto Serif TC', serif; background: #f8f4ee; color: var(--te
   <div class="login-card">
     <h2>後台管理</h2>
     <p>ADMIN DASHBOARD</p>
-    <div id="loginLoading" style="color:rgba(201,169,110,0.5);font-size:0.85rem;margin-bottom:20px;min-height:24px;letter-spacing:0.1em;">驗證登入狀態中…</div>
-    <button class="login-btn" id="googleLoginBtn" onclick="doGoogleLogin()" style="display:none;display:flex;align-items:center;justify-content:center;gap:10px;">
-      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.1-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.1 18.9 12 24 12c3 0 5.8 1.1 7.9 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 10-1.9 13.6-5.1l-6.3-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.6-3-11.3-7.3l-6.6 5.1C9.8 39.8 16.4 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.2-2.3 4.1-4.2 5.4l6.3 5.2C41 35.3 44 30 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
-      使用 Google 帳號登入
-    </button>
+    <input class="login-input" type="password" id="pwInput" placeholder="請輸入管理密碼" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">登入</button>
     <div class="login-err" id="loginErr"></div>
     <div style="margin-top:20px">
       <a href="guest.html" style="font-size:0.82rem;color:rgba(201,169,110,0.4);letter-spacing:0.1em;text-decoration:none;">← 返回來賓查詢頁</a>
@@ -180,7 +177,7 @@ body { font-family: 'Noto Serif TC', serif; background: #f8f4ee; color: var(--te
     <div class="nav-right">
       <span class="nav-badge" id="syncStatus"><span class="sync-dot loading"></span>連線中…</span>
       <span class="nav-badge" id="navBadge">載入中</span>
-      <button class="btn-sm btn-outline" style="font-size:0.78rem;text-decoration:none;cursor:pointer" onclick="doLogout()">登出</button>
+      <a href="guest.html" class="btn-sm btn-outline" style="font-size:0.78rem;text-decoration:none">登出</a>
     </div>
   </div>
   <div class="admin-content">
@@ -208,22 +205,33 @@ body { font-family: 'Noto Serif TC', serif; background: #f8f4ee; color: var(--te
           <div class="form-group"><label>容納人數</label><input class="form-input" id="at-cap" type="number" min="1" value="10"/></div>
         </div>
 
-        <!-- Guest picker from members -->
+        <!-- Guest list builder -->
         <div style="margin-top:20px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
-            <label style="font-size:0.78rem;color:var(--muted);letter-spacing:0.15em;">從人員管理選取來賓</label>
-            <input class="search-bar" id="at-member-search" placeholder="搜尋姓名…" oninput="renderMemberPicker()" style="margin-bottom:0;max-width:180px;padding:7px 12px;font-size:0.82rem;"/>
+          <label style="font-size:0.78rem;color:var(--muted);letter-spacing:0.15em;display:block;margin-bottom:10px;">來賓名單（逐筆輸入）</label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+            <input class="form-input" id="at-guest-name" placeholder="來賓姓名" style="flex:1;min-width:120px;padding:9px 12px"/>
+            <select class="form-select" id="at-guest-relation" style="min-width:130px;">
+              <option value="">— 與新人關係 —</option>
+              <optgroup label="新郎側">
+                <option value="新郎家屬">新郎家屬</option>
+                <option value="新郎親戚">新郎親戚</option>
+                <option value="新郎同學">新郎同學</option>
+                <option value="新郎同事">新郎同事</option>
+                <option value="新郎朋友">新郎朋友</option>
+              </optgroup>
+              <optgroup label="新娘側">
+                <option value="新娘家屬">新娘家屬</option>
+                <option value="新娘親戚">新娘親戚</option>
+                <option value="新娘同學">新娘同學</option>
+                <option value="新娘同事">新娘同事</option>
+                <option value="新娘朋友">新娘朋友</option>
+              </optgroup>
+              <option value="共同朋友">共同朋友</option>
+              <option value="其他">其他</option>
+            </select>
+            <button class="btn-sm btn-gold" onclick="addGuestToForm()">＋ 加入</button>
           </div>
-          <div id="at-member-picker" style="background:var(--warm);border:1px solid var(--border);border-radius:4px;max-height:240px;overflow-y:auto;padding:8px;">
-            <div style="color:var(--muted);font-size:0.82rem;padding:8px;">載入人員名單中…</div>
-          </div>
-          <div style="margin-top:10px;">
-            <div style="font-size:0.78rem;color:var(--muted);letter-spacing:0.15em;margin-bottom:6px;">已選來賓：</div>
-            <div id="at-guest-list" class="guest-form-list"></div>
-          </div>
-          <div style="margin-top:8px;">
-            <button class="btn-sm btn-outline" style="font-size:0.78rem;" onclick="adminTab('members',document.querySelectorAll('.nav-tab')[4])">＋ 前往人員管理新增人員</button>
-          </div>
+          <div id="at-guest-list" class="guest-form-list"></div>
         </div>
 
         <div class="form-actions">
@@ -429,7 +437,6 @@ body { font-family: 'Noto Serif TC', serif; background: #f8f4ee; color: var(--te
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAp_ILpjSvOmLsMU9ONQa88XDLan6f4568",
@@ -441,95 +448,47 @@ const firebaseConfig = {
   appId: "1:237043710985:web:875b8dfb1497357640ccd8"
 };
 
-// ── 白名單：只有這個 Gmail 才能進後台 ──
-const ALLOWED_EMAIL = 'tradevan.bruce@gmail.com';
-
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
+const ADMIN_PW = 'wedding2024';
 let localData = [];
-let membersData = [];
+let membersData = []; // [{id, name, relation, attend, chair, veg}]
 
-// ── 進入後台 ──
-function enterAdmin() {
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('adminPanel').style.display = 'block';
-  startListeners();
-}
-
-// ── 監聽登入狀態（頁面重整後自動恢復） ──
-onAuthStateChanged(auth, user => {
-  const loadingEl = document.getElementById('loginLoading');
-  const btnEl = document.getElementById('googleLoginBtn');
-  if (user) {
-    if (user.email === ALLOWED_EMAIL) {
-      enterAdmin();
-    } else {
-      signOut(auth);
-      loadingEl.style.display = 'none';
-      btnEl.style.display = 'flex';
-      document.getElementById('loginErr').textContent = `此帳號（${user.email}）無權限存取後台。`;
-    }
-  } else {
-    loadingEl.style.display = 'none';
-    btnEl.style.display = 'flex';
-  }
+// ── Firebase: members 監聽 ──
+onValue(ref(db, 'members'), snapshot => {
+  const raw = snapshot.val();
+  membersData = raw ? Object.values(raw) : [];
+  renderMembers();
+  renderMemberSummary();
 });
 
-// ── Google 登入 ──
-window.doGoogleLogin = async () => {
-  document.getElementById('loginErr').textContent = '';
-  try {
-    const result = await signInWithPopup(auth, provider);
-    if (result.user.email !== ALLOWED_EMAIL) {
-      await signOut(auth);
-      document.getElementById('loginErr').textContent = `此帳號（${result.user.email}）無權限存取後台。`;
-    }
-    // 成功會由 onAuthStateChanged 處理
-  } catch (err) {
-    if (err.code !== 'auth/popup-closed-by-user') {
-      document.getElementById('loginErr').textContent = '登入失敗，請再試一次。';
-    }
+// ── 暫存新增桌位的來賓 ──
+let pendingGuests = []; // [{name, relation}]
+
+// ── Login ──
+window.doLogin = () => {
+  if (document.getElementById('pwInput').value === ADMIN_PW) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminPanel').style.display = 'block';
+  } else {
+    document.getElementById('loginErr').textContent = '密碼錯誤，請再試一次。';
   }
 };
 
-// ── 登出 ──
-window.doLogout = async () => {
-  await signOut(auth);
-  document.getElementById('adminPanel').style.display = 'none';
-  document.getElementById('loginScreen').style.display = 'flex';
-  document.getElementById('loginLoading').style.display = 'none';
-  document.getElementById('googleLoginBtn').style.display = 'flex';
-};
-
-// ── Firebase 監聽（登入後才啟動） ──
-function startListeners() {
-  onValue(ref(db, 'members'), snapshot => {
-    const raw = snapshot.val();
-    membersData = raw ? Object.values(raw) : [];
-    renderMembers();
-    renderMemberSummary();
-    renderMemberPicker(); // 同步更新新增桌位的選人清單
-  });
-
-  onValue(ref(db, 'tables'), snapshot => {
-    const raw = snapshot.val();
-    localData = raw ? Object.values(raw).sort((a,b) => a.num - b.num) : [];
-    document.getElementById('syncStatus').innerHTML = '<span class="sync-dot ok"></span>即時同步中';
-    renderAdmin();
-  }, () => {
-    document.getElementById('syncStatus').innerHTML = '<span class="sync-dot err"></span>連線失敗';
-  });
-}
-// ── 暫存新增桌位的來賓 ──
-let pendingGuests = []; // [{name, relation}]
+// ── Firebase 即時監聽 ──
+onValue(ref(db, 'tables'), snapshot => {
+  const raw = snapshot.val();
+  localData = raw ? Object.values(raw).sort((a,b) => a.num - b.num) : [];
+  document.getElementById('syncStatus').innerHTML = '<span class="sync-dot ok"></span>即時同步中';
+  renderAdmin();
+}, () => {
+  document.getElementById('syncStatus').innerHTML = '<span class="sync-dot err"></span>連線失敗';
+});
 
 // ── 頁籤切換 ──
 window.adminTab = (name, el) => {
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active');
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active')); document.getElementById('panel-'+name).classList.add('active');
-  if (name === 'addtable') { renderMemberPicker(); renderPendingGuests(); }
 };
 
 // ── 渲染 ──
@@ -622,59 +581,28 @@ function renderCheckin() {
     : '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">無資料</td></tr>';
 }
 
-// ── 新增桌位：從人員管理選人 ──
-
-// 渲染人員選取清單
-window.renderMemberPicker = () => {
-  const q = (document.getElementById('at-member-search')?.value||'').toLowerCase();
-  const el = document.getElementById('at-member-picker');
-  if (!el) return;
-  const available = membersData.filter(m => {
-    if (q && !m.name.toLowerCase().includes(q)) return false;
-    // 已選的不再顯示
-    return !pendingGuests.find(g => g.memberId === m.id);
-  });
-  if (!available.length) {
-    el.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:8px;">' +
-      (membersData.length === 0 ? '尚無人員資料，請先至「人員管理」新增。' : '所有人員已全部選取或無符合搜尋。') + '</div>';
-    return;
-  }
-  el.innerHTML = available.map(m => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:3px;margin-bottom:4px;background:white;border:1px solid var(--border);cursor:pointer;"
-         onclick="pickMember('${m.id}')">
-      <div>
-        <span style="font-size:0.88rem;font-weight:500;">${m.name}</span>
-        <span style="font-size:0.75rem;color:var(--muted);margin-left:8px;">${m.relation}</span>
-      </div>
-      <span style="font-size:0.78rem;color:var(--gold);padding:3px 10px;background:rgba(201,169,110,0.1);border-radius:20px;">＋ 加入</span>
-    </div>`).join('');
-};
-
-window.pickMember = (id) => {
-  const m = membersData.find(m => m.id === id);
-  if (!m) return;
-  pendingGuests.push({name: m.name, relation: m.relation, memberId: m.id});
+// ── 新增桌位（逐筆來賓） ──
+window.addGuestToForm = () => {
+  const name = document.getElementById('at-guest-name').value.trim();
+  const relation = document.getElementById('at-guest-relation').value;
+  if (!name) { toast('請輸入來賓姓名'); return; }
+  if (pendingGuests.find(g=>g.name===name)) { toast('已有同名來賓'); return; }
+  pendingGuests.push({name, relation});
+  document.getElementById('at-guest-name').value = '';
   renderPendingGuests();
-  renderMemberPicker();
 };
 
 function renderPendingGuests() {
-  const el = document.getElementById('at-guest-list');
-  if (!el) return;
-  el.innerHTML = pendingGuests.map((g,i) =>
+  document.getElementById('at-guest-list').innerHTML = pendingGuests.map((g,i) =>
     `<div class="guest-form-item">
       <span class="gfi-name">${g.name}</span>
       <span class="gfi-relation">${g.relation||'—'}</span>
       <span class="gfi-del" onclick="removePendingGuest(${i})">✕</span>
     </div>`
-  ).join('') || '<div style="color:var(--muted);font-size:0.8rem;padding:4px 0">尚未選取任何來賓</div>';
+  ).join('') || '<div style="color:var(--muted);font-size:0.8rem;padding:4px 0">尚未加入任何來賓</div>';
 }
 
-window.removePendingGuest = i => {
-  pendingGuests.splice(i, 1);
-  renderPendingGuests();
-  renderMemberPicker();
-};
+window.removePendingGuest = i => { pendingGuests.splice(i,1); renderPendingGuests(); };
 
 window.addTable = async () => {
   const num = parseInt(document.getElementById('at-num').value);
@@ -686,18 +614,14 @@ window.addTable = async () => {
   pendingGuests.forEach((g,i) => { guests[`g${Date.now()}${i}`] = {name:g.name, relation:g.relation||'', checked:false}; });
   const id = 't'+Date.now();
   await set(ref(db,'tables/'+id), {id,num,name,cap,guests});
-  clearForm();
-  toast(`✓ 第 ${num} 桌已新增，共 ${pendingGuests.length} 位來賓`);
+  clearForm(); toast(`✓ 第 ${num} 桌已新增，共 ${pendingGuests.length} 位來賓`);
 };
 
 window.clearForm = () => {
-  document.getElementById('at-num').value='';
-  document.getElementById('at-name').value='';
+  ['at-num','at-name','at-guest-name'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('at-cap').value='10';
-  if (document.getElementById('at-member-search')) document.getElementById('at-member-search').value='';
-  pendingGuests = [];
-  renderPendingGuests();
-  renderMemberPicker();
+  document.getElementById('at-guest-relation').value='';
+  pendingGuests = []; renderPendingGuests();
 };
 
 window.deleteTable = async id => { if(!confirm('確定要刪除此桌位及所有來賓資料？'))return; await remove(ref(db,'tables/'+id)); toast('桌位已刪除'); };
@@ -902,8 +826,10 @@ window.exportMembersCSV = () => {
 let tt;
 window.toast = msg => { const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('show'),2500); };
 
+// ── 鍵盤 Enter for login ──
+document.getElementById('pwInput').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 // ── Enter to add guest in form ──
-
+document.getElementById('at-guest-name')?.addEventListener('keydown', e => { if(e.key==='Enter') addGuestToForm(); });
 </script>
 </body>
 </html>
