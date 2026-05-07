@@ -281,24 +281,6 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
 .peak-item { background:white; border:1px solid var(--border); border-radius:4px; padding:8px 14px; font-size:0.82rem; text-align:center; }
 .peak-item strong { display:block; font-family:'Cormorant Garamond',serif; font-size:1.4rem; color:var(--gold); line-height:1; }
 
-/* DRAG & DROP */
-.drag-board { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
-.drag-table-col { background:white; border:1.5px solid var(--border); border-radius:6px; overflow:hidden; min-height:120px; }
-.drag-table-col.drag-over { border-color:var(--gold); background:rgba(201,169,110,0.05); }
-.drag-col-header { background:linear-gradient(135deg,var(--deep),var(--brown)); padding:10px 14px; display:flex; align-items:center; gap:8px; }
-.drag-col-num { font-family:'Cormorant Garamond',serif; font-size:1.6rem; font-weight:600; color:var(--gold); line-height:1; }
-.drag-col-name { font-size:0.82rem; color:var(--gold-light); }
-.drag-col-cap { font-size:0.68rem; color:rgba(201,169,110,0.5); }
-.drag-guest-list { padding:8px; min-height:60px; }
-.drag-chip { padding:5px 10px; border-radius:3px; font-size:0.8rem; cursor:grab; background:var(--warm); border:1px solid var(--border); margin-bottom:5px; display:flex; align-items:center; gap:6px; user-select:none; transition:box-shadow 0.15s; }
-.drag-chip:hover { box-shadow:0 2px 8px rgba(26,18,8,0.12); }
-.drag-chip.dragging { opacity:0.4; cursor:grabbing; }
-.drag-chip-name { flex:1; font-weight:500; }
-.drag-chip-rel { font-size:0.7rem; color:var(--muted); }
-.unassigned-pool { background:white; border:1.5px dashed var(--border); border-radius:6px; padding:12px; margin-bottom:16px; }
-.unassigned-pool.drag-over { border-color:var(--gold); background:rgba(201,169,110,0.05); }
-.pool-title { font-size:0.76rem; color:var(--muted); letter-spacing:0.15em; margin-bottom:8px; }
-
 /* REPORT PANEL */
 .report-section { background:white; border:1px solid var(--border); border-radius:6px; padding:20px; margin-bottom:16px; }
 .report-section h3 { font-size:0.88rem; color:var(--brown); letter-spacing:0.18em; margin-bottom:14px; border-bottom:1px solid var(--border); padding-bottom:10px; }
@@ -347,7 +329,6 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
     <div class="nav-tab" onclick="adminTab('import',this)">CSV 匯入</div>
     <div class="nav-tab" onclick="adminTab('checkin',this)">報到總覽</div>
     <div class="nav-tab" onclick="adminTab('members',this)">人員管理</div>
-    <div class="nav-tab" onclick="adminTab('seating',this)">座位拖曳</div>
     <div class="nav-tab" onclick="adminTab('timeline',this)">報到時間軸</div>
     <div class="nav-tab" onclick="adminTab('report',this)">完整報表</div>
     <div class="nav-tab" onclick="adminTab('settings',this)">⚙ 設定</div>
@@ -517,81 +498,6 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
           <thead><tr><th>#</th><th>姓名</th><th>與新人關係</th><th style="text-align:center">出席人數</th><th style="text-align:center">兒童座椅</th><th style="text-align:center">素食人數</th><th>操作</th></tr></thead>
           <tbody id="memberBody"></tbody>
         </table>
-      </div>
-    </div>
-
-    <!-- Panel: Seating Drag -->
-    <div class="panel" id="panel-seating">
-      <div class="section-header">
-        <div class="section-title">座位拖曳安排</div>
-        <div style="font-size:0.78rem;color:var(--muted)">從未分配區拖曳來賓至桌位</div>
-      </div>
-      <div class="unassigned-pool" id="unassignedPool"
-           ondragover="event.preventDefault();this.classList.add('drag-over')"
-           ondragleave="this.classList.remove('drag-over')"
-           ondrop="dropToUnassigned(event)">
-        <div class="pool-title">⏳ 尚未分配桌位的來賓</div>
-        <div id="unassignedChips" style="display:flex;flex-wrap:wrap;gap:6px;min-height:36px"></div>
-      </div>
-      <div class="drag-board" id="dragBoard"></div>
-    </div>
-
-    <!-- Panel: Timeline -->
-    <div class="panel" id="panel-timeline">
-      <div class="section-header">
-        <div class="section-title">報到時間軸</div>
-        <div style="font-size:0.78rem;color:var(--muted)" id="timelineSubtitle"></div>
-      </div>
-      <div class="checkin-peak">
-        <div class="peak-title">📊 報到高峰統計</div>
-        <div class="peak-row" id="peakRow"></div>
-      </div>
-      <div style="background:white;border:1px solid var(--border);border-radius:6px;padding:18px;margin-bottom:16px">
-        <div style="font-size:0.76rem;color:var(--muted);letter-spacing:0.15em;margin-bottom:12px">每 15 分鐘報到人數分佈</div>
-        <div id="timelineChart"></div>
-        <div class="timeline-axis" id="timelineAxis"></div>
-      </div>
-      <div style="background:white;border:1px solid var(--border);border-radius:6px;overflow:auto">
-        <table class="guest-list-table">
-          <thead><tr><th>報到時間</th><th>姓名</th><th>桌號</th><th>與新人關係</th></tr></thead>
-          <tbody id="timelineBody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Panel: Settings -->
-    <div class="panel" id="panel-settings">
-      <div class="form-card">
-        <h3>📲 Telegram 即時通知設定</h3>
-        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:16px;line-height:1.7">
-          填入你的 Telegram Bot Token 和 Chat ID，每當來賓完成報到時會自動傳送通知。<br>
-          建立步驟：① 對 <b>@BotFather</b> 傳 /newbot 取得 Token ② 對 <b>@userinfobot</b> 傳任意訊息取得 Chat ID
-        </p>
-        <div class="form-grid">
-          <div class="form-group" style="grid-column:span 2">
-            <label>Bot Token</label>
-            <input class="form-input" id="tg-token" placeholder="例：7123456789:AAH..." style="font-family:monospace;font-size:0.85rem"/>
-          </div>
-          <div class="form-group">
-            <label>Chat ID</label>
-            <input class="form-input" id="tg-chat" placeholder="例：123456789"/>
-          </div>
-          <div class="form-group">
-            <label>每幾人報到通知一次</label>
-            <select class="form-select" id="tg-every">
-              <option value="1">每 1 人</option>
-              <option value="5">每 5 人</option>
-              <option value="10">每 10 人</option>
-              <option value="20">每 20 人</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-actions">
-          <button class="btn-sm btn-gold" onclick="saveTgSettings()">儲存設定</button>
-          <button class="btn-sm btn-outline" onclick="testTelegram()">📨 發送測試訊息</button>
-          <button class="btn-sm btn-danger" onclick="clearTgSettings()">清除</button>
-        </div>
-        <div id="tgStatus" style="margin-top:12px;font-size:0.8rem;color:var(--muted)"></div>
       </div>
     </div>
 
@@ -880,7 +786,6 @@ window.adminTab = (name, el) => {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + name).classList.add('active');
   if (name === 'tables') renderTableList();
-  if (name === 'seating') renderDragBoard();
   if (name === 'timeline') renderTimeline();
   if (name === 'report') renderReport();
 };
@@ -1644,99 +1549,6 @@ window.exportMembersXLSX = () => {
   } else {
     document.head.appendChild(script);
   }
-};
-
-// ─────────────────────────────────────────
-// DRAG & DROP SEATING
-// ─────────────────────────────────────────
-let dragGuestData = null; // {name, relation, veg, child, fromTid, fromGk}
-
-function renderDragBoard() {
-  // Unassigned pool: members not in any table
-  const assignedNames = new Set();
-  localData.forEach(t => { if(t.guests) Object.values(t.guests).forEach(g => assignedNames.add(g.name)); });
-  const unassigned = membersData.filter(m => !assignedNames.has(m.name));
-  const pool = document.getElementById('unassignedChips');
-  if (pool) {
-    pool.innerHTML = unassigned.length
-      ? unassigned.map(m => `
-          <div class="drag-chip" draggable="true"
-               ondragstart="dragStart(event,null,null,'${m.name.replace(/'/g,"\'")}','${(m.relation||'').replace(/'/g,"\'")}',${m.veg>0},${m.chair>0})"
-               ondragend="dragEnd(event)">
-            <span class="drag-chip-name">${m.name}</span>
-            <span class="drag-chip-rel">${m.relation||''}</span>
-            ${m.veg>0?'<span style="font-size:0.62rem;background:var(--veg-bg);color:var(--veg);padding:1px 5px;border-radius:10px">素</span>':''}
-            ${m.chair>0?'<span style="font-size:0.62rem;background:var(--child-bg);color:var(--child);padding:1px 5px;border-radius:10px">童</span>':''}
-          </div>`).join('')
-      : '<span style="font-size:0.8rem;color:var(--muted)">所有來賓已分配桌位 ✓</span>';
-  }
-
-  // Table columns
-  const board = document.getElementById('dragBoard');
-  if (!board) return;
-  board.innerHTML = localData.map(t => {
-    const gs = t.guests ? Object.entries(t.guests) : [];
-    const chips = gs.map(([k,g]) => `
-      <div class="drag-chip" draggable="true"
-           ondragstart="dragStart(event,'${t.id}','${k}','${g.name.replace(/'/g,"\'")}','${(g.relation||'').replace(/'/g,"\'")}',${!!g.veg},${!!g.child})"
-           ondragend="dragEnd(event)">
-        <span class="drag-chip-name">${g.name}</span>
-        <span class="drag-chip-rel">${g.relation||''}</span>
-        ${g.veg?'<span style="font-size:0.62rem;background:var(--veg-bg);color:var(--veg);padding:1px 5px;border-radius:10px">素</span>':''}
-        ${g.child?'<span style="font-size:0.62rem;background:var(--child-bg);color:var(--child);padding:1px 5px;border-radius:10px">童</span>':''}
-        ${g.checked?'<span style="font-size:0.62rem;background:var(--success-bg);color:var(--success);padding:1px 5px;border-radius:10px">到</span>':''}
-      </div>`).join('');
-    return `<div class="drag-table-col"
-                ondragover="event.preventDefault();this.classList.add('drag-over')"
-                ondragleave="this.classList.remove('drag-over')"
-                ondrop="dropToTable(event,'${t.id}')">
-      <div class="drag-col-header">
-        <div class="drag-col-num">${t.num}</div>
-        <div><div class="drag-col-name">${t.name||'未命名'}</div><div class="drag-col-cap">${gs.length}/${t.cap}</div></div>
-      </div>
-      <div class="drag-guest-list">${chips || '<div style="color:var(--muted);font-size:0.76rem;padding:4px">尚無來賓</div>'}</div>
-    </div>`;
-  }).join('');
-}
-
-window.dragStart = (e, fromTid, fromGk, name, relation, veg, child) => {
-  dragGuestData = {fromTid, fromGk, name, relation, veg, child};
-  e.target.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-};
-window.dragEnd = (e) => { e.target.classList.remove('dragging'); };
-
-window.dropToTable = async (e, toTid) => {
-  e.preventDefault();
-  document.querySelectorAll('.drag-table-col,.unassigned-pool').forEach(el => el.classList.remove('drag-over'));
-  if (!dragGuestData) return;
-  const {fromTid, fromGk, name, relation, veg, child} = dragGuestData;
-  dragGuestData = null;
-  if (fromTid === toTid) return; // same table, no-op
-  const toTable = localData.find(t => t.id === toTid);
-  if (!toTable) return;
-  // Remove from source
-  if (fromTid && fromGk) {
-    await remove(ref(db, `tables/${fromTid}/guests/${fromGk}`));
-  }
-  // Add to target
-  const key = 'g' + Date.now() + Math.random().toString(36).slice(2,6);
-  await set(ref(db, `tables/${toTid}/guests/${key}`), {name, relation, checked:false, veg:veg||false, child:child||false});
-  addActivity('edit', `${name} 移至第 ${toTable.num} 桌`);
-  toast(`✓ ${name} 已移至第 ${toTable.num} 桌`);
-};
-
-window.dropToUnassigned = async (e) => {
-  e.preventDefault();
-  document.querySelectorAll('.drag-table-col,.unassigned-pool').forEach(el => el.classList.remove('drag-over'));
-  if (!dragGuestData) return;
-  const {fromTid, fromGk, name} = dragGuestData;
-  dragGuestData = null;
-  if (!fromTid || !fromGk) return; // already unassigned
-  if (!confirm(`確定將「${name}」移回未分配區？`)) return;
-  await remove(ref(db, `tables/${fromTid}/guests/${fromGk}`));
-  addActivity('edit', `${name} 移回未分配區`);
-  toast(`${name} 已移回未分配`);
 };
 
 // ─────────────────────────────────────────
