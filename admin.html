@@ -1091,10 +1091,65 @@ window.openAddTableModal = () => {
   document.getElementById('at-num').value = '';
   document.getElementById('at-name').value = '';
   document.getElementById('at-cap').value = '10';
+  clearModalErr();
   document.getElementById('addTableModal').classList.add('show');
   setTimeout(() => document.getElementById('at-num').focus(), 100);
 };
 window.closeAddTableModal = () => document.getElementById('addTableModal').classList.remove('show');
+
+window.addTable = async () => {
+  const numEl  = document.getElementById('at-num');
+  const nameEl = document.getElementById('at-name');
+  const capEl  = document.getElementById('at-cap');
+  const num  = parseInt(numEl.value);
+  const name = nameEl.value.trim();
+  const cap  = parseInt(capEl.value) || 10;
+
+  // ── 防呆：桌號必填 ──
+  if (!num || num < 1) {
+    numEl.focus();
+    showModalErr('請輸入有效桌號（正整數）');
+    return;
+  }
+
+  // ── 防呆：桌號重複 ──
+  const dup = localData.find(t => t.num === num);
+  if (dup) {
+    numEl.focus();
+    showModalErr(`桌號 ${num} 已存在（${dup.name || '未命名'}），請改用其他桌號`);
+    return;
+  }
+
+  clearModalErr();
+  const id = 't' + Date.now();
+  await set(ref(db, 'tables/' + id), {id, num, name, cap, guests: {}});
+  closeAddTableModal();
+  addActivity('add', `新增桌位：第 ${num} 桌「${name || '未命名'}」`);
+  toast(`✓ 第 ${num} 桌已新增，請安排來賓座位`);
+  // 自動跳到桌位管理並選取新桌
+  setTimeout(() => {
+    const tabEl = document.querySelectorAll('.nav-tab')[1];
+    adminTab('tables', tabEl);
+    selectTable(id);
+  }, 300);
+};
+
+function showModalErr(msg) {
+  let err = document.getElementById('at-err');
+  if (!err) {
+    err = document.createElement('div');
+    err.id = 'at-err';
+    err.style.cssText = 'margin-top:10px;padding:9px 14px;background:#fff0f0;border:1px solid #d9a0a0;border-radius:3px;font-size:0.82rem;color:var(--danger);display:flex;align-items:center;gap:7px';
+    document.querySelector('#addTableModal .form-actions').before(err);
+  }
+  err.innerHTML = `⚠ ${msg}`;
+  err.style.display = 'flex';
+}
+
+function clearModalErr() {
+  const err = document.getElementById('at-err');
+  if (err) err.style.display = 'none';
+}
 
 
 
