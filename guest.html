@@ -534,7 +534,7 @@ window.searchGuest = () => {
       this.disabled = true;
       this.textContent = '處理中…';
       try {
-        await update(ref(db, `tables/${tid}/guests/${gk}`), { checked: true });
+        await update(ref(db, `tables/${tid}/guests/${gk}`), { checked: true, checkedAt: Date.now() });
         this.className = 'checkin-btn checked';
         this.textContent = '✓ 已完成報到';
         const st = document.getElementById('gCkSt');
