@@ -824,8 +824,10 @@ function renderDashboard() {
       const a = getAttend(g.name, g.attend);
       totalGuests += a;
       if (g.checked) checked += a;
-      if (g.veg)   totalVeg += a;
-      if (g.child) totalChild += a;
+      // 素食/兒童座椅直接從 members 抓實際數量，不乘以出席人數
+      const m = membersData.find(m => m.name === g.name);
+      totalVeg   += m ? (m.veg   || 0) : (g.veg   ? 1 : 0);
+      totalChild += m ? (m.chair || 0) : (g.child ? 1 : 0);
     });
   });
   const unchecked = totalGuests - checked;
@@ -1688,8 +1690,9 @@ window.renderReport = function renderReport() {
       const a = getAttend(g.name, g.attend);
       totalGuests += a;
       if (g.checked) { checkedCount += a; if(g.checkedAt) checkins.push({...g, num:t.num, tname:t.name||'', attend:a}); }
-      if (g.veg)   totalVeg   += a;
-      if (g.child) totalChild += a;
+      const mRec = membersData.find(m => m.name === g.name);
+      totalVeg   += mRec ? (mRec.veg   || 0) : (g.veg   ? 1 : 0);
+      totalChild += mRec ? (mRec.chair || 0) : (g.child ? 1 : 0);
       if (g.relation) relMap[g.relation] = (relMap[g.relation]||0) + a;
       allGuests.push({...g, num:t.num, tname:t.name||'', attend:a});
     });
