@@ -683,7 +683,7 @@ function getAttend(guestName, guestAttend) {
 
 function updateNavBadge() {
   let total = 0, checked = 0;
-  localData.forEach(t => { const gs = t.guests ? Object.values(t.guests) : []; gs.forEach(g => { const a = getAttend(g.name, g.attend); total += a; if (g.checked) checked += a; }); });
+  localData.forEach(t => { const gs = t.guests ? Object.values(t.guests).filter(g => g && g.name) : []; gs.forEach(g => { const a = getAttend(g.name, g.attend); total += a; if (g.checked) checked += a; }); });
   document.getElementById('navBadge').textContent = `報到 ${checked} / ${total} 人`;
 }
 
@@ -691,7 +691,7 @@ function updateNavBadge() {
 function renderDashboard() {
   let totalTables = localData.length, totalGuests = 0, checked = 0, totalVeg = 0, totalChild = 0;
   localData.forEach(t => {
-    const gs = t.guests ? Object.values(t.guests) : [];
+    const gs = t.guests ? Object.values(t.guests).filter(g => g && g.name) : [];
     gs.forEach(g => {
       const a = getAttend(g.name, g.attend); totalGuests += a; if (g.checked) checked += a;
       const m = membersData.find(m => m.name === g.name);
@@ -715,7 +715,7 @@ function renderDashboard() {
   const banner = document.getElementById('specialNeedsBanner');
   let vegTables = [], childTables = [];
   localData.forEach(t => {
-    const gs = t.guests ? Object.values(t.guests) : [];
+    const gs = t.guests ? Object.values(t.guests).filter(g => g && g.name) : [];
     const v = gs.filter(g => g.veg).map(g => g.name);
     const c = gs.filter(g => g.child).map(g => g.name);
     if (v.length) vegTables.push({num: t.num, name: t.name, guests: v});
@@ -734,7 +734,7 @@ function renderDashboard() {
   if (activityLog.length) feed.innerHTML = activityLog.slice().reverse().map(a => `<div class="af-item"><span class="af-dot ${a.type}"></span><span>${a.msg}</span><span class="af-time">${a.time}</span></div>`).join('');
 
   document.getElementById('dashTableGrid').innerHTML = localData.map(t => {
-    const gs = t.guests ? Object.entries(t.guests) : [];
+    const gs = t.guests ? Object.entries(t.guests).filter(([,g]) => g && g.name) : [];
     const chk = gs.filter(([,g]) => g.checked).length;
     const vegC = gs.filter(([,g]) => g.veg).length;
     const childC = gs.filter(([,g]) => g.child).length;
@@ -763,7 +763,7 @@ function renderTableList() {
   count.textContent = `共 ${localData.length} 桌`;
   if (!localData.length) { el.innerHTML = '<div class="empty-state" style="padding:30px 20px"><div class="es-icon">🪑</div>尚無桌位</div>'; return; }
   el.innerHTML = localData.map(t => {
-    const gs = t.guests ? Object.values(t.guests) : [];
+    const gs = t.guests ? Object.values(t.guests).filter(g => g && g.name) : [];
     const vegC = gs.filter(g => g.veg).length;
     const childC = gs.filter(g => g.child).length;
     const tags = (vegC ? `<span class="tli-veg">🥗${vegC}</span>` : '') + (childC ? `<span class="tli-child">👶${childC}</span>` : '');
@@ -785,7 +785,7 @@ function renderTableEditPanel(id) {
   const t = localData.find(t => t.id === id);
   const el = document.getElementById('tableEditPanel');
   if (!t || !el) return;
-  const gs = t.guests ? Object.entries(t.guests) : [];
+  const gs = t.guests ? Object.entries(t.guests).filter(([,g]) => g && g.name) : [];
   let occupiedSeats = 0;
   const guestItems = gs.map(([k, g]) => {
     const member = membersData.find(m => m.name === g.name);
@@ -816,7 +816,7 @@ function renderTableEditPanel(id) {
 
   // ── 關鍵修正：排序後再建下拉選單 ──
   const allAssignedNames = new Set();
-  localData.forEach(tbl => { if (!tbl.guests) return; Object.values(tbl.guests).forEach(g => allAssignedNames.add(g.name)); });
+  localData.forEach(tbl => { if (!tbl.guests) return; Object.values(tbl.guests).filter(g => g && g.name).forEach(g => allAssignedNames.add(g.name)); });
   gs.forEach(([,g]) => allAssignedNames.add(g.name));
 
   // 按姓名排序，關係分組順序固定
@@ -984,8 +984,9 @@ window.deleteTable = async id => {
 };
 
 window.removeGuest = async (tid, gk) => {
-  const t = localData.find(t => t.id === tid); const name = t?.guests?.[gk]?.name || '';
-  if (!confirm(`確定移除來賓「${name}」？`)) return;
+  const t = localData.find(t => t.id === tid); const name = t?.guests?.[gk]?.name || '此來賓';
+  if (!name || name === '此來賓') { if (!confirm('確定移除此來賓？')) return; }
+  else if (!confirm(`確定移除來賓「${name}」？`)) return;
   await remove(ref(db, `tables/${tid}/guests/${gk}`));
   addActivity('del', `移除來賓：${name}（第 ${t?.num} 桌）`); toast(`已移除：${name}`);
 };
@@ -997,7 +998,7 @@ window.renderCheckin = function() {
   const filterSpecial = document.getElementById('filterSpecial')?.value || '';
   let rows = [];
   localData.forEach(t => {
-    const gs = t.guests ? Object.entries(t.guests) : [];
+    const gs = t.guests ? Object.entries(t.guests).filter(([,g]) => g && g.name) : [];
     gs.forEach(([k, g]) => {
       if (q && !g.name.toLowerCase().includes(q)) return;
       if (filterRel && g.relation !== filterRel) return;
@@ -1047,7 +1048,7 @@ window.toggleCheckin = async (tid, gk, val) => {
       addActivity('checkin', `${name} 完成報到（第 ${t?.num} 桌）`);
       tgCheckinCount++;
       let totalG=0, checkedG=0;
-      localData.forEach(tb=>{ const gs=tb.guests?Object.values(tb.guests):[]; gs.forEach(g=>{ const a=getAttend(g.name,g.attend); totalG+=a; if(g.checked)checkedG+=a; }); });
+      localData.forEach(tb=>{ const gs=tb.guests?Object.values(tb.guests).filter(g=>g&&g.name):[]; gs.forEach(g=>{ const a=getAttend(g.name,g.attend); totalG+=a; if(g.checked)checkedG+=a; }); });
       if (tgCheckinCount % tgNotifyEvery === 0) {
         const rate = totalG ? Math.round(checkedG/totalG*100) : 0;
         sendTelegram(`✅ <b>${name}</b> 完成報到\n桌號：第 ${t?.num} 桌 ${t?.name||''}\n目前進度：${checkedG}/${totalG} 人（${rate}%）`);
@@ -1249,7 +1250,7 @@ window.renderReport = function() {
   const allGuests = []; let totalTables = localData.length, totalGuests = 0, checkedCount = 0, totalVeg = 0, totalChild = 0;
   const relMap = {}, checkins = [];
   localData.forEach(t => {
-    const gs = t.guests ? Object.values(t.guests) : [];
+    const gs = t.guests ? Object.values(t.guests).filter(g => g && g.name) : [];
     gs.forEach(g => {
       const a = getAttend(g.name, g.attend); totalGuests += a;
       if (g.checked) { checkedCount += a; if(g.checkedAt) checkins.push({...g, num:t.num, tname:t.name||'', attend:a}); }
@@ -1288,7 +1289,7 @@ window.renderReport = function() {
 
 window.exportFullCSV = () => {
   const rows = ['\uFEFF姓名,桌號,桌名,與新人關係,素食,兒童座椅,報到,報到時間'];
-  localData.forEach(t => { const gs = t.guests ? Object.values(t.guests) : []; gs.forEach(g => { const ts = g.checkedAt ? new Date(g.checkedAt).toLocaleString('zh-TW') : ''; rows.push(`${g.name},${t.num},${t.name||''},${g.relation||''},${g.veg?'是':''},${g.child?'是':''},${g.checked?'已報到':'未報到'},${ts}`); }); });
+  localData.forEach(t => { const gs = t.guests ? Object.values(t.guests).filter(g => g && g.name) : []; gs.forEach(g => { const ts = g.checkedAt ? new Date(g.checkedAt).toLocaleString('zh-TW') : ''; rows.push(`${g.name},${t.num},${t.name||''},${g.relation||''},${g.veg?'是':''},${g.child?'是':''},${g.checked?'已報到':'未報到'},${ts}`); }); });
   const blob = new Blob([rows.join('\n')], {type:'text/csv;charset=utf-8;'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `婚宴完整報表_${new Date().toLocaleDateString('zh-TW').replace(/\//g,'-')}.csv`; a.click(); toast('✓ 完整 CSV 已下載');
 };
@@ -1298,12 +1299,12 @@ window.exportFullReport = () => {
   script.onload = () => {
     const wb = XLSX.utils.book_new(); const now = new Date().toLocaleString('zh-TW');
     let totalG=0, checkedG=0, vegG=0, childG=0;
-    localData.forEach(t=>{ const gs=t.guests?Object.values(t.guests):[]; gs.forEach(g=>{ const a=getAttend(g.name,g.attend); totalG+=a; if(g.checked)checkedG+=a; const mRec=membersData.find(m=>m.name===g.name); vegG+=mRec?(mRec.veg||0):(g.veg?1:0); childG+=mRec?(mRec.chair||0):(g.child?1:0); }); });
+    localData.forEach(t=>{ const gs=t.guests?Object.values(t.guests).filter(g=>g&&g.name):[]; gs.forEach(g=>{ const a=getAttend(g.name,g.attend); totalG+=a; if(g.checked)checkedG+=a; const mRec=membersData.find(m=>m.name===g.name); vegG+=mRec?(mRec.veg||0):(g.veg?1:0); childG+=mRec?(mRec.chair||0):(g.child?1:0); }); });
     const rate = totalG ? Math.round(checkedG/totalG*100) : 0;
     const ws1 = XLSX.utils.aoa_to_sheet([['婚宴報表'],['報表時間',now],[''],['項目','數量'],['總桌數',localData.length],['來賓總人數',totalG],['已報到',checkedG],['未報到',totalG-checkedG],['報到率',rate+'%'],['素食人數',vegG],['兒童座椅',childG]]);
     ws1['!cols'] = [{wch:16},{wch:14}]; XLSX.utils.book_append_sheet(wb, ws1, '活動總覽');
     const rows2 = [['姓名','桌號','桌名','與新人關係','素食','兒童座椅','報到狀態','報到時間']];
-    localData.forEach(t => { const gs = t.guests?Object.values(t.guests):[]; gs.forEach(g => { rows2.push([g.name,t.num,t.name||'',g.relation||'',g.veg?'是':'',g.child?'是':'',g.checked?'已報到':'未報到',g.checkedAt?new Date(g.checkedAt).toLocaleString('zh-TW'):'']); }); });
+    localData.forEach(t => { const gs = t.guests?Object.values(t.guests).filter(g=>g&&g.name):[]; gs.forEach(g => { rows2.push([g.name,t.num,t.name||'',g.relation||'',g.veg?'是':'',g.child?'是':'',g.checked?'已報到':'未報到',g.checkedAt?new Date(g.checkedAt).toLocaleString('zh-TW'):'']); }); });
     const ws2 = XLSX.utils.aoa_to_sheet(rows2); ws2['!cols'] = [{wch:10},{wch:6},{wch:12},{wch:14},{wch:6},{wch:8},{wch:8},{wch:18}]; XLSX.utils.book_append_sheet(wb, ws2, '完整來賓名單');
     const checkins = []; localData.forEach(t => { if(!t.guests) return; Object.values(t.guests).forEach(g => { if(g.checked&&g.checkedAt) checkins.push({...g,num:t.num,tname:t.name||''}); }); }); checkins.sort((a,b)=>a.checkedAt-b.checkedAt);
     const rows3 = [['報到時間','姓名','桌號','桌名','與新人關係']]; checkins.forEach(c => rows3.push([new Date(c.checkedAt).toLocaleString('zh-TW'),c.name,c.num,c.tname,c.relation||'']));
