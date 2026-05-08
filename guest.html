@@ -541,7 +541,10 @@ window.searchGuest = () => {
         if (st) st.textContent = '✓ 已報到';
         toast('✓ 報到成功！祝新人百年好合 💍');
         // Telegram notification
-        notifyTelegram(found.name, found.relation, tInfo.num, tInfo.name);
+        // Get attend count from membersData
+        const memberRec = membersData.find(m => m.name === found.name);
+        const attendCount = memberRec ? (memberRec.attend || 1) : 1;
+        notifyTelegram(found.name, found.relation, tInfo.num, tInfo.name, attendCount);
       } catch (err) {
         this.disabled = false;
         this.textContent = '點此完成報到';
@@ -552,21 +555,17 @@ window.searchGuest = () => {
 };
 
 // ─── TELEGRAM NOTIFY ───
-async function notifyTelegram(name, relation, tableNum, tableName) {
+async function notifyTelegram(name, relation, tableNum, tableName, attendCount) {
   const token = localStorage.getItem('tg_token') || '';
   const chat  = localStorage.getItem('tg_chat')  || '';
   if (!token || !chat) return;
-  // Count total checked from localData
-  let totalG = 0, checkedG = 0;
-  localData.forEach(t => {
-    if (!t.guests) return;
-    Object.values(t.guests).forEach(g => {
-      totalG++;
-      if (g.checked) checkedG++;
-    });
-  });
-  const rate = totalG ? Math.round(checkedG / totalG * 100) : 0;
-  const msg = `✅ <b>${name}</b> 完成報到\n桌號：第 ${tableNum} 桌 ${tableName || ''}${relation ? '\n與新人關係：' + relation : ''}\n目前進度：${checkedG}/${totalG} 人（${rate}%）`;
+  const attend = attendCount > 1 ? `${attendCount} 位` : '1 位';
+  const msg = [
+    `✅ <b>${name}</b> 完成報到`,
+    `🪑 桌號：第 ${tableNum} 桌${tableName ? '・' + tableName : ''}`,
+    relation ? `🎀 與新人關係：${relation}` : '',
+    `👥 報到人數：${attend}`
+  ].filter(Boolean).join('\n');
   try {
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
