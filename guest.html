@@ -312,14 +312,14 @@ function getAllGuests() {
   localData.forEach(t => {
     if (!t.guests) return;
     Object.entries(t.guests).forEach(([k, g]) => {
-      guests.push({name: g.name, relation: g.relation, tid: t.id, gk: k, num: t.num, tname: t.name || '', assigned: true});
+      guests.push({name: g.name, relation: g.relation, tid: t.id, gk: k, num: t.num, tname: t.name || '', assigned: true, checked: !!g.checked});
       assignedNames.add(g.name);
     });
   });
   // From members (unassigned)
   membersData.forEach(m => {
     if (!assignedNames.has(m.name)) {
-      guests.push({name: m.name, relation: m.relation, assigned: false});
+      guests.push({name: m.name, relation: m.relation, assigned: false, checked: false});
     }
   });
   return guests;
@@ -347,10 +347,17 @@ window.onSearchInput = () => {
   list.innerHTML = combined.map((g, i) => {
     // Escape single quotes in name for onclick
     const safeName = g.name.replace(/'/g, "\'");
-    return `<div class="suggest-item" data-idx="${i}" onclick="selectSuggestion('${safeName}')">
-      <div class="suggest-avatar">${g.name[0]}</div>
-      <div>
-        <div class="suggest-name">${highlightMatch(g.name, q)}</div>
+    const isChecked = g.assigned && g.checked;
+    const itemStyle = isChecked ? 'opacity:0.6;pointer-events:none;cursor:default;background:#f8f8f6;' : '';
+    const checkedTag = isChecked
+      ? `<span style="font-size:0.68rem;background:var(--success-bg);color:var(--success);padding:2px 8px;border-radius:10px;border:1px solid rgba(74,124,89,0.3);margin-left:4px">✓ 已報到</span>`
+      : '';
+    return `<div class="suggest-item" data-idx="${i}" style="${itemStyle}" ${isChecked ? '' : `onclick="selectSuggestion('${safeName}')"`}>
+      <div class="suggest-avatar" style="${isChecked ? 'background:var(--success);' : ''}">${isChecked ? '✓' : g.name[0]}</div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="suggest-name">${highlightMatch(g.name, q)}</span>${checkedTag}
+        </div>
         <div class="suggest-meta">${g.assigned
           ? `第 ${g.num} 桌${g.tname ? '・' + g.tname : ''}`
           : '<span style="color:#c0845a">⏳ 尚未安排座位</span>'}${g.relation ? '・' + g.relation : ''}</div>
