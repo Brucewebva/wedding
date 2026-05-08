@@ -289,6 +289,7 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
         <div class="section-title">桌位管理</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn-sm btn-outline" onclick="openAddTableModal()">＋ 新增桌位</button>
+          <button class="btn-sm btn-outline" onclick="clearCorruptedTables()" title="清除桌號顯示 undefined 的異常資料">🧹 清除異常資料</button>
           <button class="btn-sm btn-danger" onclick="clearAll()">清除全部資料</button>
         </div>
       </div>
@@ -762,7 +763,9 @@ function renderTableList() {
   if (!el) return;
   count.textContent = `共 ${localData.length} 桌`;
   if (!localData.length) { el.innerHTML = '<div class="empty-state" style="padding:30px 20px"><div class="es-icon">🪑</div>尚無桌位</div>'; return; }
-  el.innerHTML = localData.map(t => {
+  // Filter out corrupted table entries
+  const validTables = localData.filter(t => t && t.id);
+  el.innerHTML = validTables.map(t => {
     const gs = t.guests ? Object.values(t.guests).filter(g => g && g.name) : [];
     const vegC = gs.filter(g => g.veg).length;
     const childC = gs.filter(g => g.child).length;
@@ -845,7 +848,7 @@ function renderTableEditPanel(id) {
 
   el.innerHTML = `
     <div class="tep-title">
-      <span>第 ${t.num} 桌・${t.name || '未命名'}</span>
+      <span>${t.num ? `第 ${t.num} 桌・` : ''}${t.name || '未命名'}</span>
       <button class="btn-sm btn-danger" style="font-size:0.75rem" onclick="deleteTable('${t.id}')">🗑 刪除桌位</button>
     </div>
     <div style="background:var(--warm);border-radius:4px;padding:14px;margin-bottom:16px">
@@ -976,11 +979,12 @@ function clearModalErr() { const err = document.getElementById('at-err'); if (er
 
 window.deleteTable = async id => {
   const t = localData.find(t => t.id === id);
-  if (!confirm(`確定要刪除第 ${t?.num} 桌「${t?.name||'未命名'}」及所有來賓？`)) return;
+  const label = t?.num ? `第 ${t.num} 桌「${t.name||'未命名'}」` : `此桌位（ID: ${id}）`;
+  if (!confirm(`確定要刪除 ${label} 及所有來賓資料？`)) return;
   await remove(ref(db, 'tables/' + id));
   selectedTableId = null;
   document.getElementById('tableEditPanel').innerHTML = '<div class="tep-empty"><div style="font-size:2rem;opacity:0.3;margin-bottom:10px">🪑</div>請從左側選擇桌位進行編輯</div>';
-  addActivity('del', `刪除桌位：第 ${t?.num} 桌`); toast('桌位已刪除');
+  addActivity('del', `刪除桌位：${label}`); toast('桌位已刪除');
 };
 
 window.removeGuest = async (tid, gk) => {
@@ -1063,6 +1067,16 @@ window.resetAllCheckin = async () => {
   const updates = {};
   localData.forEach(t => { if (t.guests) Object.keys(t.guests).forEach(k => { updates[`tables/${t.id}/guests/${k}/checked`] = false; }); });
   await update(ref(db), updates); addActivity('edit', '已重置所有報到狀態'); toast('已重置所有報到狀態');
+};
+
+window.clearCorruptedTables = async () => {
+  const corrupted = localData.filter(t => !t.num);
+  if (!corrupted.length) { toast('目前無異常桌位資料'); return; }
+  if (!confirm(`發現 ${corrupted.length} 筆異常桌位（桌號為空），確定刪除？`)) return;
+  for (const t of corrupted) {
+    await remove(ref(db, 'tables/' + t.id));
+  }
+  toast(`✓ 已清除 ${corrupted.length} 筆異常資料`);
 };
 
 window.clearAll = async () => {
