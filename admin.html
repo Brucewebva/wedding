@@ -787,6 +787,9 @@ function renderAll() {
   renderCheckin();
   updateNavBadge();
   if (selectedTableId) renderTableEditPanel(selectedTableId);
+  // Auto-refresh report panel if currently active
+  const reportPanel = document.getElementById('panel-report');
+  if (reportPanel && reportPanel.classList.contains('active')) renderReport();
 }
 
 
@@ -1312,21 +1315,25 @@ window.clearCheckinFilter = () => {
 
 window.toggleCheckin = async (tid, gk, val) => {
   const now = val ? Date.now() : null;
-  await update(ref(db, `tables/${tid}/guests/${gk}`), {checked: val, checkedAt: now});
-  const t = localData.find(t => t.id === tid);
-  const name = t?.guests?.[gk]?.name || '';
-  if (val) {
-    addActivity('checkin', `${name} 完成報到（第 ${t?.num} 桌）`);
-    tgCheckinCount++;
-    // Count total checked
-    let totalG=0, checkedG=0;
-    localData.forEach(tb=>{ const gs=tb.guests?Object.values(tb.guests):[]; totalG+=gs.length; checkedG+=gs.filter(g=>g.checked).length; });
-    if (tgCheckinCount % tgNotifyEvery === 0) {
-      const rate = totalG ? Math.round((checkedG)/totalG*100) : 0;
-      sendTelegram(`✅ <b>${name}</b> 完成報到\n桌號：第 ${t?.num} 桌 ${t?.name||''}\n目前進度：${checkedG}/${totalG} 人（${rate}%）`);
+  try {
+    await update(ref(db, `tables/${tid}/guests/${gk}`), {checked: val, checkedAt: now});
+    const t = localData.find(t => t.id === tid);
+    const name = t?.guests?.[gk]?.name || '';
+    if (val) {
+      addActivity('checkin', `${name} 完成報到（第 ${t?.num} 桌）`);
+      tgCheckinCount++;
+      let totalG=0, checkedG=0;
+      localData.forEach(tb=>{ const gs=tb.guests?Object.values(tb.guests):[]; gs.forEach(g=>{ const a=getAttend(g.name,g.attend); totalG+=a; if(g.checked)checkedG+=a; }); });
+      if (tgCheckinCount % tgNotifyEvery === 0) {
+        const rate = totalG ? Math.round((checkedG)/totalG*100) : 0;
+        sendTelegram(`✅ <b>${name}</b> 完成報到\n桌號：第 ${t?.num} 桌 ${t?.name||''}\n目前進度：${checkedG}/${totalG} 人（${rate}%）`);
+      }
     }
+    toast(val ? `✓ ${name} 已報到` : `${name} 取消報到`);
+  } catch(err) {
+    console.error('toggleCheckin error:', err);
+    toast('⚠ 寫入失敗：' + (err.message || '請檢查 Firebase 規則'));
   }
-  toast(val ? `✓ ${name} 已報到` : `${name} 取消報到`);
 };
 
 window.resetAllCheckin = async () => {
@@ -1720,7 +1727,7 @@ window.renderReport = function renderReport() {
         <thead><tr><th>報到時間</th><th>姓名</th><th>桌號</th><th>關係</th></tr></thead>
         <tbody>${checkins.length ? checkins.map(c=>`<tr>
           <td>${new Date(c.checkedAt).toLocaleString('zh-TW')}</td>
-          <td>${c.name}</td><td>${c.num}・${c.tname}</td>
+          <td>${c.name}</td><td>第 ${c.num} 桌${c.tname ? '・' + c.tname : ''}</td>
           <td>${c.relation||'—'}</td></tr>`).join('')
           : '<tr><td colspan="4" style="text-align:center;color:var(--muted)">尚無時間記錄</td></tr>'}</tbody>
       </table>
