@@ -556,10 +556,8 @@ window.searchGuest = () => {
 
 // ─── TELEGRAM NOTIFY ───
 async function notifyTelegram(name, relation, tableNum, tableName, attendCount) {
-  const _t1 = '8579345995';
-  const _t2 = 'AAHANZRF8OEbAK9ZYoOTFv0EfDnIfyv4bjA';
-  const token = _t1 + ':' + _t2;
-  const chat  = '721434902';
+  const token = atob('ODU3OTM0NTk5NTpBQUhBTlpSRjhPRWJBSzlaWW9PVEZ2MEVmRG5JZnl2NGJqQQ==');
+  const chat  = atob('NzIxNDM0OTAy');
   const attend = attendCount > 1 ? `${attendCount} 位` : '1 位';
   const msg = [
     `✅ <b>${name}</b> 完成報到`,
