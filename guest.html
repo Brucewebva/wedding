@@ -544,7 +544,9 @@ window.searchGuest = () => {
         // Get attend count from membersData
         const memberRec = membersData.find(m => m.name === found.name);
         const attendCount = memberRec ? (memberRec.attend || 1) : 1;
-        notifyTelegram(found.name, found.relation, tInfo.num, tInfo.name, attendCount);
+        const vegCount   = memberRec ? (memberRec.veg   || 0) : (found.veg   ? 1 : 0);
+        const childCount = memberRec ? (memberRec.chair || 0) : (found.child ? 1 : 0);
+        notifyTelegram(found.name, found.relation, tInfo.num, tInfo.name, attendCount, vegCount, childCount);
       } catch (err) {
         this.disabled = false;
         this.textContent = '點此完成報到';
@@ -555,15 +557,19 @@ window.searchGuest = () => {
 };
 
 // ─── TELEGRAM NOTIFY ───
-async function notifyTelegram(name, relation, tableNum, tableName, attendCount) {
+async function notifyTelegram(name, relation, tableNum, tableName, attendCount, vegCount, childCount) {
   const token = atob('ODU3OTM0NTk5NTpBQUhBTlpSRjhPRWJBSzlaWW9PVEZ2MEVmRG5JZnl2NGJqQQ==');
   const chat  = atob('NzIxNDM0OTAy');
   const attend = attendCount > 1 ? `${attendCount} 位` : '1 位';
+  const specialNeeds = [];
+  if (vegCount > 0)   specialNeeds.push(`🥗 素食 ${vegCount} 人`);
+  if (childCount > 0) specialNeeds.push(`👶 嬰兒座椅 ${childCount} 張`);
   const msg = [
     `✅ <b>${name}</b> 完成報到`,
     `🪑 桌號：第 ${tableNum} 桌${tableName ? '・' + tableName : ''}`,
     relation ? `🎀 與新人關係：${relation}` : '',
-    `👥 報到人數：${attend}`
+    `👥 報到人數：${attend}`,
+    specialNeeds.length > 0 ? `⚠️ 特殊需求：${specialNeeds.join('・')}` : ''
   ].filter(Boolean).join('\n');
   try {
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
