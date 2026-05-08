@@ -1854,6 +1854,10 @@ function loadTgSettings() {
   const token = localStorage.getItem('tg_token')||'';
   const chat  = localStorage.getItem('tg_chat')||'';
   const every = localStorage.getItem('tg_every')||'1';
+  // ── 關鍵：同步更新全域變數 ──
+  TG_BOT_TOKEN = token;
+  TG_CHAT_ID   = chat;
+  tgNotifyEvery = parseInt(every);
   const tokenEl = document.getElementById('tg-token');
   const chatEl  = document.getElementById('tg-chat');
   const everyEl = document.getElementById('tg-every');
@@ -1863,6 +1867,7 @@ function loadTgSettings() {
   if(token && chat) {
     const statusEl = document.getElementById('tgStatus');
     if(statusEl) statusEl.textContent = '✓ 已載入儲存的設定';
+    console.log('Telegram 設定已載入，Bot 就緒');
   }
 }
 
