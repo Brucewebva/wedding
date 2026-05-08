@@ -556,9 +556,8 @@ window.searchGuest = () => {
 
 // ─── TELEGRAM NOTIFY ───
 async function notifyTelegram(name, relation, tableNum, tableName, attendCount) {
-  const token = localStorage.getItem('tg_token') || '';
-  const chat  = localStorage.getItem('tg_chat')  || '';
-  if (!token || !chat) return;
+  const token = '8579345995:AAHANZRF8OEbAK9ZYoOTFv0EfDnIfyv4bjA';
+  const chat  = '721434902';
   const attend = attendCount > 1 ? `${attendCount} 位` : '1 位';
   const msg = [
     `✅ <b>${name}</b> 完成報到`,
