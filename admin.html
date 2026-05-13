@@ -578,6 +578,8 @@ const firebaseConfig = {
 };
 
 const ALLOWED_EMAIL = 'tradevan.bruce@gmail.com';
+const READONLY_EMAILS = ['bruce.realme@gmail.com', 'lnsg999@gmail.com'];
+let isReadOnly = false;
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
@@ -608,6 +610,62 @@ function enterAdmin() {
   document.getElementById('adminPanel').style.display = 'block';
   startListeners();
   setTimeout(loadTgSettings, 500);
+  setTimeout(applyReadOnlyMode, 600);
+}
+
+function applyReadOnlyMode() {
+  if (!isReadOnly) return;
+  // Show readonly badge
+  const navRight = document.querySelector('.nav-right');
+  if (navRight) {
+    const badge = document.createElement('span');
+    badge.className = 'nav-badge';
+    badge.style.cssText = 'background:rgba(139,32,32,0.15);border-color:rgba(139,32,32,0.3);color:#e07070';
+    badge.textContent = '👁 唯讀模式';
+    navRight.insertBefore(badge, navRight.firstChild);
+  }
+  // Hide write-action tabs: CSV匯入, 設定
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    if (['CSV 匯入','⚙ 設定'].includes(tab.textContent.trim())) {
+      tab.style.display = 'none';
+    }
+  });
+  // Hide add/delete/edit buttons (observe DOM changes too)
+  hideWriteButtons();
+  // Re-apply after any re-render
+  const obs = new MutationObserver(() => hideWriteButtons());
+  obs.observe(document.getElementById('adminPanel'), {childList: true, subtree: true});
+}
+
+function hideWriteButtons() {
+  if (!isReadOnly) return;
+  // Hide by button text content
+  const writeTexts = ['＋ 新增桌位','清除全部資料','🧹 清除異常資料','重置全部報到',
+    '＋ 新增人員','⬇ CSV','⬇ Excel','下載 CSV','⬇ 下載完整報表 XLSX','儲存','刪除',
+    '移除','編輯','取消','✓ 報到','清除','儲存設定','📨 發送測試訊息'];
+  document.querySelectorAll('button').forEach(btn => {
+    const txt = btn.textContent.trim();
+    if (writeTexts.some(w => txt.includes(w.replace('＋ ','').replace('⬇ ','').replace('🧹 ','')))) {
+      // Keep download buttons visible for readonly
+      if (txt.includes('下載') || txt.includes('CSV') || txt.includes('Excel') || txt.includes('XLSX')) return;
+      btn.style.display = 'none';
+    }
+  });
+  // Hide chip-x remove buttons
+  document.querySelectorAll('.chip-x, .tc-btn-del, .tc-btn').forEach(el => {
+    if (el.classList.contains('tc-btn-edit') || el.textContent.trim() === '編輯') {
+      el.style.display = 'none';
+    }
+    if (el.classList.contains('chip-x')) el.style.display = 'none';
+    if (el.classList.contains('tc-btn-del')) el.style.display = 'none';
+  });
+  // Hide gel-actions (edit/remove in table edit panel)
+  document.querySelectorAll('.gel-actions').forEach(el => el.style.display = 'none');
+  // Hide add guest section in table edit panel
+  document.querySelectorAll('[id^="gs-sel-"]').forEach(el => {
+    const parent = el.closest('div[style*="background:var(--warm)"]');
+    if (parent) parent.style.display = 'none';
+  });
 }
 
 onAuthStateChanged(auth, user => {
