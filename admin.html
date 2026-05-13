@@ -672,8 +672,13 @@ onAuthStateChanged(auth, user => {
   const loadingEl = document.getElementById('loginLoading');
   const btnEl = document.getElementById('googleLoginBtn');
   if (user) {
-    if (user.email === ALLOWED_EMAIL) { enterAdmin(); }
-    else {
+    if (user.email === ALLOWED_EMAIL) {
+      isReadOnly = false;
+      enterAdmin();
+    } else if (READONLY_EMAILS.includes(user.email)) {
+      isReadOnly = true;
+      enterAdmin();
+    } else {
       signOut(auth);
       loadingEl.style.display = 'none'; btnEl.style.display = 'flex';
       document.getElementById('loginErr').textContent = `此帳號（${user.email}）無權限。`;
@@ -685,10 +690,12 @@ window.doGoogleLogin = async () => {
   document.getElementById('loginErr').textContent = '';
   try {
     const result = await signInWithPopup(auth, provider);
-    if (result.user.email !== ALLOWED_EMAIL) {
+    const email = result.user.email;
+    if (email !== ALLOWED_EMAIL && !READONLY_EMAILS.includes(email)) {
       await signOut(auth);
-      document.getElementById('loginErr').textContent = `此帳號（${result.user.email}）無權限。`;
+      document.getElementById('loginErr').textContent = `此帳號（${email}）無權限存取後台。`;
     }
+    // onAuthStateChanged will handle enterAdmin
   } catch (err) {
     if (err.code !== 'auth/popup-closed-by-user') document.getElementById('loginErr').textContent = '登入失敗，請再試一次。';
   }
