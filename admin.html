@@ -788,7 +788,14 @@ function renderDashboard() {
         <div class="tc-num">${t.num}</div>
         <div class="tc-meta" style="flex:1">
           <div class="tc-name">${t.name||'未命名'}</div>
-          <div class="tc-cap">${chkAttend}/${totalAttend} 人 ${specTags}</div>
+          <div class="tc-cap">${chkAttend}/${totalAttend} 人${specTags ? ' ' + specTags : ''}</div>
+          ${(() => {
+            const empty = t.cap - gs.length;
+            if (empty > 3) return `<div style="font-size:0.68rem;color:#f59e0b;margin-top:2px;font-weight:500">⚠ 空位 ${empty} 席</div>`;
+            if (empty > 0) return `<div style="font-size:0.68rem;color:rgba(201,169,110,0.6);margin-top:2px">空位 ${empty} 席</div>`;
+            if (empty === 0) return `<div style="font-size:0.68rem;color:#22c55e;margin-top:2px">✓ 座位已滿</div>`;
+            return `<div style="font-size:0.68rem;color:#ef4444;margin-top:2px;font-weight:500">⚠ 超額 ${Math.abs(empty)} 人</div>`;
+          })()}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
           ${statusLabel}
