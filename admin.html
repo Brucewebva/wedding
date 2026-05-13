@@ -88,7 +88,7 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
 .btn-info:hover { background:var(--info-bg); }
 .btn-success { background:var(--success-bg); border:1px solid rgba(74,124,89,0.3); color:var(--success); }
 .btn-success:hover { background:#d0ecda; }
-.table-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); gap:14px; }
+.table-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; }
 .table-card { background:white; border:1.5px solid var(--border); border-radius:6px; overflow:hidden; transition:box-shadow 0.2s,transform 0.2s; }
 .table-card:hover { box-shadow:0 6px 24px rgba(26,18,8,0.1); transform:translateY(-2px); }
 .tc-head { background:linear-gradient(135deg,var(--deep),var(--brown)); padding:12px 16px; display:flex; align-items:center; gap:10px; }
@@ -736,23 +736,74 @@ function renderDashboard() {
 
   document.getElementById('dashTableGrid').innerHTML = localData.map(t => {
     const gs = t.guests ? Object.entries(t.guests).filter(([,g]) => g && g.name) : [];
-    const chk = gs.filter(([,g]) => g.checked).length;
+    let chkAttend = 0, totalAttend = 0;
+    gs.forEach(([,g]) => { const a = getAttend(g.name, g.attend); totalAttend += a; if (g.checked) chkAttend += a; });
+    const pct = totalAttend ? Math.round(chkAttend / totalAttend * 100) : 0;
     const vegC = gs.filter(([,g]) => g.veg).length;
     const childC = gs.filter(([,g]) => g.child).length;
-    const chips = gs.slice(0, 6).map(([k,g]) => {
-      return `<span class="chip ${g.checked ? 'chip-checked' : 'chip-unchecked'}">
-        ${g.checked ? '✓ ' : ''}<span class="chip-inner"><span class="chip-name">${g.name}</span><span class="chip-relation">${g.relation||''}</span></span>
-        <span class="chip-badges">${g.veg ? '<span class="chip-veg">素</span>' : ''}${g.child ? '<span class="chip-child">童</span>' : ''}</span>
-        <span class="chip-x" onclick="removeGuest('${t.id}','${k}')">✕</span></span>`;
-    }).join('');
-    const moreChips = gs.length > 6 ? `<span style="font-size:0.76rem;color:var(--muted);padding:4px">…還有 ${gs.length - 6} 人</span>` : '';
-    const specTags = (vegC ? `<span class="tc-special-tag veg">🥗 素食 ${vegC}</span>` : '') + (childC ? `<span class="tc-special-tag child">👶 兒童 ${childC}</span>` : '');
-    return `<div class="table-card">
-      <div class="tc-head"><div class="tc-num">${t.num}</div><div class="tc-meta"><div class="tc-name">${t.name||'未命名'}</div><div class="tc-cap">${gs.length}/${t.cap} 人</div></div>
-        <div class="tc-actions"><button class="tc-btn tc-btn-edit" onclick="adminTab('tables',document.querySelectorAll('.nav-tab')[1]);selectTable('${t.id}')">編輯</button></div></div>
-      <div class="tc-body">${specTags ? `<div class="tc-special">${specTags}</div>` : ''}
-        <div class="guest-chips">${chips || '<span style="color:var(--muted);font-size:0.78rem">尚無來賓</span>'}${moreChips}</div>
-        <div class="tc-footer"><div class="tc-progress">${chk}/${gs.length} 已報到</div></div></div></div>`;
+    const statusColor = pct === 100 ? '#22c55e' : pct > 0 ? '#f59e0b' : '#d1d5db';
+    const statusLabel = pct === 100
+      ? `<span style="font-size:0.7rem;background:#dcfce7;color:#166534;padding:2px 8px;border-radius:20px">全到</span>`
+      : pct > 0
+      ? `<span style="font-size:0.7rem;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:20px">${pct}%</span>`
+      : `<span style="font-size:0.7rem;background:var(--warm);color:var(--muted);padding:2px 8px;border-radius:20px">未到</span>`;
+
+    // Guest list rows - show ALL guests
+    const guestRows = gs.length ? gs.map(([k, g]) => {
+      const attend = getAttend(g.name, g.attend);
+      const vegTag = g.veg ? `<span style="font-size:0.65rem;background:var(--veg-bg);color:var(--veg);padding:1px 5px;border-radius:8px;margin-left:4px">素</span>` : '';
+      const childTag = g.child ? `<span style="font-size:0.65rem;background:var(--child-bg);color:var(--child);padding:1px 5px;border-radius:8px;margin-left:3px">童</span>` : '';
+      const attendTag = attend > 1 ? `<span style="font-size:0.65rem;background:rgba(44,95,138,0.1);color:var(--info);padding:1px 5px;border-radius:8px;margin-left:3px">+${attend-1}</span>` : '';
+      if (g.checked) {
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(201,169,110,0.08)">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+              <span style="font-size:0.84rem;color:var(--success);font-weight:500">${g.name}</span>
+              ${vegTag}${childTag}${attendTag}
+            </div>
+            ${g.relation ? `<div style="font-size:0.68rem;color:var(--muted);margin-top:1px">${g.relation}</div>` : ''}
+          </div>
+          <span style="font-size:0.68rem;background:var(--success-bg);color:var(--success);padding:2px 8px;border-radius:12px;white-space:nowrap;margin-left:8px;flex-shrink:0">✓ 已到</span>
+        </div>`;
+      } else {
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(201,169,110,0.08)">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+              <span style="font-size:0.84rem;color:var(--text)">${g.name}</span>
+              ${vegTag}${childTag}${attendTag}
+            </div>
+            ${g.relation ? `<div style="font-size:0.68rem;color:var(--muted);margin-top:1px">${g.relation}</div>` : ''}
+          </div>
+          <span style="font-size:0.68rem;color:var(--muted);padding:2px 8px;white-space:nowrap;margin-left:8px;flex-shrink:0">待到</span>
+        </div>`;
+      }
+    }).join('') : `<div style="font-size:0.8rem;color:var(--muted);padding:8px 0;text-align:center">尚無來賓</div>`;
+
+    const specTags = (vegC ? `<span style="font-size:0.68rem;background:var(--veg-bg);color:var(--veg);padding:2px 7px;border-radius:10px">🥗 素 ${vegC}</span>` : '') +
+                     (childC ? `<span style="font-size:0.68rem;background:var(--child-bg);color:var(--child);padding:2px 7px;border-radius:10px;margin-left:4px">👶 童 ${childC}</span>` : '');
+
+    return `<div class="table-card" style="display:flex;flex-direction:column">
+      <div class="tc-head" style="position:relative">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${statusColor};opacity:0.8"></div>
+        <div class="tc-num">${t.num}</div>
+        <div class="tc-meta" style="flex:1">
+          <div class="tc-name">${t.name||'未命名'}</div>
+          <div class="tc-cap">${chkAttend}/${totalAttend} 人 ${specTags}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          ${statusLabel}
+          <button class="tc-btn tc-btn-edit" onclick="adminTab('tables',document.querySelectorAll('.nav-tab')[1]);selectTable('${t.id}')">編輯</button>
+        </div>
+      </div>
+      <div style="padding:8px 14px;flex:1">
+        ${guestRows}
+      </div>
+      <div style="padding:6px 14px 10px;border-top:1px solid var(--border)">
+        <div style="background:var(--warm);border-radius:4px;height:5px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${statusColor};border-radius:4px;transition:width 0.5s ease"></div>
+        </div>
+      </div>
+    </div>`;
   }).join('') || '<div class="empty-state"><div class="es-icon">🪑</div>尚無桌位資料</div>';
 }
 
