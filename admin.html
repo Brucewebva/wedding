@@ -216,7 +216,22 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
 .report-stat-lbl { font-size:0.7rem; color:var(--muted); letter-spacing:0.15em; margin-top:4px; }
 .empty-state { text-align:center; padding:50px 20px; color:var(--muted); font-size:0.88rem; }
 .empty-state .es-icon { font-size:2.2rem; margin-bottom:10px; opacity:0.4; }
+/* CHECKIN RESPONSIVE */
+.checkin-desktop { display:block; }
+.checkin-mobile { display:none; }
 @media(max-width:768px){
+  .checkin-desktop { display:none; }
+  .checkin-mobile { display:block; }
+}
+.checkin-card { background:white; border:1px solid var(--border); border-radius:6px; padding:14px 16px; margin-bottom:10px; }
+.checkin-card-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:10px; }
+.checkin-card-name { font-size:1.05rem; font-weight:700; color:var(--text); }
+.checkin-card-rel { font-size:0.76rem; color:var(--muted); margin-top:2px; }
+.checkin-card-info { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+.checkin-card-tag { font-size:0.75rem; padding:3px 10px; border-radius:20px; }
+.checkin-card-actions { display:flex; gap:8px; }
+
+
   .table-mgmt-split { grid-template-columns:1fr; }
   .admin-content { padding:16px 12px; }
   .dashboard-grid { grid-template-columns:repeat(2,1fr); }
@@ -342,12 +357,15 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
         <button class="btn-sm btn-outline" style="font-size:0.76rem" onclick="clearCheckinFilter()">✕ 清除</button>
       </div>
       <div id="checkinFilterBar" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;min-height:22px;"></div>
-      <div style="background:white;border:1px solid var(--border);border-radius:4px;overflow:auto">
+      <!-- 桌面版表格 -->
+      <div class="checkin-desktop" style="background:white;border:1px solid var(--border);border-radius:4px;overflow:auto">
         <table class="guest-list-table">
           <thead><tr><th>姓名</th><th>與新人關係</th><th style="text-align:center">出席人數</th><th>特殊需求</th><th>桌號</th><th>桌名</th><th>報到狀態</th><th>操作</th></tr></thead>
           <tbody id="checkinBody"></tbody>
         </table>
       </div>
+      <!-- 手機版卡片 -->
+      <div class="checkin-mobile" id="checkinCards"></div>
     </div>
 
     <!-- Panel: Members -->
