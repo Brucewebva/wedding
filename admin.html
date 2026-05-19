@@ -34,8 +34,10 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
 .nav-right { margin-left:auto; display:flex; align-items:center; gap:8px; flex-shrink:0; padding-left:12px; }
 .nav-badge { font-size:0.72rem; background:rgba(201,169,110,0.12); color:var(--gold); padding:4px 10px; border-radius:20px; border:1px solid rgba(201,169,110,0.3); white-space:nowrap; }
 .admin-content { padding:24px 20px; max-width:1200px; margin:0 auto; }
-.dashboard-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:20px; }
-.dash-card { background:white; border:1px solid var(--border); border-radius:6px; padding:18px 16px; text-align:center; position:relative; overflow:hidden; transition:transform 0.2s,box-shadow 0.2s; cursor:default; }
+.dashboard-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:10px; margin-bottom:20px; }
+@media(max-width:1100px){ .dashboard-grid { grid-template-columns:repeat(4,1fr); } }
+@media(max-width:640px){ .dashboard-grid { grid-template-columns:repeat(2,1fr); } }
+.dash-card { background:white; border:1px solid var(--border); border-radius:6px; padding:14px 10px; text-align:center; position:relative; overflow:hidden; transition:transform 0.2s,box-shadow 0.2s; cursor:default; }
 .dash-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
 .dash-card.dc-total::before { background:linear-gradient(90deg,var(--gold),var(--gold-light)); }
 .dash-card.dc-guests::before { background:linear-gradient(90deg,#7c9cbf,#a8c4e0); }
@@ -45,7 +47,7 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
 .dash-card.dc-veg::before { background:linear-gradient(90deg,var(--veg),#6abf7a); }
 .dash-card.dc-child::before { background:linear-gradient(90deg,var(--child),#c09060); }
 .dash-card:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(26,18,8,0.1); }
-.dash-num { font-family:'Cormorant Garamond',serif; font-size:2.6rem; font-weight:600; line-height:1; margin-bottom:4px; }
+.dash-num { font-family:'Cormorant Garamond',serif; font-size:2.2rem; font-weight:600; line-height:1; margin-bottom:2px; }
 .dc-total .dash-num { color:var(--gold); }
 .dc-guests .dash-num { color:#5a7a9f; }
 .dc-checked .dash-num { color:var(--success); }
@@ -54,7 +56,7 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
 .dc-veg .dash-num { color:var(--veg); }
 .dc-child .dash-num { color:var(--child); }
 .dash-lbl { font-size:0.72rem; color:var(--muted); letter-spacing:0.18em; }
-.dash-icon { font-size:1.4rem; margin-bottom:6px; }
+.dash-icon { font-size:1.2rem; margin-bottom:4px; }
 .special-needs-banner { background:white; border:1px solid var(--border); border-radius:6px; padding:16px 20px; margin-bottom:20px; display:flex; flex-wrap:wrap; gap:14px; align-items:center; }
 .sn-title { font-size:0.78rem; color:var(--muted); letter-spacing:0.2em; flex-basis:100%; margin-bottom:4px; }
 .sn-pill { display:flex; align-items:center; gap:8px; padding:8px 16px; border-radius:30px; font-size:0.85rem; font-weight:500; }
