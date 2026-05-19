@@ -1282,7 +1282,25 @@ window.closeDupModal = () => { document.getElementById('dupModalBg').classList.r
 window.dupOverwrite = async () => {
   if (!_existingDupMember || !_pendingDupData) return;
   const {name, relation, attend, chair, veg} = _pendingDupData;
+  const oldName = _existingDupMember.name;
   await update(ref(db, 'members/' + _existingDupMember.id), {name, relation, attend, chair, veg});
+
+  // Sync to tables
+  const updates = {};
+  localData.forEach(t => {
+    if (!t.guests) return;
+    Object.entries(t.guests).forEach(([gk, g]) => {
+      if (g && g.name === oldName) {
+        updates[`tables/${t.id}/guests/${gk}/attend`] = attend;
+        updates[`tables/${t.id}/guests/${gk}/relation`] = relation;
+        updates[`tables/${t.id}/guests/${gk}/veg`] = veg > 0;
+        updates[`tables/${t.id}/guests/${gk}/child`] = chair > 0;
+        if (name !== oldName) updates[`tables/${t.id}/guests/${gk}/name`] = name;
+      }
+    });
+  });
+  if (Object.keys(updates).length > 0) await update(ref(db), updates);
+
   closeDupModal(); clearMemberForm(); toast(`✓ 已覆蓋更新：${name}`);
 };
 window.dupAddNew = async () => {
@@ -1310,11 +1328,46 @@ window.openEditModal = (id) => {
 };
 window.closeEditModal = () => document.getElementById('editModalBg').classList.remove('show');
 window.saveEditMember = async () => {
-  const id = document.getElementById('edit-mb-id').value; const name = document.getElementById('edit-mb-name').value.trim();
-  const relation = document.getElementById('edit-mb-relation').value; const attend = parseInt(document.getElementById('edit-mb-attend').value)||1;
-  const chair = parseInt(document.getElementById('edit-mb-chair').value)||0; const veg = parseInt(document.getElementById('edit-mb-veg').value)||0;
-  if (!name) { toast('請輸入姓名'); return; } if (!relation) { toast('請選擇與新人關係'); return; }
-  await update(ref(db, 'members/' + id), {name, relation, attend, chair, veg}); closeEditModal(); toast(`✓ 已更新：${name}`);
+  const id = document.getElementById('edit-mb-id').value;
+  const oldMember = membersData.find(m => m.id === id);
+  const oldName = oldMember?.name || '';
+  const name = document.getElementById('edit-mb-name').value.trim();
+  const relation = document.getElementById('edit-mb-relation').value;
+  const attend = parseInt(document.getElementById('edit-mb-attend').value)||1;
+  const chair = parseInt(document.getElementById('edit-mb-chair').value)||0;
+  const veg = parseInt(document.getElementById('edit-mb-veg').value)||0;
+  if (!name) { toast('請輸入姓名'); return; }
+  if (!relation) { toast('請選擇與新人關係'); return; }
+
+  // 1. Update members node
+  await update(ref(db, 'members/' + id), {name, relation, attend, chair, veg});
+
+  // 2. Sync to all table guests with matching name
+  const updates = {};
+  localData.forEach(t => {
+    if (!t.guests) return;
+    Object.entries(t.guests).forEach(([gk, g]) => {
+      if (g && g.name === oldName) {
+        updates[`tables/${t.id}/guests/${gk}/attend`] = attend;
+        updates[`tables/${t.id}/guests/${gk}/relation`] = relation;
+        updates[`tables/${t.id}/guests/${gk}/veg`] = veg > 0;
+        updates[`tables/${t.id}/guests/${gk}/child`] = chair > 0;
+        if (name !== oldName) {
+          updates[`tables/${t.id}/guests/${gk}/name`] = name;
+        }
+      }
+    });
+  });
+
+  if (Object.keys(updates).length > 0) {
+    await update(ref(db), updates);
+    const tableCount = new Set(Object.keys(updates).map(k => k.split('/')[1])).size;
+    toast(`✓ 已更新：${name}（同步 ${tableCount} 張桌位）`);
+  } else {
+    toast(`✓ 已更新：${name}`);
+  }
+
+  closeEditModal();
 };
 
 window.renderMembers = function() {
