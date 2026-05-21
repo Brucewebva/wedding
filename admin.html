@@ -1316,7 +1316,37 @@ window.clearMemberForm = () => {
 };
 
 window.deleteMember = async (id, name) => {
-  if (!confirm(`確定要刪除「${name}」？`)) return; await remove(ref(db, 'members/' + id)); toast(`已刪除：${name}`);
+  // 找出此人是否已安排桌位
+  const assignedTables = [];
+  localData.forEach(t => {
+    if (!t.guests) return;
+    Object.entries(t.guests).forEach(([gk, g]) => {
+      if (g && g.name === name) assignedTables.push({tid: t.id, gk, tnum: t.num});
+    });
+  });
+
+  const msg = assignedTables.length > 0
+    ? `確定要刪除「${name}」？
+
+此人已安排在第 ${assignedTables.map(t=>t.tnum).join('、')} 桌，
+刪除後桌位裡的來賓資料也會一併移除。`
+    : `確定要刪除「${name}」？`;
+
+  if (!confirm(msg)) return;
+
+  // 刪除 members
+  await remove(ref(db, 'members/' + id));
+
+  // 同步刪除所有桌位裡的該來賓
+  for (const {tid, gk} of assignedTables) {
+    await remove(ref(db, `tables/${tid}/guests/${gk}`));
+  }
+
+  if (assignedTables.length > 0) {
+    toast(`已刪除：${name}（同步移除 ${assignedTables.length} 個桌位來賓）`);
+  } else {
+    toast(`已刪除：${name}`);
+  }
 };
 
 window.openEditModal = (id) => {
