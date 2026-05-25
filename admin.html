@@ -1760,11 +1760,11 @@ function makeSeatCell(row, col, savedVal) {
 
   // MODE 3: custom text input (replaces dropdown entirely)
   const customWrap = document.createElement('div');
-  customWrap.style.cssText = `display:${isCustom ? 'flex' : 'none'};align-items:center;gap:4px;width:100%`;
+  customWrap.style.cssText = `display:${isCustom ? 'flex' : 'none'};align-items:stretch;gap:4px;width:100%;height:52px`;
   const customInp = document.createElement('input');
   customInp.id = `smc-custom-${row}-${col}`;
   customInp.className = 'form-input';
-  customInp.style.cssText = 'font-size:0.76rem;padding:5px 4px;flex:1;min-height:52px';
+  customInp.style.cssText = 'font-size:0.76rem;padding:5px 4px;flex:1;height:52px;box-sizing:border-box';
   customInp.placeholder = '輸入桌號或桌名';
   customInp.value = isCustom ? savedVal : '';
   const customClear = document.createElement('button');
@@ -1897,16 +1897,22 @@ async function loadSeatMapSettings() {
 }
 
 window.saveSeatMap = async () => {
-  const data = {};
-  for (let row = 0; row < SEATMAP_ROWS; row++) {
-    for (let col = 0; col < SEATMAP_COLS; col++) {
-      data[`${row}_${col}`] = getCellValue(row, col);
+  try {
+    const data = {};
+    for (let row = 0; row < SEATMAP_ROWS; row++) {
+      for (let col = 0; col < SEATMAP_COLS; col++) {
+        const v = getCellValue(row, col);
+        if (v) data[`${row}_${col}`] = v;
+      }
     }
+    data['main'] = getCellValue('m', 0);
+    console.log('saving seatmap:', data);
+    await set(ref(db, 'seatmap'), data);
+    toast('✓ 座位地圖設定已儲存');
+  } catch(err) {
+    console.error('saveSeatMap error:', err);
+    toast('⚠ 儲存失敗：' + (err.message || '請確認登入狀態'));
   }
-  // Main table
-  data['main'] = getCellValue('m', 0);
-  await set(ref(db, 'seatmap'), data);
-  toast('✓ 座位地圖設定已儲存');
 };
 
 function alignSeatMapMainTable() {
