@@ -612,7 +612,8 @@ function loadSeatMap() {
 }
 
 function renderSeatMap(highlightTableNum) {
-  const ROWS = 6, COLS = 6;
+  const ROWS = 6, COLS = 7;
+  const EMPTY_CELLS = new Set(['5_0']); // bottom-left corner
   const hn = String(highlightTableNum);
   const mainVal = seatMapData['main'] || '';
   const isMainHighlighted = mainVal && String(mainVal) === hn;
@@ -620,11 +621,13 @@ function renderSeatMap(highlightTableNum) {
   // Top rows (0-2)
   let topHTML = '';
   for (let r = 0; r < 3; r++) {
-    topHTML += '<div class="seatmap-row">';
+    topHTML += '<div class="seatmap-row" style="grid-template-columns:repeat(7,1fr)">';
     for (let c = 0; c < COLS; c++) {
-      const val = seatMapData[`${r}_${c}`] || '';
+      const key = `${r}_${c}`;
+      const val = seatMapData[key] || '';
       const isHL = val && String(val) === hn;
-      if (!val) { topHTML += `<div class="seatmap-cell empty"></div>`; }
+      if (EMPTY_CELLS.has(key)) { topHTML += `<div class="seatmap-cell empty" style="background:transparent;border:none"></div>`; }
+      else if (!val) { topHTML += `<div class="seatmap-cell empty"></div>`; }
       else {
         // Find table name from localData
         const tbl = localData.find(t => String(t.num) === String(val));
@@ -639,11 +642,13 @@ function renderSeatMap(highlightTableNum) {
   // Bottom rows (3-5)
   let botHTML = '';
   for (let r = 3; r < ROWS; r++) {
-    botHTML += '<div class="seatmap-row">';
+    botHTML += '<div class="seatmap-row" style="grid-template-columns:repeat(7,1fr)">';
     for (let c = 0; c < COLS; c++) {
-      const val = seatMapData[`${r}_${c}`] || '';
+      const key = `${r}_${c}`;
+      const val = seatMapData[key] || '';
       const isHL = val && String(val) === hn;
-      if (!val) { botHTML += `<div class="seatmap-cell empty"></div>`; }
+      if (EMPTY_CELLS.has(key)) { botHTML += `<div class="seatmap-cell empty" style="background:transparent;border:none"></div>`; }
+      else if (!val) { botHTML += `<div class="seatmap-cell empty"></div>`; }
       else {
         const tbl = localData.find(t => String(t.num) === String(val));
         const tname = tbl ? (tbl.name || '') : '';
@@ -666,7 +671,7 @@ function renderSeatMap(highlightTableNum) {
         <div class="seatmap-aisle">走　道</div>
         ${botHTML}
         <div class="seatmap-entrance">
-          <div class="seatmap-entrance-label">↑ 出入口</div>
+          <div class="seatmap-entrance-label" style="grid-column:4/6">↑ 出入口</div>
         </div>
       </div>
       <div class="seatmap-maintable-wrap">
