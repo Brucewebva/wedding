@@ -624,8 +624,14 @@ function renderSeatMap(highlightTableNum) {
     for (let c = 0; c < COLS; c++) {
       const val = seatMapData[`${r}_${c}`] || '';
       const isHL = val && String(val) === hn;
-      if (!val) topHTML += `<div class="seatmap-cell empty"></div>`;
-      else topHTML += `<div class="seatmap-cell${isHL ? ' highlighted' : ''}">${val}</div>`;
+      if (!val) { topHTML += `<div class="seatmap-cell empty"></div>`; }
+      else {
+        // Find table name from localData
+        const tbl = localData.find(t => String(t.num) === String(val));
+        const tname = tbl ? (tbl.name || '') : '';
+        const label = tname ? `<div style="font-size:0.7em;opacity:0.75;line-height:1.2">${tname}</div>` : '';
+        topHTML += `<div class="seatmap-cell${isHL ? ' highlighted' : ''}">${val}${label}</div>`;
+      }
     }
     topHTML += '</div>';
   }
@@ -637,11 +643,20 @@ function renderSeatMap(highlightTableNum) {
     for (let c = 0; c < COLS; c++) {
       const val = seatMapData[`${r}_${c}`] || '';
       const isHL = val && String(val) === hn;
-      if (!val) botHTML += `<div class="seatmap-cell empty"></div>`;
-      else botHTML += `<div class="seatmap-cell${isHL ? ' highlighted' : ''}">${val}</div>`;
+      if (!val) { botHTML += `<div class="seatmap-cell empty"></div>`; }
+      else {
+        const tbl = localData.find(t => String(t.num) === String(val));
+        const tname = tbl ? (tbl.name || '') : '';
+        const label = tname ? `<div style="font-size:0.7em;opacity:0.75;line-height:1.2">${tname}</div>` : '';
+        botHTML += `<div class="seatmap-cell${isHL ? ' highlighted' : ''}">${val}${label}</div>`;
+      }
     }
     botHTML += '</div>';
   }
+
+  // Main table name
+  const mainTbl = mainVal ? localData.find(t => String(t.num) === String(mainVal)) : null;
+  const mainName = mainTbl ? (mainTbl.name || '') : '';
 
   return `<div class="seatmap-wrap">
     <div class="seatmap-title">📍 座位方向圖</div>
@@ -657,8 +672,8 @@ function renderSeatMap(highlightTableNum) {
       <div class="seatmap-maintable-wrap">
         <div style="flex:3"></div>
         <div class="seatmap-maintable${isMainHighlighted ? ' highlighted' : ''}">
-          ${mainVal ? mainVal : '主桌'}<br>
-          <span style="font-size:0.6rem;opacity:0.7">${mainVal ? '（主桌）' : ''}</span>
+          ${mainVal ? mainVal : '主桌'}
+          ${mainName ? `<div style="font-size:0.6rem;opacity:0.75;line-height:1.3">${mainName}</div>` : ''}
         </div>
         <div style="flex:3"></div>
       </div>
