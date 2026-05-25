@@ -816,7 +816,7 @@ window.adminTab = (name, el) => {
   if (name === 'seatmap') {
     initSeatMapEditor();
     loadSeatMapSettings();
-    setTimeout(alignSeatMapMainTable, 100);
+    setTimeout(() => { refreshAllSeatDropdowns(); alignSeatMapMainTable(); }, 150);
   }
 };
 
@@ -1658,24 +1658,93 @@ function addActivity(type, msg) {
 const SEATMAP_ROWS = 6;
 const SEATMAP_COLS = 6;
 
-// Build table options from localData (sorted by num)
-function buildTableOptions(selectedVal) {
+// Build table options excluding already-used values
+function buildTableOptions(selectedVal, excludeVals) {
+  const used = new Set((excludeVals || []).map(String));
   const opts = localData
     .sort((a,b) => a.num - b.num)
+    .filter(t => !used.has(String(t.num)) || String(t.num) === String(selectedVal))
     .map(t => `<option value="${t.num}" ${String(t.num) === String(selectedVal) ? 'selected' : ''}>${t.num}${t.name ? ' ' + t.name : ''}</option>`)
     .join('');
-  return `<option value="">— 空格 —</option>${opts}<option value="__custom__" ${!['', ...localData.map(t=>String(t.num))].includes(String(selectedVal)) && selectedVal ? 'selected' : ''}>✏ 手動輸入…</option>`;
+  return `<option value="">— 空格 —</option>${opts}<option value="__custom__">✏ 手動輸入…</option>`;
+}
+
+// Collect all currently selected values across all cells
+function getAllSelectedVals() {
+  const vals = [];
+  for (let r = 0; r < SEATMAP_ROWS; r++) {
+    for (let c = 0; c < SEATMAP_COLS; c++) {
+      const v = getCellValue(r, c);
+      if (v && v !== '__custom__') vals.push(String(v));
+    }
+  }
+  const mainSel = document.getElementById('smc-m-0');
+  if (mainSel && mainSel.value && mainSel.value !== '__custom__') vals.push(String(mainSel.value));
+  return vals;
+}
+
+// Refresh all dropdowns to exclude used values
+function refreshAllSeatDropdowns() {
+  const used = getAllSelectedVals();
+  for (let r = 0; r < SEATMAP_ROWS; r++) {
+    for (let c = 0; c < SEATMAP_COLS; c++) {
+      const sel = document.getElementById(`smc-${r}-${c}`);
+      if (!sel) continue;
+      const curVal = getCellValue(r, c);
+      const isCustom = sel.value === '__custom__';
+      if (isCustom) continue; // don't touch custom inputs
+      const usedExcludingThis = used.filter(v => v !== String(curVal));
+      sel.innerHTML = buildTableOptions(curVal, usedExcludingThis);
+      sel.value = curVal || '';
+    }
+  }
+  // Main table
+  const mainSel = document.getElementById('smc-m-0');
+  if (mainSel && mainSel.value !== '__custom__') {
+    const curVal = mainSel.value;
+    const usedExcludingThis = used.filter(v => v !== String(curVal));
+    mainSel.innerHTML = buildTableOptions(curVal, usedExcludingThis);
+    mainSel.value = curVal || '';
+  }
 }
 
 function makeSeatCell(row, col, savedVal) {
   const wrap = document.createElement('div');
-  wrap.style.cssText = 'display:flex;flex-direction:column;gap:2px';
+  wrap.style.cssText = 'display:flex;flex-direction:column;gap:2px;position:relative';
+
+  const isCustom = savedVal && !['', ...localData.map(t=>String(t.num))].includes(String(savedVal));
+  const used = getAllSelectedVals();
+
+  // Selected display (shows after picking)
+  const selected = document.createElement('div');
+  selected.id = `smc-sel-${row}-${col}`;
+  selected.style.cssText = `display:${savedVal && !isCustom ? 'flex' : 'none'};align-items:center;justify-content:space-between;background:rgba(201,169,110,0.15);border:1px solid var(--gold);border-radius:5px;padding:5px 6px;font-size:0.78rem;font-weight:500;color:var(--brown);gap:4px;min-height:32px`;
+
+  const selLabel = document.createElement('span');
+  selLabel.id = `smc-sel-label-${row}-${col}`;
+  const preselTbl = savedVal ? localData.find(t => String(t.num) === String(savedVal)) : null;
+  selLabel.textContent = savedVal ? (preselTbl ? `${savedVal} ${preselTbl.name || ''}` : savedVal) : '';
+
+  const clearBtn = document.createElement('button');
+  clearBtn.textContent = '✕';
+  clearBtn.style.cssText = 'background:none;border:none;cursor:pointer;color:var(--danger);font-size:0.72rem;padding:0 2px;flex-shrink:0;font-weight:700';
+  clearBtn.title = '清除選擇';
+  clearBtn.onclick = () => {
+    sel.value = '';
+    inp.style.display = 'none';
+    inp.value = '';
+    selected.style.display = 'none';
+    sel.style.display = '';
+    refreshAllSeatDropdowns();
+  };
+  selected.appendChild(selLabel);
+  selected.appendChild(clearBtn);
 
   const sel = document.createElement('select');
   sel.id = `smc-${row}-${col}`;
   sel.className = 'form-select';
-  sel.style.cssText = 'font-size:0.76rem;padding:5px 4px;width:100%';
-  sel.innerHTML = buildTableOptions(savedVal);
+  sel.style.cssText = `font-size:0.76rem;padding:5px 4px;width:100%;display:${savedVal && !isCustom ? 'none' : ''}`;
+  sel.innerHTML = buildTableOptions(savedVal, used.filter(v => v !== String(savedVal)));
 
   const inp = document.createElement('input');
   inp.id = `smc-custom-${row}-${col}`;
@@ -1683,32 +1752,48 @@ function makeSeatCell(row, col, savedVal) {
   inp.style.cssText = 'font-size:0.76rem;padding:5px 4px;width:100%;display:none';
   inp.placeholder = '輸入桌號';
 
-  // If saved value not in localData, show custom input
-  const isCustom = savedVal && !['', ...localData.map(t=>String(t.num))].includes(String(savedVal));
   if (isCustom) {
     sel.value = '__custom__';
     inp.style.display = '';
     inp.value = savedVal;
+    selected.style.display = 'none';
+    sel.style.display = '';
   }
 
   sel.addEventListener('change', () => {
     if (sel.value === '__custom__') {
       inp.style.display = '';
       inp.focus();
-    } else {
+      selected.style.display = 'none';
+    } else if (sel.value) {
+      // Show selected pill, hide dropdown
+      const tbl = localData.find(t => String(t.num) === String(sel.value));
+      selLabel.textContent = tbl ? `${sel.value} ${tbl.name || ''}` : sel.value;
+      selected.style.display = 'flex';
+      sel.style.display = 'none';
       inp.style.display = 'none';
-      inp.value = '';
+      refreshAllSeatDropdowns();
+    } else {
+      selected.style.display = 'none';
+      inp.style.display = 'none';
+      refreshAllSeatDropdowns();
     }
   });
 
+  wrap.appendChild(selected);
   wrap.appendChild(sel);
   wrap.appendChild(inp);
   return wrap;
 }
 
 function getCellValue(row, col) {
+  const selDisp = document.getElementById(`smc-sel-${row}-${col}`);
   const sel = document.getElementById(`smc-${row}-${col}`);
   if (!sel) return '';
+  // If selected pill is showing, use select's stored value
+  if (selDisp && selDisp.style.display !== 'none') {
+    return sel.value || '';
+  }
   if (sel.value === '__custom__') {
     const inp = document.getElementById(`smc-custom-${row}-${col}`);
     return inp ? inp.value.trim() : '';
@@ -1749,14 +1834,22 @@ async function loadSeatMapSettings() {
         if (!savedVal) continue;
         const sel = document.getElementById(`smc-${row}-${col}`);
         if (!sel) continue;
-        // Check if value exists in options
-        const exists = [...sel.options].some(o => o.value === String(savedVal));
-        if (exists) {
-          sel.value = String(savedVal);
-        } else {
+        const isCustom = !['', ...localData.map(t=>String(t.num))].includes(String(savedVal));
+        if (isCustom) {
           sel.value = '__custom__';
           const inp = document.getElementById(`smc-custom-${row}-${col}`);
           if (inp) { inp.value = savedVal; inp.style.display = ''; }
+        } else {
+          sel.value = String(savedVal);
+          // Trigger pill display
+          const tbl = localData.find(t => String(t.num) === String(savedVal));
+          const selDisp = document.getElementById(`smc-sel-${row}-${col}`);
+          const selLabel = document.getElementById(`smc-sel-label-${row}-${col}`);
+          if (selDisp && selLabel) {
+            selLabel.textContent = tbl ? `${savedVal} ${tbl.name || ''}` : savedVal;
+            selDisp.style.display = 'flex';
+            sel.style.display = 'none';
+          }
         }
       }
     }
