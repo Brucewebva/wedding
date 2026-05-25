@@ -492,7 +492,7 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
             <div id="seatmap-top" style="display:flex;flex-direction:column;gap:4px"></div>
 
             <!-- Aisle -->
-            <div style="background:var(--warm);border:1px dashed var(--border);border-radius:5px;padding:6px;text-align:center;font-size:0.8rem;color:var(--muted);letter-spacing:0.15em;margin:2px 0">走　道</div>
+            <div class="seatmap-aisle-admin" style="background:var(--warm);border:1px dashed var(--border);border-radius:5px;padding:6px;text-align:center;font-size:0.8rem;color:var(--muted);letter-spacing:0.15em;margin:2px 0" id="seatmap-aisle-row">走　道</div>
 
             <!-- Bottom 3 rows (row 3-5) -->
             <div id="seatmap-bottom" style="display:flex;flex-direction:column;gap:4px"></div>
@@ -504,15 +504,13 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
 
           </div>
 
-          <!-- Main table (centered on aisle) -->
-          <div style="display:flex;flex-direction:column;flex-shrink:0;width:60px">
-            <div style="flex:3"></div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
-              <div style="font-size:0.7rem;color:var(--muted);text-align:center;margin-bottom:4px">主桌</div>
-              <div id="seatmap-main-wrap" style="width:90px"></div>
+          <!-- Main table (aligned with aisle via JS) -->
+          <div style="position:relative;flex-shrink:0;width:100px" id="seatmap-maintable-col">
+            <div id="seatmap-maintable-inner" style="position:absolute;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="font-size:0.7rem;color:var(--muted);text-align:center;margin-bottom:2px">主桌</div>
+              <div id="seatmap-main-wrap" style="width:96px"></div>
               <div style="font-size:0.68rem;color:var(--muted);text-align:center;margin-top:2px">（可留空）</div>
             </div>
-            <div style="flex:3"></div>
           </div>
 
           <!-- Stage (fixed, spans row 1-4) -->
@@ -815,7 +813,11 @@ window.adminTab = (name, el) => {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active')); document.getElementById('panel-' + name).classList.add('active');
   if (name === 'tables') renderTableList();
   if (name === 'report') renderReport();
-  if (name === 'seatmap') { initSeatMapEditor(); loadSeatMapSettings(); }
+  if (name === 'seatmap') {
+    initSeatMapEditor();
+    loadSeatMapSettings();
+    setTimeout(alignSeatMapMainTable, 100);
+  }
 };
 
 function renderAll() {
@@ -1795,6 +1797,18 @@ window.saveSeatMap = async () => {
   await set(ref(db, 'seatmap'), data);
   toast('✓ 座位地圖設定已儲存');
 };
+
+function alignSeatMapMainTable() {
+  const aisleEl = document.getElementById('seatmap-aisle-row');
+  const col = document.getElementById('seatmap-maintable-col');
+  const inner = document.getElementById('seatmap-maintable-inner');
+  if (!aisleEl || !col || !inner) return;
+  const aisleRect = aisleEl.getBoundingClientRect();
+  const colRect = col.getBoundingClientRect();
+  const aisleCenter = aisleRect.top + aisleRect.height / 2 - colRect.top;
+  const innerHeight = inner.offsetHeight;
+  inner.style.top = (aisleCenter - innerHeight / 2) + 'px';
+}
 
 // ── TOAST ──
 let tt;
