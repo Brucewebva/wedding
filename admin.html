@@ -1719,7 +1719,7 @@ function refreshAllSeatDropdowns() {
 
 function makeSeatCell(row, col, savedVal) {
   const wrap = document.createElement('div');
-  wrap.style.cssText = 'display:flex;flex-direction:column;gap:0;position:relative;min-height:52px';
+  wrap.style.cssText = 'display:flex;flex-direction:column;gap:0;position:relative;min-height:52px;width:100%;min-width:0;overflow:hidden';
 
   const isCustom = savedVal && !['', ...localData.map(t=>String(t.num))].includes(String(savedVal));
   const used = getAllSelectedVals();
@@ -1764,11 +1764,11 @@ function makeSeatCell(row, col, savedVal) {
 
   // MODE 3: custom text input (replaces dropdown entirely)
   const customWrap = document.createElement('div');
-  customWrap.style.cssText = `display:${isCustom ? 'flex' : 'none'};align-items:center;gap:0;width:100%`;
+  customWrap.style.cssText = `display:${isCustom ? 'flex' : 'none'};align-items:center;gap:0;width:100%;min-width:0;overflow:hidden`;
   const customInp = document.createElement('input');
   customInp.id = `smc-custom-${row}-${col}`;
   customInp.className = 'form-input';
-  customInp.style.cssText = 'font-size:0.74rem;padding:4px 2px;flex:1;min-height:52px;border-radius:5px 0 0 5px;border-right:none;box-sizing:border-box';
+  customInp.style.cssText = 'font-size:0.74rem;padding:4px 6px;flex:1;min-width:0;width:0;min-height:52px;border-radius:5px 0 0 5px;border-right:none;box-sizing:border-box';
   customInp.placeholder = '輸入桌號或桌名';
   customInp.value = isCustom ? savedVal : '';
   const customClear = document.createElement('button');
