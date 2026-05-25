@@ -272,6 +272,7 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
     <div class="nav-tab" onclick="adminTab('members',this)">人員管理</div>
     <div class="nav-tab" onclick="adminTab('report',this)">完整報表</div>
     <div class="nav-tab" onclick="adminTab('settings',this)">⚙ 設定</div>
+    <div class="nav-tab" onclick="adminTab('seatmap',this)">🗺 座位地圖</div>
     <div class="nav-right">
       <span class="nav-badge" id="syncStatus"><span class="sync-dot loading"></span>連線中…</span>
       <span class="nav-badge" id="navBadge">載入中</span>
@@ -462,6 +463,71 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
       </div>
       <div id="reportPreview"></div>
     </div>
+
+    <!-- Panel: Seat Map -->
+    <div class="panel" id="panel-seatmap">
+      <div class="section-header">
+        <div class="section-title">座位地圖設定</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-sm btn-gold" onclick="saveSeatMap()">💾 儲存地圖設定</button>
+        </div>
+      </div>
+      <div class="form-card" style="margin-bottom:14px">
+        <h3>說明</h3>
+        <p style="font-size:0.82rem;color:var(--muted);line-height:1.8">
+          在下方每個格子填入桌號（需與桌位管理中的桌號一致）。空格留白即可。<br>
+          舞台與出入口位置已固定，其餘格子與主桌皆可自由設定。<br>
+          設定完成後按「儲存地圖設定」，來賓報到後將自動顯示座位方向圖。
+        </p>
+      </div>
+
+      <!-- Map editor -->
+      <div style="background:white;border:1px solid var(--border);border-radius:6px;padding:20px;overflow-x:auto">
+        <div style="display:flex;gap:10px;align-items:stretch;min-width:360px">
+
+          <!-- Grid area -->
+          <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+
+            <!-- Top 3 rows (row 0-2) -->
+            <div id="seatmap-top" style="display:flex;flex-direction:column;gap:4px"></div>
+
+            <!-- Aisle -->
+            <div style="background:var(--warm);border:1px dashed var(--border);border-radius:5px;padding:6px;text-align:center;font-size:0.8rem;color:var(--muted);letter-spacing:0.15em;margin:2px 0">走　道</div>
+
+            <!-- Bottom 3 rows (row 3-5) -->
+            <div id="seatmap-bottom" style="display:flex;flex-direction:column;gap:4px"></div>
+
+            <!-- Entrance label (spans col 2-3, below bottom) -->
+            <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:2px">
+              <div style="grid-column:3/5;background:#fee2e2;border:0.5px solid #fca5a5;border-radius:5px;padding:5px;text-align:center;font-size:0.78rem;font-weight:500;color:#991b1b">↑ 出入口（固定）</div>
+            </div>
+
+          </div>
+
+          <!-- Main table (centered on aisle) -->
+          <div style="display:flex;flex-direction:column;flex-shrink:0;width:60px">
+            <div style="flex:3"></div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+              <div style="font-size:0.7rem;color:var(--muted);text-align:center">主桌</div>
+              <input id="seatmap-maintable" class="form-input" style="width:58px;text-align:center;padding:6px 4px;font-size:0.82rem" placeholder="桌號"/>
+              <div style="font-size:0.68rem;color:var(--muted);text-align:center">（可留空）</div>
+            </div>
+            <div style="flex:3"></div>
+          </div>
+
+          <!-- Stage (fixed, spans row 1-4) -->
+          <div style="display:flex;flex-direction:column;flex-shrink:0;width:36px">
+            <div style="flex:1"></div>
+            <div style="flex:5;background:#fce7f3;border:1.5px solid #f9a8d4;border-radius:6px;display:flex;align-items:center;justify-content:center">
+              <div style="writing-mode:vertical-rl;font-size:0.75rem;color:#9d174d;font-weight:500;letter-spacing:0.15em">舞台（固定）</div>
+            </div>
+            <div style="flex:1"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
 
   </div>
 </div>
@@ -749,6 +815,7 @@ window.adminTab = (name, el) => {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active')); document.getElementById('panel-' + name).classList.add('active');
   if (name === 'tables') renderTableList();
   if (name === 'report') renderReport();
+  if (name === 'seatmap') { initSeatMapEditor(); loadSeatMapSettings(); }
 };
 
 function renderAll() {
@@ -1584,6 +1651,62 @@ function addActivity(type, msg) {
   activityLog.push({type, msg, time: new Date().toLocaleTimeString('zh-TW')});
   if (activityLog.length > 30) activityLog.shift();
 }
+
+// ── SEAT MAP ──
+const SEATMAP_ROWS = 6;
+const SEATMAP_COLS = 6;
+
+function initSeatMapEditor() {
+  const topEl = document.getElementById('seatmap-top');
+  const botEl = document.getElementById('seatmap-bottom');
+  if (!topEl || !botEl) return;
+  topEl.innerHTML = '';
+  botEl.innerHTML = '';
+  for (let row = 0; row < SEATMAP_ROWS; row++) {
+    const rowEl = document.createElement('div');
+    rowEl.style.cssText = 'display:grid;grid-template-columns:repeat(6,1fr);gap:4px';
+    for (let col = 0; col < SEATMAP_COLS; col++) {
+      const cell = document.createElement('input');
+      cell.id = `smc-${row}-${col}`;
+      cell.className = 'form-input';
+      cell.style.cssText = 'text-align:center;padding:6px 2px;font-size:0.82rem';
+      cell.placeholder = '桌號';
+      cell.title = `第${row+1}排 第${col+1}欄`;
+      rowEl.appendChild(cell);
+    }
+    if (row < 3) topEl.appendChild(rowEl);
+    else botEl.appendChild(rowEl);
+  }
+}
+
+async function loadSeatMapSettings() {
+  try {
+    const snap = await new Promise(res => onValue(ref(db, 'seatmap'), res, {onlyOnce: true}));
+    const data = snap.val() || {};
+    for (let row = 0; row < SEATMAP_ROWS; row++) {
+      for (let col = 0; col < SEATMAP_COLS; col++) {
+        const el = document.getElementById(`smc-${row}-${col}`);
+        if (el) el.value = data[`${row}_${col}`] || '';
+      }
+    }
+    const mainEl = document.getElementById('seatmap-maintable');
+    if (mainEl) mainEl.value = data['main'] || '';
+  } catch(e) { console.warn('load seatmap failed', e); }
+}
+
+window.saveSeatMap = async () => {
+  const data = {};
+  for (let row = 0; row < SEATMAP_ROWS; row++) {
+    for (let col = 0; col < SEATMAP_COLS; col++) {
+      const el = document.getElementById(`smc-${row}-${col}`);
+      data[`${row}_${col}`] = el ? el.value.trim() : '';
+    }
+  }
+  const mainEl = document.getElementById('seatmap-maintable');
+  data['main'] = mainEl ? mainEl.value.trim() : '';
+  await set(ref(db, 'seatmap'), data);
+  toast('✓ 座位地圖設定已儲存');
+};
 
 // ── TOAST ──
 let tt;
