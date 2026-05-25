@@ -207,13 +207,13 @@ body { font-family: 'Noto Serif TC', serif; background: var(--cream); color: var
 }
 
 /* SEAT MAP */
-.seatmap-wrap { margin-top:20px; background:white; border:1px solid var(--border); border-radius:8px; padding:16px; }
+.seatmap-wrap { margin-top:20px; background:white; border:1px solid var(--border); border-radius:8px; padding:16px; overflow-x:auto; }
 .seatmap-title { font-size:0.82rem; color:var(--muted); letter-spacing:0.15em; text-align:center; margin-bottom:12px; }
-.seatmap-layout { display:flex; gap:6px; align-items:stretch; }
+.seatmap-layout { display:flex; gap:6px; align-items:stretch; min-width:320px; }
 .seatmap-grid-area { flex:1; display:flex; flex-direction:column; gap:3px; min-width:0; }
 .seatmap-row { display:grid; grid-template-columns:repeat(6,1fr); gap:3px; }
-.seatmap-cell { background:var(--warm); border:1px solid var(--border); border-radius:5px; padding:6px 2px; text-align:center; font-size:0.78rem; color:var(--muted); min-height:30px; display:flex; align-items:center; justify-content:center; }
-.seatmap-cell.highlighted { background:#fef08a; border:2px solid #ca8a04; color:#713f12; font-weight:700; font-size:0.85rem; animation:pulse-gold 1.5s infinite; }
+.seatmap-cell { background:var(--warm); border:1px solid var(--border); border-radius:5px; padding:4px 2px; text-align:center; font-size:0.8rem; color:var(--muted); min-height:28px; display:flex; align-items:center; justify-content:center; font-weight:500; }
+.seatmap-cell.highlighted { background:#fef08a; border:2px solid #ca8a04; color:#713f12; font-weight:700; font-size:0.88rem; animation:pulse-gold 1.5s infinite; }
 .seatmap-cell.empty { background:transparent; border:1px dashed rgba(201,169,110,0.2); }
 .seatmap-aisle { background:var(--warm); border:1px dashed var(--border); border-radius:5px; padding:5px; text-align:center; font-size:0.78rem; color:var(--muted); letter-spacing:0.15em; margin:2px 0; }
 .seatmap-entrance { display:grid; grid-template-columns:repeat(6,1fr); gap:3px; margin-top:2px; }
@@ -226,10 +226,12 @@ body { font-family: 'Noto Serif TC', serif; background: var(--cream); color: var
 .seatmap-legend-item { display:flex; align-items:center; gap:4px; font-size:0.72rem; color:var(--muted); }
 .seatmap-legend-dot { width:12px; height:12px; border-radius:3px; }
 @keyframes pulse-gold { 0%,100%{box-shadow:0 0 0 0 rgba(202,138,4,0.4)} 50%{box-shadow:0 0 0 6px rgba(202,138,4,0)} }
-@media(max-width:480px){
-  .seatmap-cell { font-size:0.7rem; padding:4px 1px; min-height:26px; }
-  .seatmap-maintable { width:38px; height:38px; font-size:0.65rem; }
-  .seatmap-stage { width:22px; }
+@media(max-width:600px){
+  .seatmap-wrap { padding:10px 8px; }
+  .seatmap-cell { font-size:0.68rem; padding:3px 1px; min-height:24px; }
+  .seatmap-maintable { width:34px; height:34px; font-size:0.62rem; }
+  .seatmap-stage { width:20px; }
+  .seatmap-aisle { font-size:0.7rem; padding:4px; }
 }
 </style>
 </head>
@@ -631,10 +633,7 @@ function renderSeatMap(highlightTableNum) {
       else if (!val) { topHTML += `<div class="seatmap-cell empty"></div>`; }
       else {
         // Find table name from localData
-        const tbl = localData.find(t => String(t.num) === String(val));
-        const tname = tbl ? (tbl.name || '') : '';
-        const label = tname ? `<div style="font-size:0.7em;opacity:0.75;line-height:1.2">${tname}</div>` : '';
-        topHTML += `<div class="seatmap-cell${isHL ? ' highlighted' : ''}">${val}${label}</div>`;
+        topHTML += `<div class="seatmap-cell${isHL ? ' highlighted' : ''}">${val}</div>`;
       }
     }
     topHTML += '</div>';
@@ -651,10 +650,7 @@ function renderSeatMap(highlightTableNum) {
       if (EMPTY_CELLS.has(key)) { botHTML += `<div class="seatmap-cell empty" style="background:transparent;border:none"></div>`; }
       else if (!val) { botHTML += `<div class="seatmap-cell empty"></div>`; }
       else {
-        const tbl = localData.find(t => String(t.num) === String(val));
-        const tname = tbl ? (tbl.name || '') : '';
-        const label = tname ? `<div style="font-size:0.7em;opacity:0.75;line-height:1.2">${tname}</div>` : '';
-        botHTML += `<div class="seatmap-cell${isHL ? ' highlighted' : ''}">${val}${label}</div>`;
+        botHTML += `<div class="seatmap-cell${isHL ? ' highlighted' : ''}">${val}</div>`;
       }
     }
     botHTML += '</div>';
@@ -679,7 +675,6 @@ function renderSeatMap(highlightTableNum) {
         <div style="flex:3"></div>
         <div class="seatmap-maintable${isMainHighlighted ? ' highlighted' : ''}">
           ${mainVal ? mainVal : '主桌'}
-          ${mainName ? `<div style="font-size:0.6rem;opacity:0.75;line-height:1.3">${mainName}</div>` : ''}
         </div>
         <div style="flex:3"></div>
       </div>
