@@ -499,7 +499,7 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
 
             <!-- Entrance label (spans col 2-3, below bottom) -->
             <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:2px">
-              <div style="grid-column:3/5;background:#fee2e2;border:0.5px solid #fca5a5;border-radius:5px;padding:5px;text-align:center;font-size:0.78rem;font-weight:500;color:#991b1b">↑ 出入口（固定）</div>
+              <div style="grid-column:4/6;background:#fee2e2;border:0.5px solid #fca5a5;border-radius:5px;padding:5px;text-align:center;font-size:0.78rem;font-weight:500;color:#991b1b">↑ 出入口（固定）</div>
             </div>
 
           </div>
@@ -1656,7 +1656,8 @@ function addActivity(type, msg) {
 
 // ── SEAT MAP ──
 const SEATMAP_ROWS = 6;
-const SEATMAP_COLS = 6;
+const SEATMAP_COLS = 7;
+const SEATMAP_EMPTY_CELLS = new Set(['5_0']); // bottom-left corner empty
 
 // Build table options excluding already-used values
 function buildTableOptions(selectedVal, excludeVals) {
@@ -1809,9 +1810,16 @@ function initSeatMapEditor() {
   botEl.innerHTML = '';
   for (let row = 0; row < SEATMAP_ROWS; row++) {
     const rowEl = document.createElement('div');
-    rowEl.style.cssText = 'display:grid;grid-template-columns:repeat(6,1fr);gap:4px';
+    rowEl.style.cssText = 'display:grid;grid-template-columns:repeat(7,1fr);gap:4px';
     for (let col = 0; col < SEATMAP_COLS; col++) {
-      rowEl.appendChild(makeSeatCell(row, col, ''));
+      const key = `${row}_${col}`;
+      if (SEATMAP_EMPTY_CELLS.has(key)) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'background:transparent;border:1px dashed rgba(201,169,110,0.15);border-radius:5px;min-height:32px';
+        rowEl.appendChild(empty);
+      } else {
+        rowEl.appendChild(makeSeatCell(row, col, ''));
+      }
     }
     if (row < 3) topEl.appendChild(rowEl);
     else botEl.appendChild(rowEl);
