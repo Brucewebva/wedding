@@ -508,9 +508,9 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
           <div style="display:flex;flex-direction:column;flex-shrink:0;width:60px">
             <div style="flex:3"></div>
             <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
-              <div style="font-size:0.7rem;color:var(--muted);text-align:center">主桌</div>
-              <input id="seatmap-maintable" class="form-input" style="width:58px;text-align:center;padding:6px 4px;font-size:0.82rem" placeholder="桌號"/>
-              <div style="font-size:0.68rem;color:var(--muted);text-align:center">（可留空）</div>
+              <div style="font-size:0.7rem;color:var(--muted);text-align:center;margin-bottom:4px">主桌</div>
+              <div id="seatmap-main-wrap" style="width:90px"></div>
+              <div style="font-size:0.68rem;color:var(--muted);text-align:center;margin-top:2px">（可留空）</div>
             </div>
             <div style="flex:3"></div>
           </div>
@@ -1656,6 +1656,64 @@ function addActivity(type, msg) {
 const SEATMAP_ROWS = 6;
 const SEATMAP_COLS = 6;
 
+// Build table options from localData (sorted by num)
+function buildTableOptions(selectedVal) {
+  const opts = localData
+    .sort((a,b) => a.num - b.num)
+    .map(t => `<option value="${t.num}" ${String(t.num) === String(selectedVal) ? 'selected' : ''}>${t.num}${t.name ? ' ' + t.name : ''}</option>`)
+    .join('');
+  return `<option value="">— 空格 —</option>${opts}<option value="__custom__" ${!['', ...localData.map(t=>String(t.num))].includes(String(selectedVal)) && selectedVal ? 'selected' : ''}>✏ 手動輸入…</option>`;
+}
+
+function makeSeatCell(row, col, savedVal) {
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;flex-direction:column;gap:2px';
+
+  const sel = document.createElement('select');
+  sel.id = `smc-${row}-${col}`;
+  sel.className = 'form-select';
+  sel.style.cssText = 'font-size:0.76rem;padding:5px 4px;width:100%';
+  sel.innerHTML = buildTableOptions(savedVal);
+
+  const inp = document.createElement('input');
+  inp.id = `smc-custom-${row}-${col}`;
+  inp.className = 'form-input';
+  inp.style.cssText = 'font-size:0.76rem;padding:5px 4px;width:100%;display:none';
+  inp.placeholder = '輸入桌號';
+
+  // If saved value not in localData, show custom input
+  const isCustom = savedVal && !['', ...localData.map(t=>String(t.num))].includes(String(savedVal));
+  if (isCustom) {
+    sel.value = '__custom__';
+    inp.style.display = '';
+    inp.value = savedVal;
+  }
+
+  sel.addEventListener('change', () => {
+    if (sel.value === '__custom__') {
+      inp.style.display = '';
+      inp.focus();
+    } else {
+      inp.style.display = 'none';
+      inp.value = '';
+    }
+  });
+
+  wrap.appendChild(sel);
+  wrap.appendChild(inp);
+  return wrap;
+}
+
+function getCellValue(row, col) {
+  const sel = document.getElementById(`smc-${row}-${col}`);
+  if (!sel) return '';
+  if (sel.value === '__custom__') {
+    const inp = document.getElementById(`smc-custom-${row}-${col}`);
+    return inp ? inp.value.trim() : '';
+  }
+  return sel.value;
+}
+
 function initSeatMapEditor() {
   const topEl = document.getElementById('seatmap-top');
   const botEl = document.getElementById('seatmap-bottom');
@@ -1666,16 +1724,16 @@ function initSeatMapEditor() {
     const rowEl = document.createElement('div');
     rowEl.style.cssText = 'display:grid;grid-template-columns:repeat(6,1fr);gap:4px';
     for (let col = 0; col < SEATMAP_COLS; col++) {
-      const cell = document.createElement('input');
-      cell.id = `smc-${row}-${col}`;
-      cell.className = 'form-input';
-      cell.style.cssText = 'text-align:center;padding:6px 2px;font-size:0.82rem';
-      cell.placeholder = '桌號';
-      cell.title = `第${row+1}排 第${col+1}欄`;
-      rowEl.appendChild(cell);
+      rowEl.appendChild(makeSeatCell(row, col, ''));
     }
     if (row < 3) topEl.appendChild(rowEl);
     else botEl.appendChild(rowEl);
+  }
+  // Also rebuild main table select
+  const mainWrap = document.getElementById('seatmap-main-wrap');
+  if (mainWrap) {
+    mainWrap.innerHTML = '';
+    mainWrap.appendChild(makeSeatCell('m', 0, ''));
   }
 }
 
@@ -1685,12 +1743,35 @@ async function loadSeatMapSettings() {
     const data = snap.val() || {};
     for (let row = 0; row < SEATMAP_ROWS; row++) {
       for (let col = 0; col < SEATMAP_COLS; col++) {
-        const el = document.getElementById(`smc-${row}-${col}`);
-        if (el) el.value = data[`${row}_${col}`] || '';
+        const savedVal = data[`${row}_${col}`] || '';
+        if (!savedVal) continue;
+        const sel = document.getElementById(`smc-${row}-${col}`);
+        if (!sel) continue;
+        // Check if value exists in options
+        const exists = [...sel.options].some(o => o.value === String(savedVal));
+        if (exists) {
+          sel.value = String(savedVal);
+        } else {
+          sel.value = '__custom__';
+          const inp = document.getElementById(`smc-custom-${row}-${col}`);
+          if (inp) { inp.value = savedVal; inp.style.display = ''; }
+        }
       }
     }
-    const mainEl = document.getElementById('seatmap-maintable');
-    if (mainEl) mainEl.value = data['main'] || '';
+    // Main table
+    const mainSavedVal = data['main'] || '';
+    if (mainSavedVal) {
+      const mainSel = document.getElementById(`smc-m-0`);
+      if (mainSel) {
+        const exists = [...mainSel.options].some(o => o.value === String(mainSavedVal));
+        if (exists) { mainSel.value = String(mainSavedVal); }
+        else {
+          mainSel.value = '__custom__';
+          const inp = document.getElementById(`smc-custom-m-0`);
+          if (inp) { inp.value = mainSavedVal; inp.style.display = ''; }
+        }
+      }
+    }
   } catch(e) { console.warn('load seatmap failed', e); }
 }
 
@@ -1698,12 +1779,19 @@ window.saveSeatMap = async () => {
   const data = {};
   for (let row = 0; row < SEATMAP_ROWS; row++) {
     for (let col = 0; col < SEATMAP_COLS; col++) {
-      const el = document.getElementById(`smc-${row}-${col}`);
-      data[`${row}_${col}`] = el ? el.value.trim() : '';
+      data[`${row}_${col}`] = getCellValue(row, col);
     }
   }
-  const mainEl = document.getElementById('seatmap-maintable');
-  data['main'] = mainEl ? mainEl.value.trim() : '';
+  // Main table
+  const mainSel = document.getElementById(`smc-m-0`);
+  if (mainSel) {
+    if (mainSel.value === '__custom__') {
+      const inp = document.getElementById(`smc-custom-m-0`);
+      data['main'] = inp ? inp.value.trim() : '';
+    } else {
+      data['main'] = mainSel.value;
+    }
+  }
   await set(ref(db, 'seatmap'), data);
   toast('✓ 座位地圖設定已儲存');
 };
