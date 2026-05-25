@@ -556,15 +556,16 @@ window.searchGuest = () => {
       >
         ${found.checked ? '✓ 已完成報到' : '點此完成報到'}
       </button>
+      <div id="checkin-seatmap"></div>
     </div>
   </div>`;
 
   // Attach click handler via JS (not inline onclick) to ensure it works on all browsers
-  // Show map if already checked in
+  // Always show seat map after query
   const existingMapEl = document.getElementById('checkin-seatmap');
-  if (existingMapEl && found.checked) {
+  if (existingMapEl) {
     loadSeatMap();
-    setTimeout(() => { existingMapEl.innerHTML = renderSeatMap(tInfo.num); }, 300);
+    setTimeout(() => { existingMapEl.innerHTML = renderSeatMap(tInfo.num); }, 400);
   }
 
   if (!found.checked) {
