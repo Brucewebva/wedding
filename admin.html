@@ -1695,9 +1695,13 @@ function refreshAllSeatDropdowns() {
     for (let c = 0; c < SEATMAP_COLS; c++) {
       const sel = document.getElementById(`smc-${r}-${c}`);
       if (!sel) continue;
+      // Skip cells in custom input mode or pill mode
+      const customEl = document.getElementById(`smc-custom-${r}-${c}`);
+      const pillEl = document.getElementById(`smc-sel-${r}-${c}`);
+      if (customEl && customEl.parentElement?.style.display === 'flex') continue;
+      if (pillEl && pillEl.style.display !== 'none') continue;
+      if (sel.style.display === 'none') continue;
       const curVal = getCellValue(r, c);
-      const isCustom = sel.value === '__custom__';
-      if (isCustom) continue; // don't touch custom inputs
       const usedExcludingThis = used.filter(v => v !== String(curVal));
       sel.innerHTML = buildTableOptions(curVal, usedExcludingThis);
       sel.value = curVal || '';
@@ -1784,10 +1788,11 @@ function makeSeatCell(row, col, savedVal) {
 
   sel.addEventListener('change', () => {
     if (sel.value === '__custom__') {
+      // Don't call refresh — just switch to custom input mode
       sel.style.display = 'none';
       customWrap.style.display = 'flex';
       customInp.value = '';
-      customInp.focus();
+      setTimeout(() => customInp.focus(), 50);
     } else if (sel.value) {
       pill.dataset.val = sel.value;
       pillLabel.textContent = getLabel(sel.value);
