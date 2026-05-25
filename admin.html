@@ -1734,7 +1734,7 @@ function makeSeatCell(row, col, savedVal) {
   const sel = document.createElement('select');
   sel.id = `smc-${row}-${col}`;
   sel.className = 'form-select';
-  sel.style.cssText = `font-size:0.74rem;padding:4px 2px;width:100%;min-height:52px;display:${(savedVal && !isCustom) || isCustom ? 'none' : ''}`;
+  sel.style.cssText = `font-size:0.74rem;padding:4px 2px;width:100%;min-height:52px;box-sizing:border-box;display:${(savedVal && !isCustom) || isCustom ? 'none' : ''}`;
   sel.innerHTML = buildTableOptions('', used);
 
   // MODE 2: selected pill
@@ -1764,16 +1764,16 @@ function makeSeatCell(row, col, savedVal) {
 
   // MODE 3: custom text input (replaces dropdown entirely)
   const customWrap = document.createElement('div');
-  customWrap.style.cssText = `display:${isCustom ? 'flex' : 'none'};align-items:stretch;gap:4px;width:100%;height:52px`;
+  customWrap.style.cssText = `display:${isCustom ? 'flex' : 'none'};align-items:center;gap:0;width:100%`;
   const customInp = document.createElement('input');
   customInp.id = `smc-custom-${row}-${col}`;
   customInp.className = 'form-input';
-  customInp.style.cssText = 'font-size:0.76rem;padding:5px 4px;flex:1;height:52px;box-sizing:border-box';
+  customInp.style.cssText = 'font-size:0.74rem;padding:4px 2px;flex:1;min-height:52px;border-radius:5px 0 0 5px;border-right:none;box-sizing:border-box';
   customInp.placeholder = '輸入桌號或桌名';
   customInp.value = isCustom ? savedVal : '';
   const customClear = document.createElement('button');
   customClear.innerHTML = '&times;';
-  customClear.style.cssText = 'background:none;border:none;cursor:pointer;color:var(--danger);font-size:0.8rem;padding:0 4px;flex-shrink:0;font-weight:700';
+  customClear.style.cssText = 'background:var(--cream);border:1.5px solid var(--border);border-left:none;border-radius:0 5px 5px 0;cursor:pointer;color:var(--danger);font-size:0.8rem;padding:0 7px;flex-shrink:0;font-weight:700;min-height:52px;display:flex;align-items:center';
   customClear.title = '清除';
   customClear.onclick = (e) => {
     e.preventDefault();
