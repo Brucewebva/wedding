@@ -1719,6 +1719,7 @@ function refreshAllSeatDropdowns() {
 
 function makeSeatCell(row, col, savedVal) {
   const wrap = document.createElement('div');
+  wrap.id = `smc-wrap-${row}-${col}`;
   wrap.style.cssText = 'display:flex;flex-direction:column;gap:0;position:relative;min-height:52px;width:100%;min-width:0;overflow:hidden';
 
   const isCustom = savedVal && !['', ...localData.map(t=>String(t.num))].includes(String(savedVal));
@@ -1757,6 +1758,7 @@ function makeSeatCell(row, col, savedVal) {
     customInp.value = '';
     sel.value = '';
     sel.style.display = '';
+    delete wrap.dataset.mode;
     refreshAllSeatDropdowns();
   };
   pill.appendChild(pillLabel);
@@ -1789,7 +1791,6 @@ function makeSeatCell(row, col, savedVal) {
 
   sel.addEventListener('change', () => {
     if (sel.value === '__custom__') {
-      // Don't call refresh — just switch to custom input mode
       sel.style.display = 'none';
       customWrap.style.display = 'flex';
       wrap.dataset.mode = 'custom';
@@ -1800,6 +1801,7 @@ function makeSeatCell(row, col, savedVal) {
       pillLabel.textContent = getLabel(sel.value);
       pill.style.display = 'flex';
       sel.style.display = 'none';
+      wrap.dataset.mode = 'pill';
       refreshAllSeatDropdowns();
     } else {
       refreshAllSeatDropdowns();
@@ -1813,21 +1815,18 @@ function makeSeatCell(row, col, savedVal) {
 }
 
 function getCellValue(row, col) {
-  // Check pill (selected from dropdown)
-  const pill = document.getElementById(`smc-sel-${row}-${col}`);
-  if (pill && pill.style.display !== 'none') return pill.dataset.val || '';
-  // Check custom input via parent wrap mode flag
-  const sel = document.getElementById(`smc-${row}-${col}`);
-  const customInp = document.getElementById(`smc-custom-${row}-${col}`);
-  if (customInp) {
-    const wrap = customInp.closest('[data-mode]') || customInp.parentElement?.parentElement;
-    if (wrap && wrap.dataset.mode === 'custom') return customInp.value.trim();
-    // Also check if customWrap is visible
-    const cw = customInp.parentElement;
-    if (cw && cw.style.display === 'flex') return customInp.value.trim();
+  const wrap = document.getElementById(`smc-wrap-${row}-${col}`);
+  if (!wrap) return '';
+  if (wrap.dataset.mode === 'custom') {
+    const inp = document.getElementById(`smc-custom-${row}-${col}`);
+    return inp ? inp.value.trim() : '';
   }
-  if (!sel) return '';
-  return sel.value === '__custom__' ? '' : (sel.value || '');
+  if (wrap.dataset.mode === 'pill') {
+    const pill = document.getElementById(`smc-sel-${row}-${col}`);
+    return pill ? (pill.dataset.val || '') : '';
+  }
+  const sel = document.getElementById(`smc-${row}-${col}`);
+  return sel ? (sel.value && sel.value !== '__custom__' ? sel.value : '') : '';
 }
 
 function initSeatMapEditor() {
@@ -1908,6 +1907,8 @@ async function loadSeatMapSettings() {
         if (mainSel) mainSel.style.display = 'none';
       }
     }
+    // Refresh dropdowns after all saved values are loaded
+    setTimeout(() => refreshAllSeatDropdowns(), 50);
   } catch(e) { console.warn('load seatmap failed', e); }
 }
 
