@@ -1872,19 +1872,26 @@ async function loadSeatMapSettings() {
         if (!sel) continue;
         const isCustom = !['', ...localData.map(t=>String(t.num))].includes(String(savedVal));
         if (isCustom) {
-          sel.value = '__custom__';
+          const wrapEl = document.getElementById(`smc-wrap-${row}-${col}`);
           const inp = document.getElementById(`smc-custom-${row}-${col}`);
-          if (inp) { inp.value = savedVal; inp.style.display = ''; }
+          if (inp && wrapEl) {
+            inp.value = savedVal;
+            inp.parentElement.style.display = 'flex'; // show customWrap
+            sel.style.display = 'none';
+            wrapEl.dataset.mode = 'custom'; // CRITICAL: set mode flag
+          }
         } else {
           // Show pill
           const pill = document.getElementById(`smc-sel-${row}-${col}`);
-          if (pill) {
+          const wrapEl = document.getElementById(`smc-wrap-${row}-${col}`);
+          if (pill && wrapEl) {
             pill.dataset.val = String(savedVal);
             const span = pill.querySelector('span');
             const tbl = localData.find(t => String(t.num) === String(savedVal));
             if (span) span.textContent = tbl ? `${savedVal}${tbl.name ? ' ' + tbl.name : ''}` : savedVal;
             pill.style.display = 'flex';
             sel.style.display = 'none';
+            wrapEl.dataset.mode = 'pill'; // set mode flag
           }
         }
       }
@@ -1901,6 +1908,8 @@ async function loadSeatMapSettings() {
         if (customInp) { customInp.value = mainSavedVal; customInp.parentElement.style.display = 'flex'; }
       } else if (mainPill) {
         mainPill.dataset.val = String(mainSavedVal);
+        const mainWrapEl = document.getElementById('smc-wrap-m-0');
+        if (mainWrapEl) mainWrapEl.dataset.mode = 'pill';
         const tbl = localData.find(t => String(t.num) === String(mainSavedVal));
         const span = mainPill.querySelector('span');
         if (span) span.textContent = tbl ? `${mainSavedVal}${tbl.name ? ' ' + tbl.name : ''}` : mainSavedVal;
@@ -1925,7 +1934,9 @@ window.saveSeatMap = async () => {
       }
     }
     data['main'] = getCellValue('m', 0) || null;
-    console.log('saving seatmap:', data);
+    // Debug: log what we're saving
+    const nonEmpty = Object.entries(data).filter(([k,v]) => v);
+    console.log('saving seatmap, non-empty cells:', nonEmpty);
     // Use set to fully replace seatmap node
     await set(ref(db, 'seatmap'), data);
     toast('✓ 座位地圖設定已儲存');
