@@ -1779,6 +1779,7 @@ function makeSeatCell(row, col, savedVal) {
     e.preventDefault();
     customWrap.style.display = 'none';
     customInp.value = '';
+    delete wrap.dataset.mode;
     sel.value = '';
     sel.style.display = '';
     refreshAllSeatDropdowns();
@@ -1791,6 +1792,7 @@ function makeSeatCell(row, col, savedVal) {
       // Don't call refresh — just switch to custom input mode
       sel.style.display = 'none';
       customWrap.style.display = 'flex';
+      wrap.dataset.mode = 'custom';
       customInp.value = '';
       setTimeout(() => customInp.focus(), 50);
     } else if (sel.value) {
@@ -1811,13 +1813,21 @@ function makeSeatCell(row, col, savedVal) {
 }
 
 function getCellValue(row, col) {
+  // Check pill (selected from dropdown)
   const pill = document.getElementById(`smc-sel-${row}-${col}`);
   if (pill && pill.style.display !== 'none') return pill.dataset.val || '';
-  const customWrap = document.querySelector(`#smc-custom-${row}-${col}`)?.parentElement;
-  const customInp = document.getElementById(`smc-custom-${row}-${col}`);
-  if (customInp && customInp.parentElement?.style.display !== 'none') return customInp.value.trim();
+  // Check custom input via parent wrap mode flag
   const sel = document.getElementById(`smc-${row}-${col}`);
-  return sel ? (sel.value === '__custom__' ? '' : sel.value) : '';
+  const customInp = document.getElementById(`smc-custom-${row}-${col}`);
+  if (customInp) {
+    const wrap = customInp.closest('[data-mode]') || customInp.parentElement?.parentElement;
+    if (wrap && wrap.dataset.mode === 'custom') return customInp.value.trim();
+    // Also check if customWrap is visible
+    const cw = customInp.parentElement;
+    if (cw && cw.style.display === 'flex') return customInp.value.trim();
+  }
+  if (!sel) return '';
+  return sel.value === '__custom__' ? '' : (sel.value || '');
 }
 
 function initSeatMapEditor() {
