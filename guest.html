@@ -566,8 +566,9 @@ window.searchGuest = () => {
   // Always show seat map after query
   const existingMapEl = document.getElementById('checkin-seatmap');
   if (existingMapEl) {
-    loadSeatMap();
-    setTimeout(() => { existingMapEl.innerHTML = renderSeatMap(tInfo.num); }, 400);
+    loadSeatMap().then(() => {
+      existingMapEl.innerHTML = renderSeatMap(tInfo.num);
+    });
   }
 
   if (!found.checked) {
@@ -584,11 +585,10 @@ window.searchGuest = () => {
         if (st) st.textContent = '✓ 已報到';
         toast('✓ 報到成功！祝新人百年好合 💍');
         // Show seat map
-        loadSeatMap();
-        setTimeout(() => {
+        loadSeatMap().then(() => {
           const mapEl = document.getElementById('checkin-seatmap');
           if (mapEl) mapEl.innerHTML = renderSeatMap(tInfo.num);
-        }, 300);
+        });
         // Telegram notification
         // Get attend count from membersData
         const memberRec = membersData.find(m => m.name === found.name);
@@ -609,9 +609,12 @@ window.searchGuest = () => {
 let seatMapData = {};
 
 function loadSeatMap() {
-  onValue(ref(db, 'seatmap'), snap => {
-    seatMapData = snap.val() || {};
-  }, { onlyOnce: true });
+  return new Promise(resolve => {
+    onValue(ref(db, 'seatmap'), snap => {
+      seatMapData = snap.val() || {};
+      resolve();
+    }, { onlyOnce: true });
+  });
 }
 
 function renderSeatMap(highlightTableNum) {
