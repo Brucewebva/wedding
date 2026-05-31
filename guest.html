@@ -617,6 +617,12 @@ function loadSeatMap() {
   });
 }
 
+function stripNamePrefix(val) {
+  if (!val) return '';
+  const s = String(val);
+  return s.startsWith('name:') ? s.slice(5) : s;
+}
+
 function renderSeatMap(highlightTableNum) {
   const ROWS = 6, COLS = 7;
   const EMPTY_CELLS = new Set(['5_0']); // bottom-left corner
@@ -650,7 +656,7 @@ function renderSeatMap(highlightTableNum) {
       const key = `${r}_${c}`;
       const val = seatMapData[key] || '';
       const isHL = val && String(val) === hn;
-      const displayVal = String(val).startsWith('name:') ? String(val).slice(5) : val;
+      const displayVal = stripNamePrefix(val);
       if (EMPTY_CELLS.has(key)) { botHTML += `<div class="seatmap-cell empty" style="background:transparent;border:none"></div>`; }
       else if (!val) { botHTML += `<div class="seatmap-cell empty"></div>`; }
       else {
@@ -678,7 +684,7 @@ function renderSeatMap(highlightTableNum) {
       <div class="seatmap-maintable-wrap">
         <div style="flex:3"></div>
         <div class="seatmap-maintable${isMainHighlighted ? ' highlighted' : ''}">
-          ${mainVal ? (String(mainVal).startsWith('name:') ? String(mainVal).slice(5) : mainVal) : '主桌'}
+          ${mainVal ? (stripNamePrefix(mainVal)) : '主桌'}
         </div>
         <div style="flex:3"></div>
       </div>
