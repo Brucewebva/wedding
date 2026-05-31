@@ -387,7 +387,7 @@ window.onSearchInput = () => {
           <span class="suggest-name">${highlightMatch(g.name, q)}</span>${checkedTag}
         </div>
         <div class="suggest-meta">${g.assigned
-          ? `第 ${g.num} 桌${g.tname ? '・' + g.tname : ''}`
+          ? (g.num != null ? `第 ${g.num} 桌${g.tname ? '・' + g.tname : ''}` : (g.tname || '主桌'))
           : '<span style="color:#c0845a">⏳ 尚未安排座位</span>'}${g.relation ? '・' + g.relation : ''}</div>
       </div>
     </div>`;
