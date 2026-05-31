@@ -1901,6 +1901,18 @@ async function loadSeatMapSettings() {
             sel.style.display = 'none';
             wrapEl.dataset.mode = 'custom'; // CRITICAL: set mode flag
           }
+        } else if (isNamePrefix) {
+          // No-num table - show pill with name only
+          const pill = document.getElementById(`smc-sel-${row}-${col}`);
+          const wrapEl = document.getElementById(`smc-wrap-${row}-${col}`);
+          if (pill && wrapEl) {
+            pill.dataset.val = String(savedVal);
+            const span = pill.querySelector('span');
+            if (span) span.textContent = String(savedVal).slice(5); // strip "name:"
+            pill.style.display = 'flex';
+            sel.style.display = 'none';
+            wrapEl.dataset.mode = 'pill';
+          }
         } else {
           // Show pill
           const pill = document.getElementById(`smc-sel-${row}-${col}`);
@@ -1912,7 +1924,7 @@ async function loadSeatMapSettings() {
             if (span) span.textContent = tbl ? `${savedVal}${tbl.name ? ' ' + tbl.name : ''}` : savedVal;
             pill.style.display = 'flex';
             sel.style.display = 'none';
-            wrapEl.dataset.mode = 'pill'; // set mode flag
+            wrapEl.dataset.mode = 'pill';
           }
         }
       }
@@ -1922,8 +1934,19 @@ async function loadSeatMapSettings() {
     if (mainSavedVal) {
       const mainSel = document.getElementById('smc-m-0');
       const mainPill = document.getElementById('smc-sel-m-0');
-      const isCustomMain = !localData.some(t => String(t.num) === String(mainSavedVal));
-      if (isCustomMain) {
+      const isNamePrefixMain = String(mainSavedVal).startsWith('name:');
+      const isCustomMain = !isNamePrefixMain && !localData.some(t => String(t.num) === String(mainSavedVal));
+      if (isNamePrefixMain && mainPill) {
+        // No-num table
+        mainPill.dataset.val = String(mainSavedVal);
+        const mainWrapEl2 = document.getElementById('smc-wrap-m-0');
+        if (mainWrapEl2) mainWrapEl2.dataset.mode = 'pill';
+        const mainSel2 = document.getElementById('smc-m-0');
+        const span = mainPill.querySelector('span');
+        if (span) span.textContent = String(mainSavedVal).slice(5);
+        mainPill.style.display = 'flex';
+        if (mainSel2) mainSel2.style.display = 'none';
+      } else if (isCustomMain) {
         if (mainSel) mainSel.style.display = 'none';
         const customInp = document.getElementById('smc-custom-m-0');
         if (customInp) { customInp.value = mainSavedVal; customInp.parentElement.style.display = 'flex'; }
