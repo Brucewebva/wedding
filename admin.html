@@ -936,7 +936,7 @@ function renderDashboard() {
     return `<div class="table-card" style="display:flex;flex-direction:column">
       <div class="tc-head" style="position:relative">
         <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${statusColor};opacity:0.8"></div>
-        <div class="tc-num">${t.num}</div>
+        <div class="tc-num">${t.num || ''}</div>
         <div class="tc-meta" style="flex:1">
           <div class="tc-name">${t.name||'未命名'}</div>
           <div class="tc-cap">${chkAttend}/${totalAttend} 人${specTags ? ' ' + specTags : ''}</div>
@@ -984,7 +984,7 @@ function renderTableList() {
     const statusClass = totalAttend === 0 ? 'none' : chkAttend === totalAttend ? 'full' : chkAttend > 0 ? 'partial' : 'none';
     const pct = totalAttend ? Math.round(chkAttend/totalAttend*100) : 0;
     return `<div class="table-list-item ${selectedTableId === t.id ? 'selected' : ''}" onclick="selectTable('${t.id}')">
-      <div class="tli-status ${statusClass}"></div><div class="tli-num">${t.num}</div>
+      <div class="tli-status ${statusClass}"></div><div class="tli-num">${t.num != null ? t.num : ''}</div>
       <div class="tli-info"><div class="tli-name">${t.name || '未命名'}</div><div class="tli-sub">${chkAttend}/${totalAttend} 人報到・${pct}%</div></div>
       ${tags ? `<div class="tli-tags">${tags}</div>` : ''}</div>`;
   }).join('');
@@ -1195,7 +1195,7 @@ function clearModalErr() { const err = document.getElementById('at-err'); if (er
 
 window.deleteTable = async id => {
   const t = localData.find(t => t.id === id);
-  const label = t?.num ? `第 ${t.num} 桌「${t.name||'未命名'}」` : `此桌位（ID: ${id}）`;
+  const label = t?.num ? `第 ${t.num} 桌「${t.name||'未命名'}」` : `「${t?.name||'未命名'}」`;
   if (!confirm(`確定要刪除 ${label} 及所有來賓資料？`)) return;
   await remove(ref(db, 'tables/' + id));
   selectedTableId = null;
