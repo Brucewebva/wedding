@@ -1671,12 +1671,14 @@ function buildTableOptions(selectedVal, excludeVals) {
   const used = new Set((excludeVals || []).map(String));
   const opts = localData
     .sort((a,b) => (a.num || 9999) - (b.num || 9999))
-    .filter(t => !used.has(String(t.num ?? t.id)) || String(t.num ?? t.id) === String(selectedVal))
     .map(t => {
-      const val = t.num ?? t.id; // use id as value if no num
-      const label = t.num ? `${t.num}${t.name ? ' ' + t.name : ''}` : (t.name || '未命名');
-      return `<option value="${val}" ${String(val) === String(selectedVal) ? 'selected' : ''}>${label}</option>`;
+      const val = t.num != null ? String(t.num) : `name:${t.name || t.id}`;
+      const label = t.num != null ? `${t.num}${t.name ? ' ' + t.name : ''}` : (t.name || '未命名');
+      const isUsed = used.has(val) && val !== String(selectedVal);
+      if (isUsed) return ''; // exclude already used
+      return `<option value="${val}" ${val === String(selectedVal) ? 'selected' : ''}>${label}</option>`;
     })
+    .filter(Boolean)
     .join('');
   return `<option value="">— 空格 —</option>${opts}<option value="__custom__">✏ 手動輸入…</option>`;
 }
@@ -1687,7 +1689,7 @@ function getAllSelectedVals() {
   for (let r = 0; r < SEATMAP_ROWS; r++) {
     for (let c = 0; c < SEATMAP_COLS; c++) {
       const v = getCellValue(r, c);
-      if (v) vals.push(String(v));
+      if (v && v !== 'null') vals.push(String(v));
     }
   }
   const mainPill = document.getElementById('smc-sel-m-0');
@@ -1738,10 +1740,14 @@ function makeSeatCell(row, col, savedVal) {
 
   const getLabel = (val) => {
     if (!val) return '';
+    if (String(val).startsWith('name:')) {
+      // No-num table identified by name
+      const name = String(val).slice(5);
+      return name;
+    }
     const tbl = localData.find(t => String(t.num) === String(val));
     if (tbl) {
-      // If table has no num, show name only
-      return tbl.num ? `${tbl.num}${tbl.name ? ' ' + tbl.name : ''}` : (tbl.name || '未命名');
+      return tbl.num != null ? `${tbl.num}${tbl.name ? ' ' + tbl.name : ''}` : (tbl.name || '未命名');
     }
     return String(val);
   };
