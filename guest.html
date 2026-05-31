@@ -538,8 +538,8 @@ window.searchGuest = () => {
     <div class="result-body">
       <div class="table-number">
         <div class="table-label">您的座位桌號</div>
-        <div class="table-num">${tInfo.num}</div>
-        <div class="table-name-display">${tInfo.name || ''}</div>
+        <div class="table-num">${tInfo.num != null ? tInfo.num : (tInfo.name || '主桌')}</div>
+        <div class="table-name-display">${tInfo.num != null ? (tInfo.name || '') : ''}</div>
       </div>
       ${specialHTML}
       <div class="result-info">
@@ -567,7 +567,7 @@ window.searchGuest = () => {
   const existingMapEl = document.getElementById('checkin-seatmap');
   if (existingMapEl) {
     loadSeatMap().then(() => {
-      existingMapEl.innerHTML = renderSeatMap(tInfo.num);
+      existingMapEl.innerHTML = renderSeatMap(tInfo.num ?? tInfo.id);
     });
   }
 
@@ -587,7 +587,7 @@ window.searchGuest = () => {
         // Show seat map
         loadSeatMap().then(() => {
           const mapEl = document.getElementById('checkin-seatmap');
-          if (mapEl) mapEl.innerHTML = renderSeatMap(tInfo.num);
+          if (mapEl) mapEl.innerHTML = renderSeatMap(tInfo.num ?? tInfo.id);
         });
         // Telegram notification
         // Get attend count from membersData
