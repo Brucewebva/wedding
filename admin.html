@@ -535,7 +535,7 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
   <div class="modal" style="max-width:420px">
     <h3>＋ 新增桌位</h3>
     <div class="form-grid">
-      <div class="form-group"><label>桌號 *</label><input class="form-input" id="at-num" type="number" min="1" placeholder="例：1"/></div>
+      <div class="form-group"><label>桌號（選填）</label><input class="form-input" id="at-num" type="number" min="1" placeholder="例：1，可留空"/></div>
       <div class="form-group"><label>桌名（選填）</label><input class="form-input" id="at-name" placeholder="例：新郎家屬桌"/></div>
       <div class="form-group"><label>容納人數</label><input class="form-input" id="at-cap" type="number" min="1" value="10"/></div>
     </div>
@@ -1063,7 +1063,7 @@ function renderTableEditPanel(id) {
     <div style="background:var(--warm);border-radius:4px;padding:14px;margin-bottom:16px">
       <div style="font-size:0.76rem;color:var(--muted);letter-spacing:0.15em;margin-bottom:10px">編輯桌位資料</div>
       <div class="tep-input-row">
-        <div><div class="tep-label">桌號</div><input class="tep-input w80" id="te-num-${id}" value="${t.num}" type="number" min="1"/></div>
+        <div><div class="tep-label">桌號（可留空）</div><input class="tep-input w80" id="te-num-${id}" value="${t.num || ''}" type="number" min="1" placeholder="無"/></div>
         <div style="flex:1"><div class="tep-label">桌名</div><input class="tep-input w200" id="te-name-${id}" value="${t.name||''}" placeholder="未命名"/></div>
         <div><div class="tep-label">容量</div><input class="tep-input w80" id="te-cap-${id}" value="${t.cap}" type="number" min="1"/></div>
         <div style="align-self:flex-end"><button class="btn-sm btn-gold" onclick="saveTableInfo('${id}')">儲存</button></div>
@@ -1129,14 +1129,17 @@ window.addGuestFromSelect = async (tid) => {
 };
 
 window.saveTableInfo = async (id) => {
-  const newNum = parseInt(document.getElementById(`te-num-${id}`).value);
+  const numRaw2 = document.getElementById(`te-num-${id}`).value.trim();
+  const newNum = numRaw2 ? parseInt(numRaw2) : null;
   const newName = document.getElementById(`te-name-${id}`).value.trim();
   const newCap = parseInt(document.getElementById(`te-cap-${id}`).value) || 10;
-  if (!newNum) { toast('桌號不可為空'); return; }
-  const conflict = localData.find(t => t.num === newNum && t.id !== id);
-  if (conflict) { toast(`桌號 ${newNum} 已存在`); return; }
-  await update(ref(db, 'tables/' + id), {num: newNum, name: newName, cap: newCap});
-  addActivity('edit', `桌位資料已更新：第 ${newNum} 桌 ${newName}`);
+  if (numRaw2 && (isNaN(newNum) || newNum < 1)) { toast('桌號請輸入正整數或留空'); return; }
+  if (newNum) {
+    const conflict = localData.find(t => t.num === newNum && t.id !== id);
+    if (conflict) { toast(`桌號 ${newNum} 已存在`); return; }
+  }
+  await update(ref(db, 'tables/' + id), {num: newNum || null, name: newName, cap: newCap});
+  addActivity('edit', `桌位資料已更新：${newNum ? `第 ${newNum} 桌` : ''}${newName}`);
   toast(`✓ 已更新桌位資料`);
 };
 
@@ -1167,15 +1170,19 @@ window.closeAddTableModal = () => document.getElementById('addTableModal').class
 
 window.addTable = async () => {
   const numEl = document.getElementById('at-num'); const nameEl = document.getElementById('at-name'); const capEl = document.getElementById('at-cap');
-  const num = parseInt(numEl.value); const name = nameEl.value.trim(); const cap = parseInt(capEl.value) || 10;
-  if (!num || num < 1) { numEl.focus(); showModalErr('請輸入有效桌號（正整數）'); return; }
-  const dup = localData.find(t => t.num === num);
-  if (dup) { numEl.focus(); showModalErr(`桌號 ${num} 已存在（${dup.name || '未命名'}），請改用其他桌號`); return; }
+  const numRaw = numEl.value.trim();
+  const num = numRaw ? parseInt(numRaw) : null;
+  const name = nameEl.value.trim(); const cap = parseInt(capEl.value) || 10;
+  if (numRaw && (isNaN(num) || num < 1)) { numEl.focus(); showModalErr('桌號請輸入正整數，或留空（不設桌號）'); return; }
+  if (num) {
+    const dup = localData.find(t => t.num === num);
+    if (dup) { numEl.focus(); showModalErr(`桌號 ${num} 已存在（${dup.name || '未命名'}），請改用其他桌號`); return; }
+  }
   clearModalErr();
   const id = 't' + Date.now();
-  await set(ref(db, 'tables/' + id), {id, num, name, cap, guests: {}});
-  closeAddTableModal(); addActivity('add', `新增桌位：第 ${num} 桌「${name || '未命名'}」`);
-  toast(`✓ 第 ${num} 桌已新增，請安排來賓座位`);
+  await set(ref(db, 'tables/' + id), {id, num: num || null, name, cap, guests: {}});
+  closeAddTableModal(); addActivity('add', `新增桌位：${num ? `第 ${num} 桌` : ''}「${name || '未命名'}」`);
+  toast(`✓ ${num ? `第 ${num} 桌` : `「${name || '未命名'}」`}已新增，請安排來賓座位`);
   setTimeout(() => { const tabEl = document.querySelectorAll('.nav-tab')[1]; adminTab('tables', tabEl); selectTable(id); }, 300);
 };
 
