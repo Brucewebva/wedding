@@ -567,7 +567,7 @@ window.searchGuest = () => {
   const existingMapEl = document.getElementById('checkin-seatmap');
   if (existingMapEl) {
     loadSeatMap().then(() => {
-      existingMapEl.innerHTML = renderSeatMap(tInfo.num ?? tInfo.id);
+      existingMapEl.innerHTML = renderSeatMap(tInfo.num != null ? tInfo.num : `name:${tInfo.name || ''}`);
     });
   }
 
@@ -587,7 +587,7 @@ window.searchGuest = () => {
         // Show seat map
         loadSeatMap().then(() => {
           const mapEl = document.getElementById('checkin-seatmap');
-          if (mapEl) mapEl.innerHTML = renderSeatMap(tInfo.num ?? tInfo.id);
+          if (mapEl) mapEl.innerHTML = renderSeatMap(tInfo.num != null ? tInfo.num : `name:${tInfo.name || ''}`);
         });
         // Telegram notification
         // Get attend count from membersData
@@ -620,9 +620,9 @@ function loadSeatMap() {
 function renderSeatMap(highlightTableNum) {
   const ROWS = 6, COLS = 7;
   const EMPTY_CELLS = new Set(['5_0']); // bottom-left corner
-  const hn = String(highlightTableNum);
+  const hn = highlightTableNum != null ? String(highlightTableNum) : '';
   const mainVal = seatMapData['main'] || '';
-  const isMainHighlighted = mainVal && String(mainVal) === hn;
+  const isMainHighlighted = mainVal && (String(mainVal) === hn || (String(mainVal).startsWith('name:') && hn === ''));
 
   // Top rows (0-2)
   let topHTML = '';
@@ -650,10 +650,11 @@ function renderSeatMap(highlightTableNum) {
       const key = `${r}_${c}`;
       const val = seatMapData[key] || '';
       const isHL = val && String(val) === hn;
+      const displayVal = String(val).startsWith('name:') ? String(val).slice(5) : val;
       if (EMPTY_CELLS.has(key)) { botHTML += `<div class="seatmap-cell empty" style="background:transparent;border:none"></div>`; }
       else if (!val) { botHTML += `<div class="seatmap-cell empty"></div>`; }
       else {
-        botHTML += `<div class="seatmap-cell${isHL ? ' highlighted' : ''}">${val}</div>`;
+        botHTML += `<div class="seatmap-cell${isHL ? ' highlighted' : ''}">${displayVal}</div>`;
       }
     }
     botHTML += '</div>';
@@ -677,7 +678,7 @@ function renderSeatMap(highlightTableNum) {
       <div class="seatmap-maintable-wrap">
         <div style="flex:3"></div>
         <div class="seatmap-maintable${isMainHighlighted ? ' highlighted' : ''}">
-          ${mainVal ? mainVal : '主桌'}
+          ${mainVal ? (String(mainVal).startsWith('name:') ? String(mainVal).slice(5) : mainVal) : '主桌'}
         </div>
         <div style="flex:3"></div>
       </div>
