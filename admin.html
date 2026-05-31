@@ -1670,9 +1670,13 @@ const SEATMAP_EMPTY_CELLS = new Set(['5_0']); // bottom-left corner empty
 function buildTableOptions(selectedVal, excludeVals) {
   const used = new Set((excludeVals || []).map(String));
   const opts = localData
-    .sort((a,b) => a.num - b.num)
-    .filter(t => !used.has(String(t.num)) || String(t.num) === String(selectedVal))
-    .map(t => `<option value="${t.num}" ${String(t.num) === String(selectedVal) ? 'selected' : ''}>${t.num}${t.name ? ' ' + t.name : ''}</option>`)
+    .sort((a,b) => (a.num || 9999) - (b.num || 9999))
+    .filter(t => !used.has(String(t.num ?? t.id)) || String(t.num ?? t.id) === String(selectedVal))
+    .map(t => {
+      const val = t.num ?? t.id; // use id as value if no num
+      const label = t.num ? `${t.num}${t.name ? ' ' + t.name : ''}` : (t.name || '未命名');
+      return `<option value="${val}" ${String(val) === String(selectedVal) ? 'selected' : ''}>${label}</option>`;
+    })
     .join('');
   return `<option value="">— 空格 —</option>${opts}<option value="__custom__">✏ 手動輸入…</option>`;
 }
@@ -1735,7 +1739,11 @@ function makeSeatCell(row, col, savedVal) {
   const getLabel = (val) => {
     if (!val) return '';
     const tbl = localData.find(t => String(t.num) === String(val));
-    return tbl ? `${val}${tbl.name ? ' ' + tbl.name : ''}` : String(val);
+    if (tbl) {
+      // If table has no num, show name only
+      return tbl.num ? `${tbl.num}${tbl.name ? ' ' + tbl.name : ''}` : (tbl.name || '未命名');
+    }
+    return String(val);
   };
 
   // MODE 1: dropdown (default)
