@@ -1885,46 +1885,43 @@ async function loadSeatMapSettings() {
   try {
     const snap = await new Promise(res => onValue(ref(db, 'seatmap'), res, {onlyOnce: true}));
     const data = snap.val() || {};
+    const validNums = new Set(localData.filter(t => t.num != null).map(t => String(t.num)));
+
     for (let row = 0; row < SEATMAP_ROWS; row++) {
       for (let col = 0; col < SEATMAP_COLS; col++) {
         const savedVal = data[`${row}_${col}`] || '';
         if (!savedVal) continue;
         const sel = document.getElementById(`smc-${row}-${col}`);
-        if (!sel) continue;
-        const isCustom = !['', ...localData.map(t=>String(t.num))].includes(String(savedVal));
-        if (isCustom) {
-          const wrapEl = document.getElementById(`smc-wrap-${row}-${col}`);
-          const inp = document.getElementById(`smc-custom-${row}-${col}`);
-          if (inp && wrapEl) {
-            inp.value = savedVal;
-            inp.parentElement.style.display = 'flex'; // show customWrap
-            sel.style.display = 'none';
-            wrapEl.dataset.mode = 'custom'; // CRITICAL: set mode flag
-          }
-        } else if (isNamePrefix) {
-          // No-num table - show pill with name only
-          const pill = document.getElementById(`smc-sel-${row}-${col}`);
-          const wrapEl = document.getElementById(`smc-wrap-${row}-${col}`);
-          if (pill && wrapEl) {
-            pill.dataset.val = String(savedVal);
-            const span = pill.querySelector('span');
-            if (span) span.textContent = String(savedVal).slice(5); // strip "name:"
-            pill.style.display = 'flex';
-            sel.style.display = 'none';
-            wrapEl.dataset.mode = 'pill';
-          }
+        const pill = document.getElementById(`smc-sel-${row}-${col}`);
+        const wrapEl = document.getElementById(`smc-wrap-${row}-${col}`);
+        if (!sel || !pill || !wrapEl) continue;
+
+        const isNamePrefix = String(savedVal).startsWith('name:');
+        const isKnownNum = validNums.has(String(savedVal));
+
+        const showPill = (label) => {
+          pill.dataset.val = String(savedVal);
+          const span = pill.querySelector('span');
+          if (span) span.textContent = label;
+          pill.style.display = 'flex';
+          sel.style.display = 'none';
+          wrapEl.dataset.mode = 'pill';
+        };
+
+        if (isNamePrefix) {
+          showPill(String(savedVal).slice(5));
+        } else if (isKnownNum) {
+          const tbl = localData.find(t => String(t.num) === String(savedVal));
+          const label = tbl ? `${savedVal}${tbl.name ? ' ' + tbl.name : ''}` : savedVal;
+          showPill(label);
         } else {
-          // Show pill
-          const pill = document.getElementById(`smc-sel-${row}-${col}`);
-          const wrapEl = document.getElementById(`smc-wrap-${row}-${col}`);
-          if (pill && wrapEl) {
-            pill.dataset.val = String(savedVal);
-            const span = pill.querySelector('span');
-            const tbl = localData.find(t => String(t.num) === String(savedVal));
-            if (span) span.textContent = tbl ? `${savedVal}${tbl.name ? ' ' + tbl.name : ''}` : savedVal;
-            pill.style.display = 'flex';
+          // Custom text input
+          const inp = document.getElementById(`smc-custom-${row}-${col}`);
+          if (inp) {
+            inp.value = savedVal;
+            inp.parentElement.style.display = 'flex';
             sel.style.display = 'none';
-            wrapEl.dataset.mode = 'pill';
+            wrapEl.dataset.mode = 'custom';
           }
         }
       }
