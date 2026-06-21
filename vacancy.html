@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>空位查詢</title>
+<style>
+:root {
+  --gold:#c9a96e; --gold-dark:#a8854f; --brown:#3d2b1f; --text:#3d2b1f; --muted:#8a7a68;
+  --border:#e8ddc8; --cream:#fdfaf3; --warm:#f7f0e3; --bg:#fbf7ee;
+  --success:#4a7c59; --success-bg:#e8f5ec; --danger:#8b2020; --danger-bg:#fff0f0; --info:#2c5f8a;
+}
+* { box-sizing:border-box; }
+body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Noto Sans TC',sans-serif; background:var(--bg); color:var(--text); }
+.header { background:linear-gradient(135deg,#2c2014,#3d2b1f); color:#f0e6d2; padding:20px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.header h1 { font-size:1.3rem; margin:0; font-weight:600; letter-spacing:0.05em; }
+.header h1::before { content:"🪑 "; }
+.sync-badge { font-size:0.78rem; background:rgba(255,255,255,0.1); padding:5px 12px; border-radius:20px; display:flex; align-items:center; gap:6px; }
+.sync-dot { width:7px; height:7px; border-radius:50%; background:#4ade80; animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.container { max-width:900px; margin:0 auto; padding:20px 16px 60px; }
+
+.dashboard-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:20px; }
+@media(max-width:700px){ .dashboard-grid { grid-template-columns:repeat(2,1fr); } }
+.dash-card { background:white; border:1px solid var(--border); border-radius:10px; padding:14px 10px; text-align:center; }
+.dash-icon { font-size:1.3rem; margin-bottom:4px; }
+.dash-num { font-family:'Cormorant Garamond',serif; font-size:1.7rem; font-weight:700; color:var(--gold-dark); line-height:1; }
+.dash-lbl { font-size:0.72rem; color:var(--muted); margin-top:3px; }
+
+.controls { background:white; border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:16px; display:flex; gap:16px; flex-wrap:wrap; align-items:center; }
+.controls label { display:flex; align-items:center; gap:6px; font-size:0.86rem; cursor:pointer; }
+.controls select { font-size:0.86rem; padding:5px 10px; border:1px solid var(--border); border-radius:6px; background:var(--cream); color:var(--text); }
+.search-box { flex:1; min-width:160px; }
+.search-box input { width:100%; padding:7px 12px; border:1px solid var(--border); border-radius:6px; font-size:0.86rem; background:var(--cream); color:var(--text); }
+.search-box input:focus { outline:none; border-color:var(--gold); }
+
+.vlist { background:white; border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.vrow { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--border); gap:12px; }
+.vrow:last-child { border-bottom:none; }
+.vleft { display:flex; align-items:center; gap:14px; min-width:0; flex:1; }
+.vnum { font-family:'Cormorant Garamond',serif; font-size:1.5rem; font-weight:700; color:var(--gold-dark); min-width:78px; flex-shrink:0; }
+.vinfo { min-width:0; }
+.vname { font-size:0.92rem; color:var(--text); font-weight:500; overflow:hidden; text-overflow:ellipsis; }
+.vsub { font-size:0.76rem; color:var(--muted); margin-top:2px; }
+.vbadge { font-size:0.8rem; font-weight:700; padding:6px 14px; border-radius:20px; white-space:nowrap; flex-shrink:0; }
+.vbadge.empty { color:var(--success); background:var(--success-bg); }
+.vbadge.full { color:var(--muted); background:rgba(0,0,0,0.05); }
+.vbadge.over { color:var(--danger); background:var(--danger-bg); }
+
+.empty-state { text-align:center; padding:60px 20px; color:var(--muted); }
+.loading { text-align:center; padding:60px 20px; color:var(--muted); }
+
+.refresh-fab { position:fixed; bottom:24px; right:24px; width:52px; height:52px; border-radius:50%; background:var(--gold); color:white; border:none; font-size:1.3rem; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.refresh-fab:active { transform:scale(0.92); }
+.refresh-fab.spinning { animation:spin 0.6s linear; }
+@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>空位查詢</h1>
+  <div class="sync-badge"><span class="sync-dot"></span><span id="sync-text">即時同步中</span></div>
+</div>
+
+<div class="container">
+  <div id="summary" class="dashboard-grid"></div>
+
+  <div class="controls">
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="搜尋桌號或桌名…" oninput="renderVacancy()"/>
+    </div>
+    <label><input type="checkbox" id="only-empty" onchange="renderVacancy()"/> 只顯示有空位</label>
+    <label>排序：
+      <select id="sort-mode" onchange="renderVacancy()">
+        <option value="num">依桌號</option>
+        <option value="empty-desc">空位多→少</option>
+        <option value="empty-asc">空位少→多</option>
+      </select>
+    </label>
+  </div>
+
+  <div id="vlist" class="loading">載入中…</div>
+</div>
+
+<button class="refresh-fab" id="refresh-btn" onclick="manualRefresh()" title="重新整理">🔄</button>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAp_ILpjSvOmLsMU9ONQa88XDLan6f4568",
+  authDomain: "my-wedding-b2b97.firebaseapp.com",
+  databaseURL: "https://my-wedding-b2b97-default-rtdb.firebaseio.com",
+  projectId: "my-wedding-b2b97",
+  storageBucket: "my-wedding-b2b97.firebasestorage.app",
+  messagingSenderId: "237043710985",
+  appId: "1:237043710985:web:875b8dfb1497357640ccd8"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+let tablesData = [];
+let membersData = [];
+
+function getAttend(guestName, guestAttend) {
+  if (guestAttend && guestAttend > 0) return guestAttend;
+  const m = membersData.find(m => m.name === guestName);
+  return m ? (m.attend || 1) : 1;
+}
+
+window.renderVacancy = function() {
+  const summaryEl = document.getElementById('summary');
+  const listEl = document.getElementById('vlist');
+  if (!summaryEl || !listEl) return;
+
+  const onlyEmpty = document.getElementById('only-empty')?.checked;
+  const sortMode = document.getElementById('sort-mode')?.value || 'num';
+  const searchTerm = (document.getElementById('search-input')?.value || '').trim().toLowerCase();
+
+  let rows = tablesData.map(t => {
+    const gs = t.guests ? Object.values(t.guests).filter(g => g && g.name) : [];
+    let totalAttend = 0;
+    gs.forEach(g => { totalAttend += getAttend(g.name, g.attend); });
+    const cap = t.cap || 0;
+    const empty = cap - totalAttend;
+    return { t, totalAttend, cap, empty, guestCount: gs.length };
+  });
+
+  const totalCap = rows.reduce((s,r) => s + r.cap, 0);
+  const totalUsed = rows.reduce((s,r) => s + r.totalAttend, 0);
+  const totalEmpty = rows.reduce((s,r) => s + Math.max(0, r.empty), 0);
+  const tablesWithSpace = rows.filter(r => r.empty > 0).length;
+  const fullTables = rows.filter(r => r.empty <= 0 && r.cap > 0).length;
+  const overTables = rows.filter(r => r.empty < 0).length;
+
+  summaryEl.innerHTML = `
+    <div class="dash-card"><div class="dash-icon">🍽️</div><div class="dash-num">${totalCap}</div><div class="dash-lbl">總容量</div></div>
+    <div class="dash-card"><div class="dash-icon">👥</div><div class="dash-num">${totalUsed}</div><div class="dash-lbl">已安排人數</div></div>
+    <div class="dash-card"><div class="dash-icon">🪑</div><div class="dash-num">${totalEmpty}</div><div class="dash-lbl">剩餘空位</div></div>
+    <div class="dash-card"><div class="dash-icon">✓</div><div class="dash-num">${tablesWithSpace}</div><div class="dash-lbl">有空位桌數</div></div>
+    <div class="dash-card"><div class="dash-icon">⏳</div><div class="dash-num">${fullTables}</div><div class="dash-lbl">已滿桌數</div></div>
+  `;
+  if (overTables > 0) {
+    summaryEl.innerHTML += `<div class="dash-card"><div class="dash-icon">⚠️</div><div class="dash-num" style="color:var(--danger)">${overTables}</div><div class="dash-lbl">超額桌數</div></div>`;
+  }
+
+  if (onlyEmpty) rows = rows.filter(r => r.empty > 0);
+  if (searchTerm) {
+    rows = rows.filter(r => {
+      const numStr = r.t.num != null ? String(r.t.num) : '';
+      const nameStr = (r.t.name || '').toLowerCase();
+      return numStr.includes(searchTerm) || nameStr.includes(searchTerm);
+    });
+  }
+
+  if (sortMode === 'empty-desc') rows.sort((a,b) => b.empty - a.empty);
+  else if (sortMode === 'empty-asc') rows.sort((a,b) => a.empty - b.empty);
+  else rows.sort((a,b) => (a.t.num ?? 9999) - (b.t.num ?? 9999));
+
+  if (rows.length === 0) {
+    listEl.innerHTML = `<div class="empty-state">沒有符合條件的桌位</div>`;
+    listEl.className = '';
+    return;
+  }
+
+  listEl.className = 'vlist';
+  listEl.innerHTML = rows.map(r => {
+    const t = r.t;
+    const label = t.num != null ? `第 ${t.num} 桌` : '（無桌號）';
+    let badgeClass = 'empty', badgeText = `空 ${r.empty} 位`;
+    if (r.empty < 0) { badgeClass = 'over'; badgeText = `超額 ${-r.empty} 人`; }
+    else if (r.empty === 0) { badgeClass = 'full'; badgeText = '已滿'; }
+    return `<div class="vrow">
+      <div class="vleft">
+        <div class="vnum">${label}</div>
+        <div class="vinfo">
+          <div class="vname">${t.name || '未命名'}</div>
+          <div class="vsub">已安排 ${r.totalAttend} 人 / 容量 ${r.cap} 人・${r.guestCount} 筆紀錄</div>
+        </div>
+      </div>
+      <span class="vbadge ${badgeClass}">${badgeText}</span>
+    </div>`;
+  }).join('');
+};
+
+window.manualRefresh = function() {
+  const btn = document.getElementById('refresh-btn');
+  btn.classList.add('spinning');
+  setTimeout(() => btn.classList.remove('spinning'), 600);
+  renderVacancy();
+};
+
+onValue(ref(db, 'tables'), snap => {
+  const val = snap.val() || {};
+  tablesData = Object.entries(val).map(([id, t]) => ({...t, id}));
+  renderVacancy();
+});
+
+onValue(ref(db, 'members'), snap => {
+  const val = snap.val() || {};
+  membersData = Object.entries(val).map(([id, m]) => ({...m, id}));
+  renderVacancy();
+});
+</script>
+</body>
+</html>
