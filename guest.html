@@ -377,11 +377,11 @@ window.onSearchInput = () => {
     // Escape single quotes in name for onclick
     const safeName = g.name.replace(/'/g, "\'");
     const isChecked = g.assigned && g.checked;
-    const itemStyle = isChecked ? 'opacity:0.6;pointer-events:none;cursor:default;background:#f8f8f6;' : '';
+    const itemStyle = isChecked ? 'background:#f8f8f6;' : '';
     const checkedTag = isChecked
       ? `<span style="font-size:0.68rem;background:var(--success-bg);color:var(--success);padding:2px 8px;border-radius:10px;border:1px solid rgba(74,124,89,0.3);margin-left:4px">✓ 已報到</span>`
       : '';
-    return `<div class="suggest-item" data-idx="${i}" style="${itemStyle}" ${isChecked ? '' : `onclick="selectSuggestion('${safeName}')"`}>
+    return `<div class="suggest-item" data-idx="${i}" style="${itemStyle}" onclick="selectSuggestion('${safeName}')">
       <div class="suggest-avatar" style="${isChecked ? 'background:var(--success);' : ''}">${isChecked ? '✓' : g.name[0]}</div>
       <div style="flex:1">
         <div style="display:flex;align-items:center;gap:6px">
