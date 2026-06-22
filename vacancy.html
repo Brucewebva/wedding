@@ -199,12 +199,22 @@ let expandedTableId = null;
 async function sendTelegram(msg) {
   const token = atob('ODU3OTM0NTk5NTpBQUhBTlpSRjhPRWJBSzlaWW9PVEZ2MEVmRG5JZnl2NGJqQQ==');
   const chat  = atob('NzIxNDM0OTAy');
+  console.log('[Telegram] sending:', msg);
   try {
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({chat_id: chat, text: msg, parse_mode: 'HTML'})
     });
-  } catch(e) { console.warn('Telegram send failed', e); }
+    const data = await res.json();
+    console.log('[Telegram] response:', data);
+    if (!data.ok) {
+      console.error('[Telegram] API error:', data.description);
+      toast('⚠ Telegram 通知失敗：' + data.description);
+    }
+  } catch(e) {
+    console.error('[Telegram] fetch failed', e);
+    toast('⚠ Telegram 連線失敗');
+  }
 }
 
 function getAttend(guestName, guestAttend) {
@@ -443,7 +453,7 @@ window.addWalkIn = async function(tid) {
     `👥 報到人數：${attend} 位`,
     specialNeeds.length > 0 ? `⚠️ 特殊需求：${specialNeeds.join('・')}` : ''
   ].filter(Boolean).join('\n');
-  sendTelegram(tgMsg);
+  await sendTelegram(tgMsg);
 
   // Clear form
   nameEl.value = ''; relEl.value = ''; vegEl.checked = false; childEl.checked = false;
