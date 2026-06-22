@@ -403,6 +403,16 @@ window.addWalkIn = async function(tid) {
     checkedAt: Date.now()
   });
 
+  // 同步新增到人員管理（members 節點）
+  const existingMember = membersData.find(m => m.name === name);
+  if (!existingMember) {
+    const mid = 'm' + Date.now() + Math.random().toString(36).slice(2,5);
+    await set(ref(db, 'members/' + mid), {
+      id: mid, name, relation,
+      attend, chair: child ? attend : 0, veg: veg ? attend : 0
+    });
+  }
+
   toast(`✓ 已加入：${name}（第 ${t.num != null ? t.num : ''} 桌，出席 ${attend} 人，已報到）`);
 
   // Clear form
