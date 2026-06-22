@@ -1008,10 +1008,11 @@ function renderTableEditPanel(id) {
     const vegBadge = g.veg ? '<span class="gel-veg">🥗 素食</span>' : '';
     const childBadge = g.child ? '<span class="gel-child">👶 兒童</span>' : '';
     const checkedBadge = g.checked ? '<span class="gel-checked">✓ 已報到</span>' : '';
+    const walkInBadge = g.walkIn ? '<span style="font-size:0.68rem;background:#fef3c7;color:#92400e;padding:2px 7px;border-radius:10px">⚡ 臨時加入</span>' : '';
     return `<div class="gel-item">
       <div style="display:flex;flex-direction:column;flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="gel-name">${g.name}</span><span class="gel-rel">${g.relation || '—'}</span></div>
-        <div class="gel-badges" style="margin-top:4px">${attendBadge}${vegBadge}${childBadge}${checkedBadge}</div>
+        <div class="gel-badges" style="margin-top:4px">${attendBadge}${vegBadge}${childBadge}${checkedBadge}${walkInBadge}</div>
       </div>
       <div class="gel-actions">
         <button class="btn-sm btn-info" style="font-size:0.72rem;padding:4px 8px" onclick="openEditGuestModal('${id}','${k}')">編輯</button>
@@ -1225,7 +1226,7 @@ window.renderCheckin = function() {
       if (filterRel && g.relation !== filterRel) return;
       if (filterSpecial === 'veg' && !g.veg) return;
       if (filterSpecial === 'child' && !g.child) return;
-      rows.push({name: g.name, relation: g.relation || '', num: t.num, tname: t.name || '—', checked: g.checked, veg: g.veg, child: g.child, tid: t.id, gk: k, attend: getAttend(g.name, g.attend)});
+      rows.push({name: g.name, relation: g.relation || '', num: t.num, tname: t.name || '—', checked: g.checked, veg: g.veg, child: g.child, tid: t.id, gk: k, attend: getAttend(g.name, g.attend), walkIn: g.walkIn});
     });
   });
   rows.sort((a, b) => a.num - b.num);
@@ -1244,7 +1245,7 @@ window.renderCheckin = function() {
   }
   document.getElementById('checkinBody').innerHTML = rows.length
     ? rows.map(r => `<tr>
-        <td><strong>${r.name}</strong></td>
+        <td><strong>${r.name}</strong>${r.walkIn ? ' <span style="font-size:0.66rem;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:8px">⚡臨時</span>' : ''}</td>
         <td>${r.relation ? `<span class="badge badge-relation">${r.relation}</span>` : '—'}</td>
         <td style="text-align:center">${r.attend > 1 ? `<span style="font-size:0.78rem;background:rgba(44,95,138,0.1);color:var(--info);padding:2px 9px;border-radius:20px;border:1px solid rgba(44,95,138,0.2)">👫 ${r.attend} 人</span>` : `<span style="font-size:0.78rem;color:var(--muted)">1 人</span>`}</td>
         <td>${r.veg ? '<span class="badge badge-veg">🥗 素食</span> ' : ''}${r.child ? '<span class="badge badge-child">👶 兒童</span>' : (r.veg ? '' : '—')}</td>
