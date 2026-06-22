@@ -471,6 +471,7 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
         <div class="section-title">座位地圖設定</div>
         <div style="display:flex;gap:8px">
           <button class="btn-sm btn-gold" onclick="saveSeatMap()">💾 儲存地圖設定</button>
+          <button class="btn-sm btn-outline" onclick="exportSeatMapPrint()">🖨 匯出列印版（含各桌名單）</button>
         </div>
       </div>
       <div class="form-card" style="margin-bottom:14px">
@@ -2000,6 +2001,158 @@ function alignSeatMapMainTable() {
   const innerHeight = inner.offsetHeight;
   inner.style.top = (aisleCenter - innerHeight / 2) + 'px';
 }
+
+// ── SEAT MAP PRINT EXPORT ──
+function getTableNameForSeatVal(val) {
+  if (!val) return '';
+  if (String(val).startsWith('name:')) return String(val).slice(5);
+  const tbl = localData.find(t => String(t.num) === String(val));
+  return tbl ? (tbl.name || '') : '';
+}
+
+window.exportSeatMapPrint = async () => {
+  try {
+    const snap = await new Promise(res => onValue(ref(db, 'seatmap'), res, {onlyOnce: true}));
+    const seatData = snap.val() || {};
+
+    // Build the visual seat map grid HTML (mirrors the editor layout)
+    function buildGridHTML() {
+      let topHTML = '', botHTML = '';
+      for (let row = 0; row < SEATMAP_ROWS; row++) {
+        let rowHTML = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px">';
+        for (let col = 0; col < SEATMAP_COLS; col++) {
+          const key = `${row}_${col}`;
+          if (SEATMAP_EMPTY_CELLS.has(key)) {
+            rowHTML += `<div></div>`;
+            continue;
+          }
+          const val = seatData[key];
+          if (!val) {
+            rowHTML += `<div style="border:1px dashed #ccc;border-radius:6px;min-height:46px"></div>`;
+          } else {
+            const tname = getTableNameForSeatVal(val);
+            const labelNum = String(val).startsWith('name:') ? '' : val;
+            rowHTML += `<div style="border:2px solid #8b6914;border-radius:50%;min-height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;line-height:1.25;padding:2px">
+              ${labelNum ? `<div style="font-weight:700;font-size:13px">${labelNum}</div>` : ''}
+              ${tname ? `<div style="font-size:9px;color:#555">${tname}</div>` : ''}
+            </div>`;
+          }
+        }
+        rowHTML += '</div>';
+        if (row < 3) topHTML += rowHTML; else botHTML += rowHTML;
+      }
+
+      const mainVal = seatData['main'];
+      const mainLabel = mainVal ? (String(mainVal).startsWith('name:') ? String(mainVal).slice(5) : `${mainVal}`) : '主桌';
+      const mainTname = mainVal ? getTableNameForSeatVal(mainVal) : '';
+
+      return `
+        <div style="display:flex;gap:10px;align-items:stretch">
+          <div style="flex:1">
+            ${topHTML}
+            <div style="background:#f5ede0;border:1px dashed #c9a96e;border-radius:5px;padding:6px;text-align:center;font-size:11px;color:#8a7055;letter-spacing:3px;margin:4px 0">走　道</div>
+            ${botHTML}
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:4px">
+              <div></div><div></div><div></div>
+              <div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:5px;padding:4px;text-align:center;font-size:10px;color:#991b1b;grid-column:span 2">↑ 出入口</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:80px;flex-shrink:0">
+            <div style="width:64px;height:64px;border:2px solid #c9a96e;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;text-align:center">
+              <div style="font-weight:700">${mainLabel}</div>
+              ${mainTname ? `<div style="font-size:9px;color:#555">${mainTname}</div>` : ''}
+            </div>
+          </div>
+          <div style="width:30px;background:#fce7f3;border:1.5px solid #f9a8d4;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <div style="writing-mode:vertical-rl;font-size:11px;color:#9d174d;font-weight:500;letter-spacing:3px">舞台</div>
+          </div>
+        </div>`;
+    }
+
+    // Build per-table guest seat rows (mirrors the reference photo style)
+    function buildTableRows() {
+      const sortedTables = [...localData].sort((a,b) => (a.num ?? 9999) - (b.num ?? 9999));
+      const maxSeats = Math.max(10, ...sortedTables.map(t => t.cap || 0));
+
+      let headerCols = '';
+      for (let i = 1; i <= maxSeats; i++) headerCols += `<th style="border:1px solid #999;padding:4px;font-size:11px">${i}</th>`;
+
+      let bodyRows = '';
+      sortedTables.forEach(t => {
+        const gs = t.guests ? Object.values(t.guests).filter(g => g && g.name) : [];
+        let totalAttend = 0;
+        const seatNames = [];
+        gs.forEach(g => {
+          const a = getAttend(g.name, g.attend);
+          totalAttend += a;
+          for (let i = 0; i < a; i++) {
+            seatNames.push({name: i === 0 ? g.name : `${g.name}(+${i})`, veg: g.veg, child: g.child});
+          }
+        });
+        const cap = t.cap || 0;
+        const empty = cap - totalAttend;
+        const babyCount = gs.filter(g => g.child).reduce((s,g) => s + getAttend(g.name, g.attend), 0);
+
+        let seatCells = '';
+        for (let i = 0; i < maxSeats; i++) {
+          const seat = seatNames[i];
+          if (!seat) { seatCells += `<td style="border:1px solid #ccc;padding:4px;font-size:11px"></td>`; continue; }
+          const bg = seat.veg ? 'background:#dbeafe;color:#1e40af' : '';
+          seatCells += `<td style="border:1px solid #ccc;padding:4px;font-size:11px;${bg}">${seat.name}</td>`;
+        }
+
+        const label = t.num != null ? t.num : (t.name || '主桌');
+        bodyRows += `<tr>
+          <td style="border:1px solid #999;padding:5px 8px;font-size:12px;font-weight:600;white-space:nowrap;background:#f5ede0">${label}${t.name ? `<div style="font-size:9px;color:#666;font-weight:400">${t.name}</div>` : ''}</td>
+          ${seatCells}
+          <td style="border:1px solid #999;padding:4px;font-size:12px;text-align:center;font-weight:600">${babyCount || 0}</td>
+          <td style="border:1px solid #999;padding:4px;font-size:12px;text-align:center;font-weight:600;color:${empty<0?'#c0392b':empty>0?'#92400e':'#4a7c59'}">${empty}</td>
+        </tr>`;
+      });
+
+      return `<table style="border-collapse:collapse;width:100%;margin-top:20px">
+        <thead><tr>
+          <th style="border:1px solid #999;padding:5px 8px;font-size:11px;background:#3d2b0e;color:#e8d5a3">桌別</th>
+          ${headerCols}
+          <th style="border:1px solid #999;padding:4px;font-size:11px;background:#3d2b0e;color:#e8d5a3">Babyseat</th>
+          <th style="border:1px solid #999;padding:4px;font-size:11px;background:#3d2b0e;color:#e8d5a3">空位</th>
+        </tr></thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+      <div style="margin-top:10px;font-size:11px;color:#555">
+        <span style="display:inline-block;width:12px;height:12px;background:#dbeafe;border:1px solid #999;vertical-align:middle;margin-right:4px"></span>素食
+      </div>`;
+    }
+
+    const printHTML = `<!DOCTYPE html>
+<html lang="zh-TW"><head><meta charset="UTF-8"><title>座位地圖與桌位名單</title>
+<style>
+  body { font-family:'Noto Serif TC',serif; padding:24px; color:#2c1f0a; }
+  h1 { font-size:1.3rem; text-align:center; margin-bottom:4px; }
+  .meta { text-align:center; font-size:0.8rem; color:#8a7055; margin-bottom:20px; }
+  @media print {
+    @page { size: A4 landscape; margin: 10mm; }
+    .no-print { display:none; }
+  }
+</style></head>
+<body>
+  <h1>婚宴座位地圖與桌位名單</h1>
+  <div class="meta">列印時間：${new Date().toLocaleString('zh-TW')}</div>
+  ${buildGridHTML()}
+  ${buildTableRows()}
+  <div class="no-print" style="text-align:center;margin-top:24px">
+    <button onclick="window.print()" style="padding:10px 24px;font-size:1rem;cursor:pointer;background:#c9a96e;border:none;border-radius:4px;color:#1a1208">🖨 列印 / 另存 PDF</button>
+  </div>
+</body></html>`;
+
+    const win = window.open('', '_blank');
+    win.document.write(printHTML);
+    win.document.close();
+  } catch (err) {
+    console.error('exportSeatMapPrint error:', err);
+    toast('⚠ 匯出失敗：' + (err.message || '請稍後再試'));
+  }
+};
 
 // ── TOAST ──
 let tt;
