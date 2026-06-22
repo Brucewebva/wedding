@@ -319,7 +319,8 @@ window.renderVacancy = function() {
             attend > 1 ? `<span class="vtag" style="background:var(--info-bg);color:var(--info)">👫${attend}人</span>` : '',
             g.veg ? '<span class="vtag veg">🥗素食</span>' : '',
             g.child ? '<span class="vtag child">👶兒童</span>' : '',
-            g.checked ? '<span class="vtag checked">✓已報到</span>' : ''
+            g.checked ? '<span class="vtag checked">✓已報到</span>' : '',
+            g.walkIn ? '<span class="vtag" style="background:#fef3c7;color:#92400e">⚡臨時加入</span>' : ''
           ].filter(Boolean).join('');
           return `<div class="vguest-item"><span>${g.name}${g.relation ? ` <span style="color:var(--muted);font-size:0.76rem">（${g.relation}）</span>` : ''}</span><div class="vguest-tags">${tags}</div></div>`;
         }).join('')
@@ -400,7 +401,8 @@ window.addWalkIn = async function(tid) {
   await set(ref(db, `tables/${tid}/guests/${key}`), {
     name, relation, attend, veg, child,
     checked: true,
-    checkedAt: Date.now()
+    checkedAt: Date.now(),
+    walkIn: true
   });
 
   // 同步新增到人員管理（members 節點）
