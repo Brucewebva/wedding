@@ -195,6 +195,18 @@ let tablesData = [];
 let membersData = [];
 let expandedTableId = null;
 
+// Telegram 設定（與 guest.html 報到通知共用同一組 Bot）
+async function sendTelegram(msg) {
+  const token = atob('ODU3OTM0NTk5NTpBQUhBTlpSRjhPRWJBSzlaWW9PVEZ2MEVmRG5JZnl2NGJqQQ==');
+  const chat  = atob('NzIxNDM0OTAy');
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({chat_id: chat, text: msg, parse_mode: 'HTML'})
+    });
+  } catch(e) { console.warn('Telegram send failed', e); }
+}
+
 function getAttend(guestName, guestAttend) {
   if (guestAttend && guestAttend > 0) return guestAttend;
   const m = membersData.find(m => m.name === guestName);
@@ -418,6 +430,20 @@ window.addWalkIn = async function(tid) {
   }
 
   toast(`✓ 已加入：${name}（第 ${t.num != null ? t.num : ''} 桌，出席 ${attend} 人，已報到）`);
+
+  // 發送 Telegram 通知
+  const tableLabel = t.num != null ? `第 ${t.num} 桌` : (t.name || '主桌');
+  const specialNeeds = [];
+  if (veg) specialNeeds.push(`🥗 素食 ${attend} 人`);
+  if (child) specialNeeds.push(`👶 嬰兒座椅 ${attend} 張`);
+  const tgMsg = [
+    `⚡ <b>${name}</b> 現場臨時加人（已報到）`,
+    `🪑 桌號：${tableLabel}${t.name ? '・' + t.name : ''}`,
+    relation ? `🎀 與新人關係：${relation}` : '',
+    `👥 報到人數：${attend} 位`,
+    specialNeeds.length > 0 ? `⚠️ 特殊需求：${specialNeeds.join('・')}` : ''
+  ].filter(Boolean).join('\n');
+  sendTelegram(tgMsg);
 
   // Clear form
   nameEl.value = ''; relEl.value = ''; vegEl.checked = false; childEl.checked = false;
