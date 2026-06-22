@@ -1,94 +1,168 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>空位查詢</title>
+<title>空位查詢與現場加人</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <style>
 :root {
-  --gold:#c9a96e; --gold-dark:#a8854f; --brown:#3d2b1f; --text:#3d2b1f; --muted:#8a7a68;
-  --border:#e8ddc8; --cream:#fdfaf3; --warm:#f7f0e3; --bg:#fbf7ee;
-  --success:#4a7c59; --success-bg:#e8f5ec; --danger:#8b2020; --danger-bg:#fff0f0; --info:#2c5f8a;
+  --gold: #c9a96e; --gold-light: #e8d5a3; --gold-dark: #8b6914;
+  --cream: #fdf8f0; --warm: #f5ede0; --deep: #1a1208; --brown: #3d2b0e;
+  --text: #2c1f0a; --muted: #8a7055; --border: rgba(201,169,110,0.3);
+  --success: #4a7c59; --success-bg: #e8f5ec; --danger: #8b2020; --danger-bg: #fff0f0;
+  --veg: #3a7d44; --veg-bg: #e6f4ea;
+  --child: #7c5c3a; --child-bg: #fdf0e6;
+  --info: #2c5f8a; --info-bg: #e8f0f8;
 }
-* { box-sizing:border-box; }
-body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Noto Sans TC',sans-serif; background:var(--bg); color:var(--text); }
-.header { background:linear-gradient(135deg,#2c2014,#3d2b1f); color:#f0e6d2; padding:20px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
-.header h1 { font-size:1.3rem; margin:0; font-weight:600; letter-spacing:0.05em; }
-.header h1::before { content:"🪑 "; }
-.sync-badge { font-size:0.78rem; background:rgba(255,255,255,0.1); padding:5px 12px; border-radius:20px; display:flex; align-items:center; gap:6px; }
-.sync-dot { width:7px; height:7px; border-radius:50%; background:#4ade80; animation:pulse 2s infinite; }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--text); min-height: 100vh; }
 
-.container { max-width:900px; margin:0 auto; padding:20px 16px 60px; }
+#loginScreen { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(160deg,#1a1208,#2e1e08); }
+.login-card { background:rgba(253,248,240,0.04); border:1px solid rgba(201,169,110,0.2); border-radius:4px; padding:48px 40px; width:100%; max-width:360px; text-align:center; }
+.login-card h2 { font-family:'Cormorant Garamond',serif; font-size:1.8rem; color:var(--gold-light); font-weight:300; margin-bottom:6px; }
+.login-card p { font-size:0.8rem; color:rgba(201,169,110,0.5); letter-spacing:0.2em; margin-bottom:32px; }
+.login-btn { width:100%; padding:13px; background:var(--gold); border:none; border-radius:2px; font-family:'Noto Serif TC',serif; font-size:1rem; font-weight:500; color:var(--deep); cursor:pointer; letter-spacing:0.1em; display:flex; align-items:center; justify-content:center; gap:10px; }
+.login-btn:hover { background:var(--gold-light); }
+.login-err { font-size:0.82rem; color:#e07070; margin-top:10px; min-height:20px; }
+#loginLoading { color:rgba(201,169,110,0.5);font-size:0.85rem;margin-bottom:20px;min-height:24px;letter-spacing:0.1em; }
 
-.dashboard-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:20px; }
+#mainPanel { display:none; }
+.top-nav { background:var(--deep); padding:14px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; border-bottom:1px solid rgba(201,169,110,0.2); }
+.top-nav-title { font-family:'Cormorant Garamond',serif; font-size:1.2rem; color:var(--gold); letter-spacing:0.1em; }
+.top-nav-title::before { content:"🪑 "; }
+.nav-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.nav-badge { font-size:0.72rem; background:rgba(201,169,110,0.12); color:var(--gold); padding:4px 10px; border-radius:20px; border:1px solid rgba(201,169,110,0.3); white-space:nowrap; }
+.sync-dot { width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:5px; vertical-align:middle; }
+.sync-dot.ok { background:#4a7c59; }
+.sync-dot.err { background:#c0392b; }
+.sync-dot.loading { background:var(--gold); animation:pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.btn-sm { padding:8px 16px; font-family:'Noto Serif TC',serif; font-size:0.82rem; cursor:pointer; border-radius:3px; transition:all 0.2s; letter-spacing:0.05em; border:none; display:inline-flex; align-items:center; gap:5px; }
+.btn-gold { background:var(--gold); color:var(--deep); font-weight:500; }
+.btn-gold:hover { background:var(--gold-light); }
+.btn-outline { background:transparent; border:1px solid var(--border); color:var(--muted); text-decoration:none; }
+.btn-outline:hover { border-color:var(--gold); color:var(--gold); }
+
+.container { max-width:1000px; margin:0 auto; padding:20px 16px 60px; }
+
+.dashboard-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:18px; }
 @media(max-width:700px){ .dashboard-grid { grid-template-columns:repeat(2,1fr); } }
-.dash-card { background:white; border:1px solid var(--border); border-radius:10px; padding:14px 10px; text-align:center; }
-.dash-icon { font-size:1.3rem; margin-bottom:4px; }
-.dash-num { font-family:'Cormorant Garamond',serif; font-size:1.7rem; font-weight:700; color:var(--gold-dark); line-height:1; }
-.dash-lbl { font-size:0.72rem; color:var(--muted); margin-top:3px; }
+.dash-card { background:white; border:1px solid var(--border); border-radius:6px; padding:14px 10px; text-align:center; }
+.dash-icon { font-size:1.2rem; margin-bottom:4px; }
+.dash-num { font-family:'Cormorant Garamond',serif; font-size:2rem; font-weight:600; color:var(--gold-dark); line-height:1; }
+.dash-lbl { font-size:0.72rem; color:var(--muted); letter-spacing:0.15em; margin-top:3px; }
 
-.controls { background:white; border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:16px; display:flex; gap:16px; flex-wrap:wrap; align-items:center; }
-.controls label { display:flex; align-items:center; gap:6px; font-size:0.86rem; cursor:pointer; }
-.controls select { font-size:0.86rem; padding:5px 10px; border:1px solid var(--border); border-radius:6px; background:var(--cream); color:var(--text); }
+.controls { background:white; border:1px solid var(--border); border-radius:6px; padding:14px 16px; margin-bottom:16px; display:flex; gap:14px; flex-wrap:wrap; align-items:center; }
+.controls label { display:flex; align-items:center; gap:6px; font-size:0.85rem; cursor:pointer; color:var(--text); }
+.controls select { font-size:0.85rem; padding:6px 10px; border:1.5px solid var(--border); border-radius:3px; background:var(--cream); color:var(--text); font-family:'Noto Serif TC',serif; }
 .search-box { flex:1; min-width:160px; }
-.search-box input { width:100%; padding:7px 12px; border:1px solid var(--border); border-radius:6px; font-size:0.86rem; background:var(--cream); color:var(--text); }
+.search-box input { width:100%; padding:8px 12px; border:1.5px solid var(--border); border-radius:3px; font-size:0.86rem; background:var(--cream); color:var(--text); font-family:'Noto Serif TC',serif; }
 .search-box input:focus { outline:none; border-color:var(--gold); }
 
-.vlist { background:white; border:1px solid var(--border); border-radius:10px; overflow:hidden; }
-.vrow { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--border); gap:12px; }
+.vlist { background:white; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+.vrow { border-bottom:1px solid rgba(201,169,110,0.15); }
 .vrow:last-child { border-bottom:none; }
+.vrow-main { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; gap:12px; cursor:pointer; transition:background 0.15s; }
+.vrow-main:hover { background:var(--warm); }
+.vrow.expanded .vrow-main { background:var(--warm); }
 .vleft { display:flex; align-items:center; gap:14px; min-width:0; flex:1; }
-.vnum { font-family:'Cormorant Garamond',serif; font-size:1.5rem; font-weight:700; color:var(--gold-dark); min-width:78px; flex-shrink:0; }
+.vnum { font-family:'Cormorant Garamond',serif; font-size:1.5rem; font-weight:700; color:var(--gold-dark); min-width:64px; flex-shrink:0; text-align:center; }
 .vinfo { min-width:0; }
-.vname { font-size:0.92rem; color:var(--text); font-weight:500; overflow:hidden; text-overflow:ellipsis; }
+.vname { font-size:0.92rem; color:var(--text); font-weight:500; }
 .vsub { font-size:0.76rem; color:var(--muted); margin-top:2px; }
 .vbadge { font-size:0.8rem; font-weight:700; padding:6px 14px; border-radius:20px; white-space:nowrap; flex-shrink:0; }
 .vbadge.empty { color:var(--success); background:var(--success-bg); }
 .vbadge.full { color:var(--muted); background:rgba(0,0,0,0.05); }
 .vbadge.over { color:var(--danger); background:var(--danger-bg); }
+.vexpand-icon { color:var(--muted); font-size:0.8rem; transition:transform 0.2s; flex-shrink:0; }
+.vrow.expanded .vexpand-icon { transform:rotate(90deg); }
+
+.vrow-detail { display:none; padding:0 16px 16px; }
+.vrow.expanded .vrow-detail { display:block; }
+.vguest-list { margin-bottom:12px; }
+.vguest-item { display:flex; align-items:center; justify-content:space-between; padding:7px 10px; background:var(--warm); border-radius:3px; margin-bottom:5px; font-size:0.84rem; }
+.vguest-tags { display:flex; gap:4px; align-items:center; }
+.vtag { font-size:0.66rem; padding:1px 6px; border-radius:8px; }
+.vtag.veg { background:var(--veg-bg); color:var(--veg); }
+.vtag.child { background:var(--child-bg); color:var(--child); }
+.vtag.checked { background:var(--success-bg); color:var(--success); }
+
+.add-form { background:var(--cream); border:1.5px dashed var(--border); border-radius:5px; padding:14px; }
+.add-form-title { font-size:0.78rem; color:var(--muted); letter-spacing:0.15em; margin-bottom:10px; }
+.add-form-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+.add-form-row input[type="text"] { flex:1; min-width:120px; padding:8px 12px; border:1.5px solid var(--border); border-radius:3px; font-family:'Noto Serif TC',serif; font-size:0.88rem; background:white; }
+.add-form-row select { padding:8px 12px; border:1.5px solid var(--border); border-radius:3px; font-family:'Noto Serif TC',serif; font-size:0.88rem; background:white; }
+.add-form-row input:focus, .add-form-row select:focus { outline:none; border-color:var(--gold); }
+.add-form-checks { display:flex; gap:16px; margin-bottom:10px; flex-wrap:wrap; }
+.add-form-checks label { display:flex; align-items:center; gap:6px; font-size:0.84rem; cursor:pointer; }
+.add-form-note { font-size:0.74rem; color:var(--success); background:var(--success-bg); padding:7px 10px; border-radius:3px; margin-bottom:10px; }
 
 .empty-state { text-align:center; padding:60px 20px; color:var(--muted); }
 .loading { text-align:center; padding:60px 20px; color:var(--muted); }
-
-.refresh-fab { position:fixed; bottom:24px; right:24px; width:52px; height:52px; border-radius:50%; background:var(--gold); color:white; border:none; font-size:1.3rem; box-shadow:0 4px 12px rgba(0,0,0,0.2); cursor:pointer; display:flex; align-items:center; justify-content:center; }
-.refresh-fab:active { transform:scale(0.92); }
-.refresh-fab.spinning { animation:spin 0.6s linear; }
-@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+.toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--deep); color:var(--gold-light); padding:11px 22px; border-radius:4px; font-size:0.88rem; opacity:0; pointer-events:none; transition:all 0.3s; z-index:9999; white-space:nowrap; border:1px solid rgba(201,169,110,0.3); }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>空位查詢</h1>
-  <div class="sync-badge"><span class="sync-dot"></span><span id="sync-text">即時同步中</span></div>
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <h2>空位查詢系統</h2>
+    <p>VACANCY LOOKUP</p>
+    <div id="loginLoading">驗證登入狀態中…</div>
+    <button class="login-btn" id="googleLoginBtn" onclick="doGoogleLogin()" style="display:none">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20H24v8h11.3C33.6 33.1 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c11 0 19.7-8 19.7-20 0-1.3-.1-2.7-.1-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.5 15.1 18.9 12 24 12c3 0 5.8 1.1 7.9 2.9l5.7-5.7C34.1 6.5 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 10-1.9 13.6-5.1l-6.3-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.6-3-11.3-7.3l-6.6 5.1C9.8 39.8 16.4 44 24 44z"/><path fill="#1976D2" d="M43.6 20H24v8h11.3c-.8 2.2-2.3 4.1-4.2 5.4l6.3 5.2C41 35.3 44 30 44 24c0-1.3-.1-2.7-.4-4z"/></svg>
+      使用 Google 帳號登入
+    </button>
+    <div class="login-err" id="loginErr"></div>
+    <div style="margin-top:20px">
+      <a href="guest.html" style="font-size:0.82rem;color:rgba(201,169,110,0.4);letter-spacing:0.1em;text-decoration:none;">← 返回首頁</a>
+    </div>
+  </div>
 </div>
 
-<div class="container">
-  <div id="summary" class="dashboard-grid"></div>
-
-  <div class="controls">
-    <div class="search-box">
-      <input type="text" id="search-input" placeholder="搜尋桌號或桌名…" oninput="renderVacancy()"/>
+<!-- MAIN PANEL -->
+<div id="mainPanel">
+  <div class="top-nav">
+    <div class="top-nav-title">空位查詢與現場加人</div>
+    <div class="nav-right">
+      <span class="nav-badge" id="syncStatus"><span class="sync-dot loading"></span>連線中…</span>
+      <a href="guest.html" class="btn-sm btn-outline">← 返回首頁</a>
+      <a href="admin.html" class="btn-sm btn-outline">後台管理</a>
+      <button class="btn-sm btn-outline" onclick="doLogout()">登出</button>
     </div>
-    <label><input type="checkbox" id="only-empty" onchange="renderVacancy()"/> 只顯示有空位</label>
-    <label>排序：
-      <select id="sort-mode" onchange="renderVacancy()">
-        <option value="num">依桌號</option>
-        <option value="empty-desc">空位多→少</option>
-        <option value="empty-asc">空位少→多</option>
-      </select>
-    </label>
   </div>
 
-  <div id="vlist" class="loading">載入中…</div>
+  <div class="container">
+    <div id="summary" class="dashboard-grid"></div>
+
+    <div class="controls">
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="搜尋桌號或桌名…" oninput="renderVacancy()"/>
+      </div>
+      <label><input type="checkbox" id="only-empty" onchange="renderVacancy()"/> 只顯示有空位</label>
+      <label>排序：
+        <select id="sort-mode" onchange="renderVacancy()">
+          <option value="num">依桌號</option>
+          <option value="empty-desc">空位多→少</option>
+          <option value="empty-asc">空位少→多</option>
+        </select>
+      </label>
+    </div>
+
+    <div id="vlist" class="loading">載入中…</div>
+  </div>
 </div>
 
-<button class="refresh-fab" id="refresh-btn" onclick="manualRefresh()" title="重新整理">🔄</button>
+<div class="toast" id="toast"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, set, update, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAp_ILpjSvOmLsMU9ONQa88XDLan6f4568",
@@ -100,11 +174,17 @@ const firebaseConfig = {
   appId: "1:237043710985:web:875b8dfb1497357640ccd8"
 };
 
+const ALLOWED_EMAIL = 'tradevan.bruce@gmail.com';
+const READONLY_EMAILS = ['bruce.realme@gmail.com', 'lnsg999@gmail.com'];
+
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 
 let tablesData = [];
 let membersData = [];
+let expandedTableId = null;
 
 function getAttend(guestName, guestAttend) {
   if (guestAttend && guestAttend > 0) return guestAttend;
@@ -112,6 +192,66 @@ function getAttend(guestName, guestAttend) {
   return m ? (m.attend || 1) : 1;
 }
 
+// ── AUTH ──
+function enterMain() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainPanel').style.display = 'block';
+  startListeners();
+}
+
+onAuthStateChanged(auth, user => {
+  const loadingEl = document.getElementById('loginLoading');
+  const btnEl = document.getElementById('googleLoginBtn');
+  if (user) {
+    if (user.email === ALLOWED_EMAIL || READONLY_EMAILS.includes(user.email)) {
+      enterMain();
+    } else {
+      signOut(auth);
+      loadingEl.style.display = 'none'; btnEl.style.display = 'flex';
+      document.getElementById('loginErr').textContent = `此帳號（${user.email}）無權限。`;
+    }
+  } else { loadingEl.style.display = 'none'; btnEl.style.display = 'flex'; }
+});
+
+window.doGoogleLogin = async () => {
+  document.getElementById('loginErr').textContent = '';
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const email = result.user.email;
+    if (email !== ALLOWED_EMAIL && !READONLY_EMAILS.includes(email)) {
+      await signOut(auth);
+      document.getElementById('loginErr').textContent = `此帳號（${email}）無權限存取。`;
+    }
+  } catch (err) {
+    if (err.code !== 'auth/popup-closed-by-user') document.getElementById('loginErr').textContent = '登入失敗，請再試一次。';
+  }
+};
+
+window.doLogout = async () => {
+  await signOut(auth);
+  document.getElementById('mainPanel').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginLoading').style.display = 'none';
+  document.getElementById('googleLoginBtn').style.display = 'flex';
+};
+
+// ── FIREBASE LISTENERS ──
+function startListeners() {
+  onValue(ref(db, 'tables'), snap => {
+    const raw = snap.val();
+    tablesData = raw ? Object.values(raw).filter(t => t && t.id) : [];
+    document.getElementById('syncStatus').innerHTML = '<span class="sync-dot ok"></span>即時同步中';
+    renderVacancy();
+  }, () => { document.getElementById('syncStatus').innerHTML = '<span class="sync-dot err"></span>連線失敗'; });
+
+  onValue(ref(db, 'members'), snap => {
+    const raw = snap.val();
+    membersData = raw ? Object.values(raw) : [];
+    renderVacancy();
+  });
+}
+
+// ── RENDER ──
 window.renderVacancy = function() {
   const summaryEl = document.getElementById('summary');
   const listEl = document.getElementById('vlist');
@@ -122,12 +262,12 @@ window.renderVacancy = function() {
   const searchTerm = (document.getElementById('search-input')?.value || '').trim().toLowerCase();
 
   let rows = tablesData.map(t => {
-    const gs = t.guests ? Object.values(t.guests).filter(g => g && g.name) : [];
+    const gs = t.guests ? Object.entries(t.guests).filter(([,g]) => g && g.name) : [];
     let totalAttend = 0;
-    gs.forEach(g => { totalAttend += getAttend(g.name, g.attend); });
+    gs.forEach(([,g]) => { totalAttend += getAttend(g.name, g.attend); });
     const cap = t.cap || 0;
     const empty = cap - totalAttend;
-    return { t, totalAttend, cap, empty, guestCount: gs.length };
+    return { t, gs, totalAttend, cap, empty };
   });
 
   const totalCap = rows.reduce((s,r) => s + r.cap, 0);
@@ -135,7 +275,6 @@ window.renderVacancy = function() {
   const totalEmpty = rows.reduce((s,r) => s + Math.max(0, r.empty), 0);
   const tablesWithSpace = rows.filter(r => r.empty > 0).length;
   const fullTables = rows.filter(r => r.empty <= 0 && r.cap > 0).length;
-  const overTables = rows.filter(r => r.empty < 0).length;
 
   summaryEl.innerHTML = `
     <div class="dash-card"><div class="dash-icon">🍽️</div><div class="dash-num">${totalCap}</div><div class="dash-lbl">總容量</div></div>
@@ -144,9 +283,6 @@ window.renderVacancy = function() {
     <div class="dash-card"><div class="dash-icon">✓</div><div class="dash-num">${tablesWithSpace}</div><div class="dash-lbl">有空位桌數</div></div>
     <div class="dash-card"><div class="dash-icon">⏳</div><div class="dash-num">${fullTables}</div><div class="dash-lbl">已滿桌數</div></div>
   `;
-  if (overTables > 0) {
-    summaryEl.innerHTML += `<div class="dash-card"><div class="dash-icon">⚠️</div><div class="dash-num" style="color:var(--danger)">${overTables}</div><div class="dash-lbl">超額桌數</div></div>`;
-  }
 
   if (onlyEmpty) rows = rows.filter(r => r.empty > 0);
   if (searchTerm) {
@@ -174,37 +310,112 @@ window.renderVacancy = function() {
     let badgeClass = 'empty', badgeText = `空 ${r.empty} 位`;
     if (r.empty < 0) { badgeClass = 'over'; badgeText = `超額 ${-r.empty} 人`; }
     else if (r.empty === 0) { badgeClass = 'full'; badgeText = '已滿'; }
-    return `<div class="vrow">
-      <div class="vleft">
-        <div class="vnum">${label}</div>
-        <div class="vinfo">
-          <div class="vname">${t.name || '未命名'}</div>
-          <div class="vsub">已安排 ${r.totalAttend} 人 / 容量 ${r.cap} 人・${r.guestCount} 筆紀錄</div>
+    const isExpanded = expandedTableId === t.id;
+
+    const guestListHTML = r.gs.length
+      ? r.gs.map(([k, g]) => {
+          const attend = getAttend(g.name, g.attend);
+          const tags = [
+            attend > 1 ? `<span class="vtag" style="background:var(--info-bg);color:var(--info)">👫${attend}人</span>` : '',
+            g.veg ? '<span class="vtag veg">🥗素食</span>' : '',
+            g.child ? '<span class="vtag child">👶兒童</span>' : '',
+            g.checked ? '<span class="vtag checked">✓已報到</span>' : ''
+          ].filter(Boolean).join('');
+          return `<div class="vguest-item"><span>${g.name}${g.relation ? ` <span style="color:var(--muted);font-size:0.76rem">（${g.relation}）</span>` : ''}</span><div class="vguest-tags">${tags}</div></div>`;
+        }).join('')
+      : `<div style="font-size:0.82rem;color:var(--muted);padding:6px 0">此桌尚無來賓</div>`;
+
+    const canAdd = r.empty > 0;
+
+    return `<div class="vrow ${isExpanded ? 'expanded' : ''}" data-tid="${t.id}">
+      <div class="vrow-main" onclick="toggleExpand('${t.id}')">
+        <div class="vleft">
+          <div class="vnum">${label}</div>
+          <div class="vinfo">
+            <div class="vname">${t.name || '未命名'}</div>
+            <div class="vsub">已安排 ${r.totalAttend} 人 / 容量 ${r.cap} 人</div>
+          </div>
         </div>
+        <span class="vbadge ${badgeClass}">${badgeText}</span>
+        <span class="vexpand-icon">▶</span>
       </div>
-      <span class="vbadge ${badgeClass}">${badgeText}</span>
+      <div class="vrow-detail">
+        <div class="vguest-list">${guestListHTML}</div>
+        ${canAdd ? `
+        <div class="add-form">
+          <div class="add-form-title">＋ 現場加人到此桌（空位 ${r.empty} 位）</div>
+          <div class="add-form-row">
+            <input type="text" id="vadd-name-${t.id}" placeholder="來賓姓名"/>
+            <select id="vadd-relation-${t.id}">
+              <option value="">— 關係 —</option>
+              <option>新郎父親朋友</option><option>新郎母親朋友</option><option>新郎親友</option>
+              <option>新郎同事</option><option>新郎同學</option>
+              <option>新娘同事</option><option>新娘同學</option><option>新娘親友</option>
+            </select>
+            <select id="vadd-attend-${t.id}" style="width:90px">
+              ${Array.from({length: Math.max(1,r.empty)}, (_, i) => i+1).map(n => `<option value="${n}">出席 ${n} 人</option>`).join('')}
+            </select>
+          </div>
+          <div class="add-form-checks">
+            <label><input type="checkbox" id="vadd-veg-${t.id}"/> 🥗 素食需求</label>
+            <label><input type="checkbox" id="vadd-child-${t.id}"/> 👶 兒童座椅</label>
+          </div>
+          <div class="add-form-note">✓ 此來賓將直接標記為「已報到」（現場加入視為已到場）</div>
+          <button class="btn-sm btn-gold" onclick="addWalkIn('${t.id}')">確認加入並報到</button>
+        </div>` : `<div style="font-size:0.82rem;color:var(--muted);padding:10px 0;text-align:center">此桌已無空位</div>`}
+      </div>
     </div>`;
   }).join('');
 };
 
-window.manualRefresh = function() {
-  const btn = document.getElementById('refresh-btn');
-  btn.classList.add('spinning');
-  setTimeout(() => btn.classList.remove('spinning'), 600);
+window.toggleExpand = function(tid) {
+  expandedTableId = expandedTableId === tid ? null : tid;
   renderVacancy();
 };
 
-onValue(ref(db, 'tables'), snap => {
-  const val = snap.val() || {};
-  tablesData = Object.entries(val).map(([id, t]) => ({...t, id}));
-  renderVacancy();
-});
+window.addWalkIn = async function(tid) {
+  const nameEl = document.getElementById(`vadd-name-${tid}`);
+  const relEl = document.getElementById(`vadd-relation-${tid}`);
+  const attendEl = document.getElementById(`vadd-attend-${tid}`);
+  const vegEl = document.getElementById(`vadd-veg-${tid}`);
+  const childEl = document.getElementById(`vadd-child-${tid}`);
 
-onValue(ref(db, 'members'), snap => {
-  const val = snap.val() || {};
-  membersData = Object.entries(val).map(([id, m]) => ({...m, id}));
-  renderVacancy();
-});
+  const name = nameEl.value.trim();
+  if (!name) { toast('請輸入來賓姓名'); nameEl.focus(); return; }
+
+  const t = tablesData.find(t => t.id === tid);
+  if (!t) return;
+
+  if (t.guests && Object.values(t.guests).find(g => g && g.name === name)) {
+    toast('此桌已有同名來賓');
+    return;
+  }
+
+  const relation = relEl.value;
+  const attend = parseInt(attendEl.value) || 1;
+  const veg = vegEl.checked;
+  const child = childEl.checked;
+
+  const key = 'g' + Date.now() + Math.random().toString(36).slice(2, 6);
+  await set(ref(db, `tables/${tid}/guests/${key}`), {
+    name, relation, attend, veg, child,
+    checked: true,
+    checkedAt: Date.now()
+  });
+
+  toast(`✓ 已加入：${name}（第 ${t.num != null ? t.num : ''} 桌，出席 ${attend} 人，已報到）`);
+
+  // Clear form
+  nameEl.value = ''; relEl.value = ''; vegEl.checked = false; childEl.checked = false;
+};
+
+window.toast = msg => {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(window._tt);
+  window._tt = setTimeout(() => el.classList.remove('show'), 2800);
+};
 </script>
 </body>
 </html>
