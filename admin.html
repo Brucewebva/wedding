@@ -472,6 +472,7 @@ body { font-family: 'Noto Serif TC', serif; background: #f0ebe3; color: var(--te
         <div style="display:flex;gap:8px">
           <button class="btn-sm btn-gold" onclick="saveSeatMap()">💾 儲存地圖設定</button>
           <button class="btn-sm btn-outline" onclick="exportSeatMapPrint()">🖨 匯出列印版（含各桌名單）</button>
+          <button class="btn-sm btn-success" onclick="exportSeatMapExcel()">⬇ 匯出 Excel（含各桌名單）</button>
         </div>
       </div>
       <div class="form-card" style="margin-bottom:14px">
@@ -2092,21 +2093,21 @@ window.exportSeatMapPrint = async () => {
 
         const label = t.num != null ? t.num : (t.name || '主桌');
         bodyRows += `<tr>
-          <td style="border:1px solid #999;padding:3px 8px;font-size:16px;font-weight:700;white-space:nowrap;background:#f5ede0;vertical-align:top">${label}${t.name ? `<div style="font-size:11px;color:#555;font-weight:500;margin-top:1px">${t.name}</div>` : ''}</td>
-          <td style="border:1px solid #999;padding:3px 8px;font-size:10.5px;text-align:left;line-height:1.25">${guestLines.join('') || '<span style="color:#999">（無）</span>'}</td>
-          <td style="border:1px solid #999;padding:3px;font-size:11px;text-align:center;font-weight:600;white-space:nowrap;vertical-align:top">${totalAttend} / ${cap}</td>
-          <td style="border:1px solid #999;padding:3px;font-size:11px;text-align:center;font-weight:600;vertical-align:top">${babyCount || 0}</td>
-          <td style="border:1px solid #999;padding:3px;font-size:11px;text-align:center;font-weight:600;vertical-align:top;color:${empty<0?'#c0392b':empty>0?'#92400e':'#4a7c59'}">${empty}</td>
+          <td style="border:1px solid #999;padding:3px 4px;font-size:16px;font-weight:700;white-space:nowrap;background:#f5ede0;vertical-align:top">${label}${t.name ? `<div style="font-size:11px;color:#555;font-weight:500;margin-top:1px">${t.name}</div>` : ''}</td>
+          <td style="border:1px solid #999;padding:3px 5px;font-size:10.5px;text-align:left;line-height:1.25">${guestLines.join('') || '<span style="color:#999">（無）</span>'}</td>
+          <td style="border:1px solid #999;padding:3px 2px;font-size:11px;text-align:center;font-weight:600;white-space:nowrap;vertical-align:top">${totalAttend} / ${cap}</td>
+          <td style="border:1px solid #999;padding:3px 2px;font-size:11px;text-align:center;font-weight:600;vertical-align:top">${babyCount || 0}</td>
+          <td style="border:1px solid #999;padding:3px 2px;font-size:11px;text-align:center;font-weight:600;vertical-align:top;color:${empty<0?'#c0392b':empty>0?'#92400e':'#4a7c59'}">${empty}</td>
         </tr>`;
       });
 
       return `<table style="border-collapse:collapse;width:100%;margin-top:14px">
         <thead><tr>
-          <th style="border:1px solid #999;padding:4px 8px;font-size:10px;background:#3d2b0e;color:#e8d5a3">桌別</th>
-          <th style="border:1px solid #999;padding:4px 8px;font-size:10px;background:#3d2b0e;color:#e8d5a3">來賓名單</th>
-          <th style="border:1px solid #999;padding:4px;font-size:10px;background:#3d2b0e;color:#e8d5a3">人數/容量</th>
-          <th style="border:1px solid #999;padding:4px;font-size:10px;background:#3d2b0e;color:#e8d5a3">Babyseat</th>
-          <th style="border:1px solid #999;padding:4px;font-size:10px;background:#3d2b0e;color:#e8d5a3">空位</th>
+          <th style="border:1px solid #999;padding:3px 4px;font-size:10px;background:#3d2b0e;color:#e8d5a3">桌別</th>
+          <th style="border:1px solid #999;padding:3px 5px;font-size:10px;background:#3d2b0e;color:#e8d5a3">來賓名單</th>
+          <th style="border:1px solid #999;padding:3px 2px;font-size:10px;background:#3d2b0e;color:#e8d5a3">人數/容量</th>
+          <th style="border:1px solid #999;padding:3px 2px;font-size:10px;background:#3d2b0e;color:#e8d5a3">Babyseat</th>
+          <th style="border:1px solid #999;padding:3px 2px;font-size:10px;background:#3d2b0e;color:#e8d5a3">空位</th>
         </tr></thead>
         <tbody>${bodyRows}</tbody>
       </table>
@@ -2142,6 +2143,81 @@ window.exportSeatMapPrint = async () => {
     win.document.close();
   } catch (err) {
     console.error('exportSeatMapPrint error:', err);
+    toast('⚠ 匯出失敗：' + (err.message || '請稍後再試'));
+  }
+};
+
+// ── SEAT MAP EXCEL EXPORT ──
+window.exportSeatMapExcel = async () => {
+  try {
+    const snap = await new Promise(res => onValue(ref(db, 'seatmap'), res, {onlyOnce: true}));
+    const seatData = snap.val() || {};
+
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    script.onload = () => {
+      const wb = XLSX.utils.book_new();
+
+      // ── Sheet 1: 座位地圖（文字版） ──
+      const mapRows = [];
+      for (let row = 0; row < SEATMAP_ROWS; row++) {
+        const rowCells = [];
+        for (let col = 0; col < SEATMAP_COLS; col++) {
+          const key = `${row}_${col}`;
+          if (SEATMAP_EMPTY_CELLS.has(key)) { rowCells.push(''); continue; }
+          const val = seatData[key];
+          if (!val) { rowCells.push(''); continue; }
+          const tname = getTableNameForSeatVal(val);
+          const labelNum = String(val).startsWith('name:') ? '' : val;
+          rowCells.push(labelNum ? `${labelNum}${tname ? ' ' + tname : ''}` : tname);
+        }
+        mapRows.push(rowCells);
+        if (row === 2) mapRows.push(['走道','','','','','','']);
+      }
+      mapRows.push(['','','↑出入口','↑出入口','','','']);
+      const mainVal = seatData['main'];
+      const mainLabel = mainVal ? (String(mainVal).startsWith('name:') ? String(mainVal).slice(5) : `${mainVal}`) : '主桌';
+      const mainTname = mainVal ? getTableNameForSeatVal(mainVal) : '';
+      mapRows.push([]);
+      mapRows.push(['主桌', mainTname ? `${mainLabel} ${mainTname}` : mainLabel]);
+
+      const ws1 = XLSX.utils.aoa_to_sheet(mapRows);
+      ws1['!cols'] = Array(7).fill({wch:14});
+      XLSX.utils.book_append_sheet(wb, ws1, '座位地圖');
+
+      // ── Sheet 2: 各桌來賓名單 ──
+      const sortedTables = [...localData].sort((a,b) => (a.num ?? 9999) - (b.num ?? 9999));
+      const rows2 = [['桌別','桌名','姓名','出席人數','素食','兒童座椅','人數/容量','空位']];
+      sortedTables.forEach(t => {
+        const gs = t.guests ? Object.values(t.guests).filter(g => g && g.name) : [];
+        let totalAttend = 0;
+        const label = t.num != null ? t.num : (t.name || '主桌');
+        if (gs.length === 0) {
+          rows2.push([label, t.name||'', '（無）', '', '', '', `0 / ${t.cap||0}`, t.cap||0]);
+        } else {
+          gs.forEach((g, idx) => {
+            const a = getAttend(g.name, g.attend);
+            totalAttend += a;
+            rows2.push([
+              idx === 0 ? label : '',
+              idx === 0 ? (t.name||'') : '',
+              g.name, a, g.veg?'是':'', g.child?'是':'',
+              idx === 0 ? `${gs.reduce((s,gg)=>s+getAttend(gg.name,gg.attend),0)} / ${t.cap||0}` : '',
+              idx === 0 ? (t.cap||0) - gs.reduce((s,gg)=>s+getAttend(gg.name,gg.attend),0) : ''
+            ]);
+          });
+        }
+      });
+      const ws2 = XLSX.utils.aoa_to_sheet(rows2);
+      ws2['!cols'] = [{wch:8},{wch:14},{wch:12},{wch:8},{wch:6},{wch:8},{wch:10},{wch:6}];
+      XLSX.utils.book_append_sheet(wb, ws2, '各桌來賓名單');
+
+      XLSX.writeFile(wb, `婚宴座位地圖與名單_${new Date().toLocaleDateString('zh-TW').replace(/\//g,'-')}.xlsx`);
+      toast('✓ Excel 已下載');
+    };
+    if (typeof XLSX !== 'undefined') script.onload(); else document.head.appendChild(script);
+  } catch (err) {
+    console.error('exportSeatMapExcel error:', err);
     toast('⚠ 匯出失敗：' + (err.message || '請稍後再試'));
   }
 };
